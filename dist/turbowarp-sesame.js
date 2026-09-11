@@ -32,8 +32,8 @@
   		{
   			"opcode": "configure",
   			"blockType": "COMMAND",
-  			"text": "configure API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]",
-  			"description": "Keeps the Candy House credentials in memory until they are cleared or the extension reloads.",
+  			"text": "configure Direct mode API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]",
+  			"description": "Selects Direct mode and keeps the Candy House credentials in memory until they are cleared or the extension reloads.",
   			"arguments": {
   				"API_KEY": {
   					"type": "STRING",
@@ -50,17 +50,57 @@
   			}
   		},
   		{
+  			"opcode": "configureRelay",
+  			"blockType": "COMMAND",
+  			"text": "configure local Relay [ENDPOINT] device alias [DEVICE_ALIAS]",
+  			"description": "Selects Relay mode for a localhost Capability Proxy without storing Candy House credentials in the project.",
+  			"arguments": {
+  				"ENDPOINT": {
+  					"type": "STRING",
+  					"defaultValue": "http://127.0.0.1:8787"
+  				},
+  				"DEVICE_ALIAS": {
+  					"type": "STRING",
+  					"defaultValue": "front-door"
+  				}
+  			}
+  		},
+  		{
+  			"opcode": "pairRelay",
+  			"blockType": "COMMAND",
+  			"text": "pair local Relay with one-time code [CODE]",
+  			"description": "Exchanges an eight-digit one-time code for a Relay token held only in extension memory.",
+  			"arguments": { "CODE": {
+  				"type": "STRING",
+  				"defaultValue": "00000000"
+  			} }
+  		},
+  		{
   			"opcode": "clearCredentials",
   			"blockType": "COMMAND",
-  			"text": "clear Sesame credentials",
-  			"description": "Removes all Candy House credentials held by the running extension.",
+  			"text": "clear Sesame connection",
+  			"description": "Removes Direct credentials or the local Relay session held by the running extension.",
   			"arguments": {}
   		},
   		{
   			"opcode": "isConfigured",
   			"blockType": "BOOLEAN",
-  			"text": "Sesame credentials configured?",
-  			"description": "Reports whether valid credentials are currently held in memory.",
+  			"text": "Sesame connection ready?",
+  			"description": "Reports whether Direct credentials or a paired Relay session are currently held in memory.",
+  			"arguments": {}
+  		},
+  		{
+  			"opcode": "relayPaired",
+  			"blockType": "BOOLEAN",
+  			"text": "local Relay paired?",
+  			"description": "Reports whether the current Relay connection has an in-memory session token.",
+  			"arguments": {}
+  		},
+  		{
+  			"opcode": "connectionMode",
+  			"blockType": "REPORTER",
+  			"text": "Sesame connection mode",
+  			"description": "Reports direct, relay, or not configured.",
   			"arguments": {}
   		},
   		{
@@ -153,6 +193,120 @@
   		}
   	}
   };
+  //#endregion
+  //#region src/relay-client.ts
+  var LOOPBACK_HOSTNAMES = /* @__PURE__ */ new Set([
+  	"127.0.0.1",
+  	"localhost",
+  	"[::1]"
+  ]);
+  var ALIAS_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/iu;
+  var TOKEN_PATTERN = /^[A-Za-z0-9_-]{20,}$/u;
+  async function pairWithRelay(configuration, code, fetcher = fetch) {
+  	const normalized = validateRelayConfiguration(configuration);
+  	if (!/^\d{8}$/u.test(code)) throw new TypeError("Relay pairing code must contain exactly eight digits.");
+  	const record = requireRecord$1(await requestJson(fetcher, `${normalized.endpoint}/v1/pair`, {
+  		method: "POST",
+  		headers: { "content-type": "application/json" },
+  		body: JSON.stringify({ code }),
+  		redirect: "error"
+  	}), "Relay returned an invalid pairing response.");
+  	if (!TOKEN_PATTERN.test(String(record.token ?? ""))) throw new Error("Relay returned an invalid pairing token.");
+  	if (typeof record.expiresAt !== "number" || !Number.isFinite(record.expiresAt) || record.expiresAt <= Date.now()) throw new Error("Relay returned an invalid session expiration.");
+  	return {
+  		...normalized,
+  		token: String(record.token),
+  		expiresAt: record.expiresAt
+  	};
+  }
+  var RelayClient = class {
+  	constructor(session, fetcher = fetch) {
+  		this.fetcher = fetcher;
+  		const configuration = validateRelayConfiguration(session);
+  		if (!TOKEN_PATTERN.test(session.token)) throw new TypeError("Relay token has an invalid format.");
+  		if (!Number.isFinite(session.expiresAt)) throw new TypeError("Relay session expiration must be a number.");
+  		this.session = {
+  			...configuration,
+  			token: session.token,
+  			expiresAt: session.expiresAt
+  		};
+  	}
+  	async getStatus() {
+  		return requireRecord$1(await this.request(this.devicePath("status")), "Relay returned an invalid status response.");
+  	}
+  	async getHistory(page, length) {
+  		const parameters = new URLSearchParams({
+  			page: String(page),
+  			length: String(length)
+  		});
+  		const result = await this.request(`${this.devicePath("history")}?${parameters}`);
+  		if (!Array.isArray(result)) throw new Error("Relay returned an invalid history response.");
+  		return result;
+  	}
+  	async sendCommand(command, history) {
+  		return this.request(this.devicePath(`commands/${command}`), {
+  			method: "POST",
+  			headers: { "content-type": "application/json" },
+  			body: JSON.stringify({ history })
+  		});
+  	}
+  	devicePath(suffix) {
+  		return `/v1/candyhouse/devices/${encodeURIComponent(this.session.deviceAlias)}/${suffix}`;
+  	}
+  	async request(path, init = {}) {
+  		if (this.session.expiresAt <= Date.now()) throw new Error("Relay session has expired. Pair with the local relay again.");
+  		return requireRecord$1(await requestJson(this.fetcher, `${this.session.endpoint}${path}`, {
+  			...init,
+  			headers: {
+  				...init.headers,
+  				authorization: `Bearer ${this.session.token}`
+  			},
+  			redirect: "error"
+  		}), "Relay returned an invalid response.").data;
+  	}
+  };
+  function validateRelayConfiguration(configuration) {
+  	let url;
+  	try {
+  		url = new URL(configuration.endpoint.trim());
+  	} catch {
+  		throw new TypeError("Relay endpoint must be a valid URL.");
+  	}
+  	if (url.protocol !== "http:" || !LOOPBACK_HOSTNAMES.has(url.hostname)) throw new TypeError("Relay endpoint must use HTTP on a loopback hostname.");
+  	if (url.username.length > 0 || url.password.length > 0 || url.search.length > 0 || url.hash.length > 0 || url.pathname !== "/" && url.pathname !== "") throw new TypeError("Relay endpoint must contain only its loopback origin.");
+  	const deviceAlias = configuration.deviceAlias.trim();
+  	if (!ALIAS_PATTERN.test(deviceAlias)) throw new TypeError("Relay device alias has an invalid format.");
+  	return {
+  		endpoint: url.origin,
+  		deviceAlias
+  	};
+  }
+  async function requestJson(fetcher, url, init) {
+  	const response = await fetcher(url, init);
+  	const text = await response.text();
+  	let result = null;
+  	if (text.length > 0) try {
+  		result = JSON.parse(text);
+  	} catch {
+  		throw new Error(`Relay returned a non-JSON response (${response.status}).`);
+  	}
+  	if (!response.ok) throw new Error(`Relay request failed (${response.status}): ${errorDetail$1(result)}`);
+  	return result;
+  }
+  function requireRecord$1(value, message) {
+  	if (typeof value !== "object" || value === null || Array.isArray(value)) throw new Error(message);
+  	return value;
+  }
+  function errorDetail$1(value) {
+  	if (typeof value === "object" && value !== null) {
+  		const root = value;
+  		if (typeof root.error === "object" && root.error !== null) {
+  			const error = root.error;
+  			if (typeof error.message === "string") return error.message;
+  		}
+  	}
+  	return "unknown error";
+  }
   //#endregion
   //#region src/aes-cmac.ts
   var BLOCK_SIZE = 16;
@@ -340,22 +494,54 @@
   				secretKey: Scratch.Cast.toString(args.SECRET_KEY).trim().toLowerCase()
   			};
   			new SesameClient(credentials);
-  			this.credentials = credentials;
+  			this.connection = {
+  				mode: "direct",
+  				credentials
+  			};
   		});
   	}
+  	configureRelay(args) {
+  		this.capture(() => {
+  			const configuration = validateRelayConfiguration({
+  				endpoint: Scratch.Cast.toString(args.ENDPOINT),
+  				deviceAlias: Scratch.Cast.toString(args.DEVICE_ALIAS)
+  			});
+  			this.connection = {
+  				mode: "relay",
+  				configuration
+  			};
+  		});
+  	}
+  	async pairRelay(args) {
+  		await this.captureAsync(async () => {
+  			if (this.connection?.mode !== "relay") throw new Error("Configure the local relay first.");
+  			const session = await pairWithRelay(this.connection.configuration, Scratch.Cast.toString(args.CODE).trim());
+  			this.connection = {
+  				mode: "relay",
+  				configuration: this.connection.configuration,
+  				session
+  			};
+  		}, void 0);
+  	}
   	clearCredentials() {
-  		this.credentials = void 0;
+  		this.connection = void 0;
   		this.lastErrorMessage = "";
   	}
   	isConfigured() {
-  		return this.credentials !== void 0;
+  		return this.connection?.mode === "direct" || this.relayPaired();
+  	}
+  	relayPaired() {
+  		return this.connection?.mode === "relay" && this.connection.session !== void 0 && this.connection.session.expiresAt > Date.now();
+  	}
+  	connectionMode() {
+  		return this.connection?.mode ?? "not configured";
   	}
   	commandsEnabled() {
   		return featureFlags.sesameCommands;
   	}
   	async getStatusField(args) {
   		return this.captureAsync(async () => {
-  			const value = (await this.client().getStatus())[Scratch.Cast.toString(args.FIELD)];
+  			const value = (await this.transport().getStatus())[Scratch.Cast.toString(args.FIELD)];
   			return isScratchValue(value) ? value : value === void 0 ? "" : JSON.stringify(value);
   		}, "");
   	}
@@ -363,7 +549,7 @@
   		return this.captureAsync(async () => {
   			const page = boundedInteger(Scratch.Cast.toNumber(args.PAGE), 0, Number.MAX_SAFE_INTEGER);
   			const length = boundedInteger(Scratch.Cast.toNumber(args.LENGTH), 1, 50);
-  			return JSON.stringify(await this.client().getHistory(page, length));
+  			return JSON.stringify(await this.transport().getHistory(page, length));
   		}, "[]");
   	}
   	async sendCommand(args) {
@@ -371,15 +557,17 @@
   			if (!featureFlags.sesameCommands) throw new Error("Remote lock commands are disabled in this build.");
   			const command = Scratch.Cast.toString(args.COMMAND);
   			if (!isSesameCommand(command)) throw new TypeError(`Unknown Sesame command: ${command}`);
-  			await this.client().sendCommand(command, Scratch.Cast.toString(args.HISTORY));
+  			await this.transport().sendCommand(command, Scratch.Cast.toString(args.HISTORY));
   		}, void 0);
   	}
   	lastError() {
   		return this.lastErrorMessage;
   	}
-  	client() {
-  		if (this.credentials === void 0) throw new Error("Configure Sesame credentials first.");
-  		return new SesameClient(this.credentials);
+  	transport() {
+  		if (this.connection?.mode === "direct") return new SesameClient(this.connection.credentials);
+  		if (this.connection?.mode === "relay" && this.connection.session !== void 0) return new RelayClient(this.connection.session);
+  		if (this.connection?.mode === "relay") throw new Error("Pair with the local relay first.");
+  		throw new Error("Configure Direct mode or the local relay first.");
   	}
   	capture(action) {
   		try {

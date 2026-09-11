@@ -4,11 +4,19 @@
 
 ## Runtime boundary
 
-The extension runs in TurboWarp's sandbox and calls only
-`https://app.candyhouse.co/api/sesame2`. Credentials live on the extension instance and are never
-written to storage. `SesameExtension` converts block values and captures errors;
-`SesameClient` owns HTTP request and response handling; `aes-cmac.ts` signs the three-byte Sesame
-timestamp message with Web Crypto.
+The extension runs in TurboWarp's sandbox and selects Direct or Relay mode. `SesameExtension` owns
+block conversion, connection state, and error capture. Both modes implement the `SesameTransport`
+contract.
+
+```text
+Direct: TurboWarp -> SesameClient -> Candy House API
+Relay:  TurboWarp -> RelayClient -> 127.0.0.1 Capability Proxy -> Candy House API
+```
+
+Direct credentials live only on the extension instance. Relay mode never receives the provider API
+key, UUID, or secret. It stores only the endpoint, device alias, and paired token. The token is not
+written to storage and disappears when the extension reloads. `RelayClient` accepts only HTTP
+loopback origins, preventing token delivery to a remote host.
 
 Remote commands are gated by the build-time constant in `config/feature-flags.ts`. The check occurs
 before client creation, signing, or HTTP access, so an OFF build cannot send a command request.
@@ -19,7 +27,7 @@ The project keeps runtime behavior and compatibility metadata separate while gen
 the same checked-in source definitions.
 
 ```text
-src/index.ts + src/extension.ts + src/sesame-client.ts + src/aes-cmac.ts
+src/index.ts + src/extension.ts + transports and clients
   -> vite-plugin-turbowarp-extension
   -> dist/<extension>.js
 

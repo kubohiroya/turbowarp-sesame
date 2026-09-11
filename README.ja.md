@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-Candy House Sesameの状態確認と、明示的に有効化したbuildでの遠隔施錠操作を、公式Web API経由で行うTurboWarp機能拡張です。
+Candy House Sesameの状態確認と、明示的に有効化したbuildでの遠隔施錠操作を行うTurboWarp機能拡張です。APIをブラウザから直接呼ぶDirect modeと、資格情報をlocalhostに分離するRelay modeを選べます。
 
 **利用ガイド:** [English](https://kubohiroya.github.io/turbowarp-sesame/)
 
@@ -12,16 +12,18 @@ Candy House Sesameの状態確認と、明示的に有効化したbuildでの遠
 - Sesame履歴のJSON形式での取得
 - 安全フラグを有効にしたbuildでの施錠、解錠、トグル要求
 - 設定／APIエラーをプロジェクトを停止させずブロックから確認
+- `@kubohiroya/capability-proxy`とのワンタイムコードによるローカルペアリング
 
 ## 動作条件と安全上の注意
 
-- Candy HouseのAPIキー、Sesame UUID、32文字の16進数秘密鍵
+- 推奨: localhostで起動した`@kubohiroya/capability-proxy`、デバイス別名、起動時のワンタイムコード
+- Direct mode: Candy HouseのAPIキー、Sesame UUID、32文字の16進数秘密鍵
 - WiFi Module 2などを通してCandy Houseクラウドから到達できるSesame
 - `fetch`、`TextEncoder`、Web Crypto AES-CBCに対応するブラウザ
 - sandbox対応のため、通常は「サンドボックスなし」を選択しないで読み込む
 
 > [!CAUTION]
-> ブロックの入力欄へ直接書いた値は`.sb3`プロジェクトに保存されます。実際の認証情報を含むプロジェクトを公開・共有しないでください。機能拡張自身は認証情報を実行時メモリだけに保持しますが、保存済みブロックの値は除去できません。
+> Direct modeのブロックへ直接書いた値は`.sb3`プロジェクトに保存されます。実際の認証情報を含むプロジェクトを公開・共有しないでください。Relay modeではAPIキーとsecretをブロックへ渡しません。ペアリング後のRelay tokenは機能拡張の実行時メモリだけに保持します。
 
 既定buildでは遠隔操作が無効です。また、クラウドがコマンドを受理しても物理的に鍵が動いた保証にはならないため、操作後に状態を再取得してください。
 
@@ -31,26 +33,37 @@ Candy House Sesameの状態確認と、明示的に有効化したbuildでの遠
 2. TurboWarpの**機能拡張**を開きます。
 3. **カスタム機能拡張**からfileを選び、「サンドボックスなし」を有効にせず読み込みます。
 
-## クイックスタート
+## Relay mode（推奨）
 
-1. Candy House開発者ページから認証情報を取得します。
-2. 設定ブロックを一度実行します。保存済みブロックへ認証情報を直接書く代わりに、非公開のローカルプロジェクトや変数の利用を推奨します。
-3. 状態または履歴を取得します。失敗時は`last Sesame error`を確認します。
-4. 共有PCでは作業終了前に認証情報消去ブロックを実行します。
+1. [`@kubohiroya/capability-proxy`](https://github.com/kubohiroya/capability-proxy)をlocalhostで起動します。
+2. `configure local Relay ...`でendpointとRelay設定内のデバイス別名を指定します。
+3. Relayの標準出力に表示された8桁コードを`pair local Relay ...`へ入力します。
+4. 状態または履歴を取得します。Relay再起動後は再度ペアリングします。
 
 ```text
-configure API key (...) UUID (...) secret key (...)
+configure local Relay [http://127.0.0.1:8787] device alias [front-door]
+pair local Relay with one-time code (...)
 say (Sesame status [CHSesame2Status])
-clear Sesame credentials
+clear Sesame connection
 ```
+
+endpointとデバイス別名は秘密ではありません。8桁コードは5分以内に一度だけ利用でき、交換後に受け取るRelay tokenはブロックや`.sb3`へ保存されません。
+
+## Direct mode
+
+Candy House開発者ページから認証情報を取得し、`configure Direct mode ...`を実行します。これはRelayを起動できない場合の互換モードです。入力値が`.sb3`へ残る可能性があるため、実際の資格情報を含むプロジェクトを共有しないでください。
 
 ## ブロックリファレンス
 
 | ブロック                          | 動作                                    |
 | --------------------------------- | --------------------------------------- |
-| `configure API key ...`           | 検証済み認証情報を実行時メモリへ設定    |
-| `clear Sesame credentials`        | 実行時メモリの認証情報を消去            |
-| `Sesame credentials configured?`  | 認証情報が設定済みか返す                |
+| `configure Direct mode ...`       | Direct資格情報を実行時メモリへ設定      |
+| `configure local Relay ...`       | localhost Relayとデバイス別名を設定     |
+| `pair local Relay ...`            | ワンタイムコードをメモリ内tokenへ交換   |
+| `clear Sesame connection`         | Direct資格情報またはRelay sessionを消去 |
+| `Sesame connection ready?`        | 現在の接続が利用可能か返す              |
+| `local Relay paired?`             | Relay tokenを保持しているか返す         |
+| `Sesame connection mode`          | `direct`、`relay`、未設定を返す         |
 | `Sesame status [FIELD]`           | 現在の状態から指定fieldを取得           |
 | `Sesame history page ...`         | 最大50件の履歴をJSON文字列で取得        |
 | `Sesame [COMMAND] ...`            | flag有効buildで施錠・解錠・トグルを要求 |
@@ -61,11 +74,13 @@ clear Sesame credentials
 
 | 状況                         | 動作                                         |
 | ---------------------------- | -------------------------------------------- |
-| 認証情報が不正               | 以前の有効な設定を維持し、エラーを記録       |
+| Direct認証情報が不正         | 以前の有効な設定を維持し、エラーを記録       |
+| Relay endpointが外部host     | 設定を拒否し、localhost以外へtokenを送らない |
+| Relay再起動／session期限切れ | 再ペアリングが必要                           |
 | API／network失敗             | 空値または`[]`を返し、プロジェクトは継続     |
 | 遠隔操作flagがOFF            | コマンドrequestを送信しない                  |
 | コマンドが受理された         | 状態を再取得して実機動作を確認する必要がある |
-| 認証情報消去／機能拡張再読込 | メモリ上の認証情報を破棄                     |
+| 接続消去／機能拡張再読込     | メモリ上の資格情報とRelay tokenを破棄        |
 
 ## 遠隔操作の有効化
 

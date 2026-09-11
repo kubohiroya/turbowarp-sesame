@@ -31,6 +31,25 @@
       ]
     },
     {
+      "opcode": "configureRelay",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "DEVICE_ALIAS",
+          "type": "STRING"
+        },
+        {
+          "id": "ENDPOINT",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "connectionMode",
+      "blockType": "REPORTER",
+      "arguments": []
+    },
+    {
       "opcode": "getHistory",
       "blockType": "REPORTER",
       "arguments": [
@@ -63,6 +82,21 @@
     {
       "opcode": "lastError",
       "blockType": "REPORTER",
+      "arguments": []
+    },
+    {
+      "opcode": "pairRelay",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CODE",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "relayPaired",
+      "blockType": "BOOLEAN",
       "arguments": []
     },
     {

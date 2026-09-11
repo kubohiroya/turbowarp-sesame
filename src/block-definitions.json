@@ -4,8 +4,8 @@
     {
       "opcode": "configure",
       "blockType": "COMMAND",
-      "text": "configure API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]",
-      "description": "Keeps the Candy House credentials in memory until they are cleared or the extension reloads.",
+      "text": "configure Direct mode API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]",
+      "description": "Selects Direct mode and keeps the Candy House credentials in memory until they are cleared or the extension reloads.",
       "arguments": {
         "API_KEY": { "type": "STRING", "defaultValue": "api-key" },
         "UUID": {
@@ -19,17 +19,53 @@
       }
     },
     {
+      "opcode": "configureRelay",
+      "blockType": "COMMAND",
+      "text": "configure local Relay [ENDPOINT] device alias [DEVICE_ALIAS]",
+      "description": "Selects Relay mode for a localhost Capability Proxy without storing Candy House credentials in the project.",
+      "arguments": {
+        "ENDPOINT": {
+          "type": "STRING",
+          "defaultValue": "http://127.0.0.1:8787"
+        },
+        "DEVICE_ALIAS": { "type": "STRING", "defaultValue": "front-door" }
+      }
+    },
+    {
+      "opcode": "pairRelay",
+      "blockType": "COMMAND",
+      "text": "pair local Relay with one-time code [CODE]",
+      "description": "Exchanges an eight-digit one-time code for a Relay token held only in extension memory.",
+      "arguments": {
+        "CODE": { "type": "STRING", "defaultValue": "00000000" }
+      }
+    },
+    {
       "opcode": "clearCredentials",
       "blockType": "COMMAND",
-      "text": "clear Sesame credentials",
-      "description": "Removes all Candy House credentials held by the running extension.",
+      "text": "clear Sesame connection",
+      "description": "Removes Direct credentials or the local Relay session held by the running extension.",
       "arguments": {}
     },
     {
       "opcode": "isConfigured",
       "blockType": "BOOLEAN",
-      "text": "Sesame credentials configured?",
-      "description": "Reports whether valid credentials are currently held in memory.",
+      "text": "Sesame connection ready?",
+      "description": "Reports whether Direct credentials or a paired Relay session are currently held in memory.",
+      "arguments": {}
+    },
+    {
+      "opcode": "relayPaired",
+      "blockType": "BOOLEAN",
+      "text": "local Relay paired?",
+      "description": "Reports whether the current Relay connection has an in-memory session token.",
+      "arguments": {}
+    },
+    {
+      "opcode": "connectionMode",
+      "blockType": "REPORTER",
+      "text": "Sesame connection mode",
+      "description": "Reports direct, relay, or not configured.",
       "arguments": {}
     },
     {

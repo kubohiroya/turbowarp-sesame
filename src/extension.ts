@@ -2,10 +2,18 @@ import { featureFlags } from "../config/feature-flags.js";
 import definitions from "./block-definitions.json";
 import { extensionConfig } from "./config.js";
 import {
+  pairWithRelay,
+  RelayClient,
+  validateRelayConfiguration,
+  type RelayConfiguration,
+  type RelaySession,
+} from "./relay-client.js";
+import {
   SesameClient,
   type SesameCommand,
   type SesameCredentials,
 } from "./sesame-client.js";
+import type { SesameTransport } from "./transport.js";
 
 type BlockTypeName = "COMMAND" | "REPORTER" | "BOOLEAN";
 type ArgumentTypeName = "STRING" | "NUMBER" | "BOOLEAN";
@@ -33,7 +41,14 @@ const blockDefinitions = definitions.blocks as readonly BlockDefinition[];
 const menuDefinitions = definitions.menus as Record<string, MenuDefinition>;
 
 export class SesameExtension implements TurboWarpExtension {
-  private credentials: SesameCredentials | undefined;
+  private connection:
+    | { mode: "direct"; credentials: SesameCredentials }
+    | {
+        mode: "relay";
+        configuration: RelayConfiguration;
+        session?: RelaySession;
+      }
+    | undefined;
   private lastErrorMessage = "";
 
   public getInfo(): Record<string, unknown> {
@@ -63,17 +78,59 @@ export class SesameExtension implements TurboWarpExtension {
       };
       // Construction validates before replacing working credentials.
       new SesameClient(credentials);
-      this.credentials = credentials;
+      this.connection = { mode: "direct", credentials };
     });
   }
 
+  public configureRelay(args: {
+    ENDPOINT: unknown;
+    DEVICE_ALIAS: unknown;
+  }): void {
+    this.capture(() => {
+      const configuration = validateRelayConfiguration({
+        endpoint: Scratch.Cast.toString(args.ENDPOINT),
+        deviceAlias: Scratch.Cast.toString(args.DEVICE_ALIAS),
+      });
+      this.connection = { mode: "relay", configuration };
+    });
+  }
+
+  public async pairRelay(args: { CODE: unknown }): Promise<void> {
+    await this.captureAsync(async () => {
+      if (this.connection?.mode !== "relay") {
+        throw new Error("Configure the local relay first.");
+      }
+      const session = await pairWithRelay(
+        this.connection.configuration,
+        Scratch.Cast.toString(args.CODE).trim(),
+      );
+      this.connection = {
+        mode: "relay",
+        configuration: this.connection.configuration,
+        session,
+      };
+    }, undefined);
+  }
+
   public clearCredentials(): void {
-    this.credentials = undefined;
+    this.connection = undefined;
     this.lastErrorMessage = "";
   }
 
   public isConfigured(): boolean {
-    return this.credentials !== undefined;
+    return this.connection?.mode === "direct" || this.relayPaired();
+  }
+
+  public relayPaired(): boolean {
+    return (
+      this.connection?.mode === "relay" &&
+      this.connection.session !== undefined &&
+      this.connection.session.expiresAt > Date.now()
+    );
+  }
+
+  public connectionMode(): string {
+    return this.connection?.mode ?? "not configured";
   }
 
   public commandsEnabled(): boolean {
@@ -84,7 +141,7 @@ export class SesameExtension implements TurboWarpExtension {
     FIELD: unknown;
   }): Promise<string | number | boolean> {
     return this.captureAsync(async () => {
-      const status = await this.client().getStatus();
+      const status = await this.transport().getStatus();
       const field = Scratch.Cast.toString(args.FIELD);
       const value = status[field];
       return isScratchValue(value)
@@ -106,7 +163,7 @@ export class SesameExtension implements TurboWarpExtension {
         Number.MAX_SAFE_INTEGER,
       );
       const length = boundedInteger(Scratch.Cast.toNumber(args.LENGTH), 1, 50);
-      return JSON.stringify(await this.client().getHistory(page, length));
+      return JSON.stringify(await this.transport().getHistory(page, length));
     }, "[]");
   }
 
@@ -121,7 +178,7 @@ export class SesameExtension implements TurboWarpExtension {
       const command = Scratch.Cast.toString(args.COMMAND);
       if (!isSesameCommand(command))
         throw new TypeError(`Unknown Sesame command: ${command}`);
-      await this.client().sendCommand(
+      await this.transport().sendCommand(
         command,
         Scratch.Cast.toString(args.HISTORY),
       );
@@ -132,10 +189,20 @@ export class SesameExtension implements TurboWarpExtension {
     return this.lastErrorMessage;
   }
 
-  private client(): SesameClient {
-    if (this.credentials === undefined)
-      throw new Error("Configure Sesame credentials first.");
-    return new SesameClient(this.credentials);
+  private transport(): SesameTransport {
+    if (this.connection?.mode === "direct") {
+      return new SesameClient(this.connection.credentials);
+    }
+    if (
+      this.connection?.mode === "relay" &&
+      this.connection.session !== undefined
+    ) {
+      return new RelayClient(this.connection.session);
+    }
+    if (this.connection?.mode === "relay") {
+      throw new Error("Pair with the local relay first.");
+    }
+    throw new Error("Configure Direct mode or the local relay first.");
   }
 
   private capture(action: () => void): void {

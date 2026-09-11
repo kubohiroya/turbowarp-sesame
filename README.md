@@ -3,7 +3,8 @@
 [English](README.md) | [日本語](README.ja.md)
 
 A TurboWarp extension for inspecting Candy House Sesame devices and, in explicitly enabled builds,
-requesting remote lock operations through the official Web API.
+requesting remote lock operations. It supports Direct mode and a localhost Relay mode that keeps
+provider credentials out of TurboWarp projects.
 
 **User guide:** [English](https://kubohiroya.github.io/turbowarp-sesame/)
 
@@ -13,18 +14,20 @@ requesting remote lock operations through the official Web API.
 - Retrieves recent Sesame history as JSON.
 - Can request lock, unlock, and toggle operations in a build where the safety flag is enabled.
 - Reports configuration and API failures through a block instead of stopping the project.
+- Pairs with `@kubohiroya/capability-proxy` using a short-lived one-time code.
 
 ## Requirements and safety
 
-- A Candy House API key, Sesame UUID, and 32-character hexadecimal secret key.
+- Recommended: a localhost `@kubohiroya/capability-proxy`, a device alias, and its one-time code.
+- Direct mode: a Candy House API key, Sesame UUID, and 32-character hexadecimal secret key.
 - A Sesame device reachable through the Candy House cloud, such as through WiFi Module 2.
 - A browser with `fetch`, `TextEncoder`, and Web Crypto AES-CBC support.
 - The extension is sandbox-compatible and should normally be loaded in the sandbox.
 
 > [!CAUTION]
-> Values typed directly into block inputs are stored in the `.sb3` project. Never publish or share a
-> project containing real credentials. The extension keeps credentials only in runtime memory, but
-> it cannot remove values written into saved blocks.
+> Values typed into Direct mode blocks are stored in the `.sb3` project. Never publish or share a
+> project containing real credentials. Relay mode does not pass the API key or secret to TurboWarp;
+> the paired Relay token stays only in extension runtime memory.
 
 Remote lock commands are disabled in default builds. A command accepted by the cloud does not prove
 that the physical lock moved; read the status again to confirm the result.
@@ -48,19 +51,28 @@ pnpm add --save-exact @kubohiroya/turbowarp-sesame@0.1.0
 node_modules/@kubohiroya/turbowarp-sesame/dist/turbowarp-sesame.js
 ```
 
-## Quick start
+## Relay mode (recommended)
 
-1. Obtain credentials from the Candy House developer portal.
-2. Run the configuration block once. Prefer reporter variables or a private local project over
-   literal credentials in saved blocks.
-3. Read a status field or history. Check `last Sesame error` after a failed operation.
-4. Clear credentials before leaving the project running on a shared computer.
+1. Start [`@kubohiroya/capability-proxy`](https://github.com/kubohiroya/capability-proxy) on localhost.
+2. Configure its endpoint and the device alias defined in the Relay configuration.
+3. Enter the eight-digit code printed by the Relay into the pairing block.
+4. Read status or history. Pair again after restarting the Relay.
 
 ```text
-configure API key (...) UUID (...) secret key (...)
+configure local Relay [http://127.0.0.1:8787] device alias [front-door]
+pair local Relay with one-time code (...)
 say (Sesame status [CHSesame2Status])
-clear Sesame credentials
+clear Sesame connection
 ```
+
+The endpoint and alias are not secrets. The pairing code works once within five minutes, and the
+resulting token is never written to a block or `.sb3` file.
+
+## Direct mode
+
+Obtain credentials from the Candy House developer portal and run the Direct configuration block.
+This compatibility mode is useful when a local Relay cannot be run, but saved block inputs may
+remain in the `.sb3` file.
 
 ## Block reference
 
@@ -68,9 +80,9 @@ This section is generated from [`src/block-definitions.json`](src/block-definiti
 
 <!-- BEGIN GENERATED BLOCKS -->
 
-### `configure API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]`
+### `configure Direct mode API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]`
 
-Keeps the Candy House credentials in memory until they are cleared or the extension reloads.
+Selects Direct mode and keeps the Candy House credentials in memory until they are cleared or the extension reloads.
 
 | Property     | Value                                                   |
 | ------------ | ------------------------------------------------------- |
@@ -80,23 +92,62 @@ Keeps the Candy House credentials in memory until they are cleared or the extens
 | `UUID`       | String, default: `00000000-0000-0000-0000-000000000000` |
 | `SECRET_KEY` | String, default: `00000000000000000000000000000000`     |
 
-### `clear Sesame credentials`
+### `configure local Relay [ENDPOINT] device alias [DEVICE_ALIAS]`
 
-Removes all Candy House credentials held by the running extension.
+Selects Relay mode for a localhost Capability Proxy without storing Candy House credentials in the project.
+
+| Property       | Value                                    |
+| -------------- | ---------------------------------------- |
+| Type           | Command                                  |
+| Opcode         | `configureRelay`                         |
+| `ENDPOINT`     | String, default: `http://127.0.0.1:8787` |
+| `DEVICE_ALIAS` | String, default: `front-door`            |
+
+### `pair local Relay with one-time code [CODE]`
+
+Exchanges an eight-digit one-time code for a Relay token held only in extension memory.
+
+| Property | Value                       |
+| -------- | --------------------------- |
+| Type     | Command                     |
+| Opcode   | `pairRelay`                 |
+| `CODE`   | String, default: `00000000` |
+
+### `clear Sesame connection`
+
+Removes Direct credentials or the local Relay session held by the running extension.
 
 | Property | Value              |
 | -------- | ------------------ |
 | Type     | Command            |
 | Opcode   | `clearCredentials` |
 
-### `Sesame credentials configured?`
+### `Sesame connection ready?`
 
-Reports whether valid credentials are currently held in memory.
+Reports whether Direct credentials or a paired Relay session are currently held in memory.
 
 | Property | Value          |
 | -------- | -------------- |
 | Type     | Boolean        |
 | Opcode   | `isConfigured` |
+
+### `local Relay paired?`
+
+Reports whether the current Relay connection has an in-memory session token.
+
+| Property | Value         |
+| -------- | ------------- |
+| Type     | Boolean       |
+| Opcode   | `relayPaired` |
+
+### `Sesame connection mode`
+
+Reports direct, relay, or not configured.
+
+| Property | Value            |
+| -------- | ---------------- |
+| Type     | Reporter         |
+| Opcode   | `connectionMode` |
 
 ### `Sesame status [FIELD]`
 

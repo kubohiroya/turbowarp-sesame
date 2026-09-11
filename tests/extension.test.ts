@@ -42,6 +42,9 @@ describe("SesameExtension", () => {
     expect(info.blocks.map((block) => block.opcode)).toContain(
       "getStatusField",
     );
+    expect(info.blocks.map((block) => block.opcode)).toContain(
+      "configureRelay",
+    );
     expect(info.menus).toHaveProperty("statusFields");
   });
 
@@ -60,6 +63,58 @@ describe("SesameExtension", () => {
     ).not.toThrow();
     expect(extension.isConfigured()).toBe(false);
     expect(extension.lastError()).toContain("canonical UUID format");
+  });
+
+  it("configures and pairs with a local Relay without provider credentials", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            token: "a-valid-local-relay-token-value",
+            expiresAt: Date.now() + 60_000,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { batteryPercentage: 87 } }), {
+          status: 200,
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    const extension = new SesameExtension();
+
+    extension.configureRelay({
+      ENDPOINT: "http://127.0.0.1:8787",
+      DEVICE_ALIAS: "front-door",
+    });
+    expect(extension.connectionMode()).toBe("relay");
+    expect(extension.relayPaired()).toBe(false);
+    expect(extension.isConfigured()).toBe(false);
+
+    await extension.pairRelay({ CODE: "12345678" });
+    expect(extension.relayPaired()).toBe(true);
+    expect(extension.isConfigured()).toBe(true);
+    await expect(
+      extension.getStatusField({ FIELD: "batteryPercentage" }),
+    ).resolves.toBe(87);
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("http://127.0.0.1:8787/v1/pair");
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      "http://127.0.0.1:8787/v1/candyhouse/devices/front-door/status",
+    );
+    expect(JSON.stringify(fetchMock.mock.calls)).not.toContain("test-api-key");
+  });
+
+  it("rejects a non-loopback Relay endpoint", () => {
+    const extension = new SesameExtension();
+    extension.configureRelay({
+      ENDPOINT: "https://relay.example.com",
+      DEVICE_ALIAS: "front-door",
+    });
+    expect(extension.connectionMode()).toBe("not configured");
+    expect(extension.lastError()).toContain("loopback hostname");
   });
 
   it("fetches a selected status field", async () => {

@@ -28,23 +28,25 @@
   <body>
     <h1>TurboWarp-Sesame</h1>
     <p>
-      A sandboxed TurboWarp extension for the official Candy House Sesame Web
-      API.
+      A sandboxed TurboWarp extension with Direct and localhost Relay modes for
+      the Candy House Sesame Web API.
     </p>
 
     <h2>Setup</h2>
     <ol>
-      <li>Obtain an API key, Sesame UUID, and secret key from Candy House.</li>
+      <li>Start <code>@kubohiroya/capability-proxy</code> on localhost.</li>
       <li>
         Load <code>dist/turbowarp-sesame.js</code> as a sandboxed custom
         extension.
       </li>
-      <li>Run the configuration block before status or history blocks.</li>
+      <li>Configure the Relay endpoint and device alias.</li>
+      <li>Pair using the one-time code printed by the Relay.</li>
     </ol>
 
     <p class="warning">
-      Credentials written directly in blocks are saved in the SB3 file. Do not
-      share a project that contains real credentials.
+      Relay mode keeps provider credentials out of the SB3 file. Credentials
+      written into Direct mode blocks are saved in the project and must not be
+      shared.
     </p>
 
     <h2>Remote commands</h2>
