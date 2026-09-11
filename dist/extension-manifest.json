@@ -1,17 +1,94 @@
 {
   "formatVersion": 1,
-  "id": "kubohiroyaexampleextension",
+  "id": "kubohiroyasesame",
   "blocks": [
     {
-      "opcode": "hello",
+      "opcode": "clearCredentials",
+      "blockType": "COMMAND",
+      "arguments": []
+    },
+    {
+      "opcode": "commandsEnabled",
+      "blockType": "BOOLEAN",
+      "arguments": []
+    },
+    {
+      "opcode": "configure",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "API_KEY",
+          "type": "STRING"
+        },
+        {
+          "id": "SECRET_KEY",
+          "type": "STRING"
+        },
+        {
+          "id": "UUID",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "getHistory",
       "blockType": "REPORTER",
       "arguments": [
         {
-          "id": "NAME",
+          "id": "LENGTH",
+          "type": "NUMBER"
+        },
+        {
+          "id": "PAGE",
+          "type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "opcode": "getStatusField",
+      "blockType": "REPORTER",
+      "arguments": [
+        {
+          "id": "FIELD",
+          "type": "STRING",
+          "menu": "statusFields"
+        }
+      ]
+    },
+    {
+      "opcode": "isConfigured",
+      "blockType": "BOOLEAN",
+      "arguments": []
+    },
+    {
+      "opcode": "lastError",
+      "blockType": "REPORTER",
+      "arguments": []
+    },
+    {
+      "opcode": "sendCommand",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "COMMAND",
+          "type": "STRING",
+          "menu": "commands"
+        },
+        {
+          "id": "HISTORY",
           "type": "STRING"
         }
       ]
     }
   ],
-  "menus": []
+  "menus": [
+    {
+      "id": "commands",
+      "acceptReporters": false
+    },
+    {
+      "id": "statusFields",
+      "acceptReporters": true
+    }
+  ]
 }

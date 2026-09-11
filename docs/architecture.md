@@ -2,13 +2,24 @@
 
 [日本語](architecture.ja.md)
 
+## Runtime boundary
+
+The extension runs in TurboWarp's sandbox and calls only
+`https://app.candyhouse.co/api/sesame2`. Credentials live on the extension instance and are never
+written to storage. `SesameExtension` converts block values and captures errors;
+`SesameClient` owns HTTP request and response handling; `aes-cmac.ts` signs the three-byte Sesame
+timestamp message with Web Crypto.
+
+Remote commands are gated by the build-time constant in `config/feature-flags.ts`. The check occurs
+before client creation, signing, or HTTP access, so an OFF build cannot send a command request.
+
 ## Build outputs
 
 The project keeps runtime behavior and compatibility metadata separate while generating both from
 the same checked-in source definitions.
 
 ```text
-src/index.ts + src/extension.ts
+src/index.ts + src/extension.ts + src/sesame-client.ts + src/aes-cmac.ts
   -> vite-plugin-turbowarp-extension
   -> dist/<extension>.js
 
@@ -39,6 +50,6 @@ changes from documentation or localization changes.
 
 ## Drift detection
 
-`dist/` is committed as a release artifact. `npm run check:dist` rebuilds both files and fails when
+`dist/` is committed as a release artifact. `pnpm run check:dist` rebuilds both files and fails when
 Git reports any modified, deleted, or untracked file below `dist/`. This catches manifest and bundle
 drift in local checks and CI.

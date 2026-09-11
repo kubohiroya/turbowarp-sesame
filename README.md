@@ -1,115 +1,193 @@
-# TurboWarp-Extension-Template
+# TurboWarp-Sesame
 
-[日本語](README.ja.md)
+[English](README.md) | [日本語](README.ja.md)
 
-A reusable TypeScript template for developing, testing, building, and releasing TurboWarp extensions with Vite.
+A TurboWarp extension for inspecting Candy House Sesame devices and, in explicitly enabled builds,
+requesting remote lock operations through the official Web API.
 
-## User guide
-
-Create a repository from this template, replace the package and extension metadata, implement blocks in `src/extension.ts`, and keep generated artifacts checked in.
-
-The template package is version-pinned when it is used as a reference:
-
-```bash
-pnpm add --save-exact @kubohiroya/turbowarp-extension-template@0.2.0
-```
+**User guide:** [English](https://kubohiroya.github.io/turbowarp-sesame/)
 
 ## What it does
 
-- builds a single TurboWarp-compatible JavaScript extension file;
-- emits a deterministic `dist/extension-manifest.json` API contract;
-- generates the README block reference from `src/block-definitions.json`;
-- verifies source, documentation, generated `dist/` output, repository policy, and npm package contents in one check.
+- Reads lock state, battery level, angle, timestamp, and Wi-Fi module state.
+- Retrieves recent Sesame history as JSON.
+- Can request lock, unlock, and toggle operations in a build where the safety flag is enabled.
+- Reports configuration and API failures through a block instead of stopping the project.
 
 ## Requirements and safety
 
-- Node.js 22 or newer;
-- pnpm through Corepack;
-- TurboWarp's unsandboxed extension option only when your extension metadata sets `unsandboxed: true`.
+- A Candy House API key, Sesame UUID, and 32-character hexadecimal secret key.
+- A Sesame device reachable through the Candy House cloud, such as through WiFi Module 2.
+- A browser with `fetch`, `TextEncoder`, and Web Crypto AES-CBC support.
+- The extension is sandbox-compatible and should normally be loaded in the sandbox.
 
-Only load generated extension code that you trust. Unsandboxed extensions run with browser page access.
+> [!CAUTION]
+> Values typed directly into block inputs are stored in the `.sb3` project. Never publish or share a
+> project containing real credentials. The extension keeps credentials only in runtime memory, but
+> it cannot remove values written into saved blocks.
+
+Remote lock commands are disabled in default builds. A command accepted by the cloud does not prove
+that the physical lock moved; read the status again to confirm the result.
 
 ## Installation
 
+1. Download [`dist/turbowarp-sesame.js`](dist/turbowarp-sesame.js?raw=1).
+2. Open **Extensions** in TurboWarp.
+3. Choose **Custom Extension** and load the file without enabling the unsandboxed option.
+
+The reviewed JavaScript build is committed to this repository, so users do not need a build
+environment.
+
+For package consumers:
+
 ```bash
-corepack enable
-pnpm install --frozen-lockfile
+pnpm add --save-exact @kubohiroya/turbowarp-sesame@0.1.0
+```
+
+```text
+node_modules/@kubohiroya/turbowarp-sesame/dist/turbowarp-sesame.js
 ```
 
 ## Quick start
 
-1. Create a repository from this template.
-2. Update `package.json` metadata and `repo-policy.json`.
-3. Edit `src/config.ts`.
-4. Define blocks in `src/block-definitions.json`.
-5. Implement runtime behavior in `src/extension.ts`.
-6. Run `pnpm run docs`.
-7. Run `pnpm run check`.
+1. Obtain credentials from the Candy House developer portal.
+2. Run the configuration block once. Prefer reporter variables or a private local project over
+   literal credentials in saved blocks.
+3. Read a status field or history. Check `last Sesame error` after a failed operation.
+4. Clear credentials before leaving the project running on a shared computer.
 
-For continuous rebuilding during development:
-
-```bash
-pnpm run dev
+```text
+configure API key (...) UUID (...) secret key (...)
+say (Sesame status [CHSesame2Status])
+clear Sesame credentials
 ```
 
 ## Block reference
 
+This section is generated from [`src/block-definitions.json`](src/block-definitions.json).
+
 <!-- BEGIN GENERATED BLOCKS -->
 
-### `hello [NAME]`
+### `configure API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]`
 
-Returns a localized greeting for the supplied name.
+Keeps the Candy House credentials in memory until they are cleared or the extension reloads.
 
-| Property | Value |
-|---|---|
-| Type | Reporter |
-| Opcode | `hello` |
-| `NAME` | String, default: `world` |
+| Property     | Value                                                   |
+| ------------ | ------------------------------------------------------- |
+| Type         | Command                                                 |
+| Opcode       | `configure`                                             |
+| `API_KEY`    | String, default: `api-key`                              |
+| `UUID`       | String, default: `00000000-0000-0000-0000-000000000000` |
+| `SECRET_KEY` | String, default: `00000000000000000000000000000000`     |
+
+### `clear Sesame credentials`
+
+Removes all Candy House credentials held by the running extension.
+
+| Property | Value              |
+| -------- | ------------------ |
+| Type     | Command            |
+| Opcode   | `clearCredentials` |
+
+### `Sesame credentials configured?`
+
+Reports whether valid credentials are currently held in memory.
+
+| Property | Value          |
+| -------- | -------------- |
+| Type     | Boolean        |
+| Opcode   | `isConfigured` |
+
+### `Sesame status [FIELD]`
+
+Fetches one field from the current Sesame status.
+
+| Property | Value                              |
+| -------- | ---------------------------------- |
+| Type     | Reporter                           |
+| Opcode   | `getStatusField`                   |
+| `FIELD`  | String, default: `CHSesame2Status` |
+
+### `Sesame history page [PAGE] length [LENGTH]`
+
+Fetches up to 50 history records as a JSON string.
+
+| Property | Value                 |
+| -------- | --------------------- |
+| Type     | Reporter              |
+| Opcode   | `getHistory`          |
+| `PAGE`   | Number, default: `0`  |
+| `LENGTH` | Number, default: `10` |
+
+### `Sesame [COMMAND] with history [HISTORY]`
+
+Requests a lock, unlock, or toggle operation when remote commands are enabled in the build.
+
+| Property  | Value                        |
+| --------- | ---------------------------- |
+| Type      | Command                      |
+| Opcode    | `sendCommand`                |
+| `COMMAND` | String, default: `lock`      |
+| `HISTORY` | String, default: `TurboWarp` |
+
+### `Sesame remote commands enabled?`
+
+Reports the build-time safety flag for remote lock commands.
+
+| Property | Value             |
+| -------- | ----------------- |
+| Type     | Boolean           |
+| Opcode   | `commandsEnabled` |
+
+### `last Sesame error`
+
+Reports the most recent configuration or API error without exposing credentials.
+
+| Property | Value       |
+| -------- | ----------- |
+| Type     | Reporter    |
+| Opcode   | `lastError` |
 
 <!-- END GENERATED BLOCKS -->
 
 ## Important behavior
 
-```text
-TypeScript source
-  -> Vite
-  -> vite-plugin-turbowarp-extension
-  -> dist/<extension-name>.js
+| Situation                                    | Behavior                                                                                   |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Credentials are invalid                      | The previous valid configuration is retained and `last Sesame error` explains the failure. |
+| API or network request fails                 | The block returns an empty value or `[]`; the project continues and the error is recorded. |
+| Remote command flag is OFF                   | No command request is sent.                                                                |
+| Remote command is accepted                   | Re-read status to verify that the physical device moved.                                   |
+| Credentials are cleared or extension reloads | In-memory credentials are discarded.                                                       |
 
-Extension config + block definitions
-  -> extension manifest plugin
-  -> dist/extension-manifest.json
-```
+## Enabling remote commands
 
-The generated JavaScript is a single, non-minified TurboWarp extension file with Extension Gallery metadata and the standard `(function (Scratch) { ... })(Scratch);` wrapper.
-
-Each build emits `dist/extension-manifest.json` with `formatVersion: 1`. It records the extension ID, block opcodes and types, argument IDs and types, and menu references in a deterministic order. Tools such as `sb3-toolchain` can compare this contract before updating an embedded extension or migrating its ID. See [the architecture document](docs/architecture.md) and the [JSON Schema](schemas/extension-manifest.schema.json) for the v1 contract.
+Remote commands are intentionally fixed OFF in [`config/feature-flags.ts`](config/feature-flags.ts).
+Review the source and security implications, change `sesameCommands` to `true`, and rebuild locally
+only when physical lock control is intended. Never distribute an enabled build without making that
+capability explicit.
 
 ## Compatibility
 
-The canonical README is `README.md`. Japanese documentation uses `README.ja.md`; new repositories should not create `README_ja.md`.
-
-Repository-level differences belong in `repo-policy.json`. Use policy exceptions for upstream forks, mixed-license content, legacy package names, or third-party bundles instead of weakening checks silently.
+| Identifier   | Value                          | Stability                                   |
+| ------------ | ------------------------------ | ------------------------------------------- |
+| Product name | `TurboWarp-Sesame`             | Human-facing                                |
+| Repository   | `kubohiroya/turbowarp-sesame`  | Current source                              |
+| npm package  | `@kubohiroya/turbowarp-sesame` | Public package contract                     |
+| Extension ID | `kubohiroyasesame`             | Stored in SB3; migration required to change |
 
 ## Development
 
-```bash
-pnpm run check
-```
-
-The check runs type checking, linting, tests, generated README validation, `dist/` reproducibility, repository policy validation, and an npm package dry run.
-
-## Release
-
-Keep `package.json` as the version source of truth. Before publishing, run:
+Requires Node.js 22.12 or newer and the pnpm version declared in `package.json`.
 
 ```bash
-pnpm run check
-npm pack --dry-run --ignore-scripts
+corepack enable
+pnpm install --frozen-lockfile
+pnpm check
 ```
 
-Release artifacts include `dist/example-extension.js`, `dist/extension-manifest.json`, `README.md`, `README.ja.md`, and `LICENSE`.
+See [`docs/architecture.md`](docs/architecture.md) for runtime and generated-artifact details.
 
 ## License
 
-SPDX-License-Identifier: MPL-2.0
+[Mozilla Public License 2.0](LICENSE) (SPDX: `MPL-2.0`).

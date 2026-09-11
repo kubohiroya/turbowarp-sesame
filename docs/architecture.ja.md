@@ -2,12 +2,18 @@
 
 [English](architecture.md)
 
+## 実行時の境界
+
+機能拡張はTurboWarpのsandbox内で動作し、`https://app.candyhouse.co/api/sesame2`だけを呼び出します。認証情報は機能拡張instance上だけに保持し、storageへ保存しません。`SesameExtension`がblock値の変換とerror捕捉、`SesameClient`がHTTP request／response、`aes-cmac.ts`がWeb Cryptoによる3 byteのSesame timestamp messageへの署名を担当します。
+
+遠隔操作は`config/feature-flags.ts`のbuild時定数で制御します。この確認をclient生成、署名、HTTP accessより前に行うため、OFFのbuildはcommand requestを送信できません。
+
 ## ビルド出力
 
 このプロジェクトは実行時の動作と互換性メタデータを分離し、リポジトリに保存された同じソース定義から両方を生成します。
 
 ```text
-src/index.ts + src/extension.ts
+src/index.ts + src/extension.ts + src/sesame-client.ts + src/aes-cmac.ts
   -> vite-plugin-turbowarp-extension
   -> dist/<extension>.js
 
@@ -33,4 +39,4 @@ v1契約は次の情報を含みます。
 
 ## 差分の検出
 
-`dist/`はリリース成果物としてコミットされます。`npm run check:dist`は両方のファイルを再ビルドし、`dist/`配下に変更、削除、未追跡ファイルがある場合に失敗します。これにより、ローカル検証とCIの両方でmanifestとバンドルの差分を検出できます。
+`dist/`はリリース成果物としてコミットされます。`pnpm run check:dist`は両方のファイルを再ビルドし、`dist/`配下に変更、削除、未追跡ファイルがある場合に失敗します。これにより、ローカル検証とCIの両方でmanifestとバンドルの差分を検出できます。

@@ -1,14 +1,108 @@
 {
-  "extensionName": "TurboWarp-Example-Extension",
+  "extensionName": "TurboWarp-Sesame",
   "blocks": [
     {
-      "opcode": "hello",
-      "blockType": "REPORTER",
-      "text": "hello [NAME]",
-      "description": "Returns a localized greeting for the supplied name.",
+      "opcode": "configure",
+      "blockType": "COMMAND",
+      "text": "configure API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]",
+      "description": "Keeps the Candy House credentials in memory until they are cleared or the extension reloads.",
       "arguments": {
-        "NAME": {"type": "STRING", "defaultValue": "world"}
+        "API_KEY": { "type": "STRING", "defaultValue": "api-key" },
+        "UUID": {
+          "type": "STRING",
+          "defaultValue": "00000000-0000-0000-0000-000000000000"
+        },
+        "SECRET_KEY": {
+          "type": "STRING",
+          "defaultValue": "00000000000000000000000000000000"
+        }
       }
+    },
+    {
+      "opcode": "clearCredentials",
+      "blockType": "COMMAND",
+      "text": "clear Sesame credentials",
+      "description": "Removes all Candy House credentials held by the running extension.",
+      "arguments": {}
+    },
+    {
+      "opcode": "isConfigured",
+      "blockType": "BOOLEAN",
+      "text": "Sesame credentials configured?",
+      "description": "Reports whether valid credentials are currently held in memory.",
+      "arguments": {}
+    },
+    {
+      "opcode": "getStatusField",
+      "blockType": "REPORTER",
+      "text": "Sesame status [FIELD]",
+      "description": "Fetches one field from the current Sesame status.",
+      "arguments": {
+        "FIELD": {
+          "type": "STRING",
+          "defaultValue": "CHSesame2Status",
+          "menu": "statusFields"
+        }
+      }
+    },
+    {
+      "opcode": "getHistory",
+      "blockType": "REPORTER",
+      "text": "Sesame history page [PAGE] length [LENGTH]",
+      "description": "Fetches up to 50 history records as a JSON string.",
+      "arguments": {
+        "PAGE": { "type": "NUMBER", "defaultValue": 0 },
+        "LENGTH": { "type": "NUMBER", "defaultValue": 10 }
+      }
+    },
+    {
+      "opcode": "sendCommand",
+      "blockType": "COMMAND",
+      "text": "Sesame [COMMAND] with history [HISTORY]",
+      "description": "Requests a lock, unlock, or toggle operation when remote commands are enabled in the build.",
+      "arguments": {
+        "COMMAND": {
+          "type": "STRING",
+          "defaultValue": "lock",
+          "menu": "commands"
+        },
+        "HISTORY": { "type": "STRING", "defaultValue": "TurboWarp" }
+      }
+    },
+    {
+      "opcode": "commandsEnabled",
+      "blockType": "BOOLEAN",
+      "text": "Sesame remote commands enabled?",
+      "description": "Reports the build-time safety flag for remote lock commands.",
+      "arguments": {}
+    },
+    {
+      "opcode": "lastError",
+      "blockType": "REPORTER",
+      "text": "last Sesame error",
+      "description": "Reports the most recent configuration or API error without exposing credentials.",
+      "arguments": {}
     }
-  ]
+  ],
+  "menus": {
+    "statusFields": {
+      "acceptReporters": true,
+      "items": [
+        "CHSesame2Status",
+        "batteryPercentage",
+        "batteryVoltage",
+        "position",
+        "timestamp",
+        "wm2State"
+      ]
+    },
+    "commands": {
+      "acceptReporters": false,
+      "items": [
+        { "text": "lock", "value": "lock" },
+        { "text": "unlock", "value": "unlock" },
+        { "text": "toggle", "value": "toggle" }
+      ]
+    }
+  }
 }

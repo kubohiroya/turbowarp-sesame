@@ -1,28 +1,70 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Example Extension documentation</title>
-  <style>
-    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:900px;margin:0 auto;padding:2rem;line-height:1.6;color:#222}
-    code{background:#f3f3f3;padding:.1em .3em;border-radius:.25em}
-    pre{background:#f6f8fa;padding:1rem;overflow:auto;border-radius:.5rem}
-  </style>
-</head>
-<body>
-  <h1>Example Extension</h1>
-  <p>This is the English user documentation published with the TurboWarp Extension Template.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>TurboWarp-Sesame documentation</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 850px;
+        margin: 0 auto;
+        padding: 2rem;
+        line-height: 1.6;
+        color: #2a2418;
+      }
+      code {
+        background: #fff3d4;
+        padding: 0.1em 0.3em;
+        border-radius: 0.25em;
+      }
+      .warning {
+        border-left: 0.35rem solid #d48a00;
+        padding: 0.5rem 1rem;
+        background: #fff8e8;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>TurboWarp-Sesame</h1>
+    <p>
+      A sandboxed TurboWarp extension for the official Candy House Sesame Web
+      API.
+    </p>
 
-  <h2>Blocks</h2>
-  <h3><code>hello [NAME]</code></h3>
-  <p>Returns a localized greeting for the supplied name.</p>
+    <h2>Setup</h2>
+    <ol>
+      <li>Obtain an API key, Sesame UUID, and secret key from Candy House.</li>
+      <li>
+        Load <code>dist/turbowarp-sesame.js</code> as a sandboxed custom
+        extension.
+      </li>
+      <li>Run the configuration block before status or history blocks.</li>
+    </ol>
 
-  <h2>Template requirement</h2>
-  <p>Repositories created from this template should replace this page with English documentation for their extension and keep the GitHub Pages URL in <code>extensionConfig.docsURI</code>.</p>
-  <p>They should also replace the example <code>blockIconURI</code> with a meaningful, self-contained SVG icon encoded as <code>data:image/svg+xml;base64,...</code>.</p>
+    <p class="warning">
+      Credentials written directly in blocks are saved in the SB3 file. Do not
+      share a project that contains real credentials.
+    </p>
 
-  <h2>Development</h2>
-  <p>See the repository README and architecture documentation for build, test, release, and compatibility details.</p>
-</body>
+    <h2>Remote commands</h2>
+    <p>
+      Lock, unlock, and toggle requests are disabled in the default build. They
+      can be enabled only by changing the build-time feature flag and
+      rebuilding. After any accepted command, fetch the status again to verify
+      the physical device.
+    </p>
+
+    <h2>Errors</h2>
+    <p>
+      API blocks return safe empty values when a request fails. Use
+      <code>last Sesame error</code> to inspect the failure.
+    </p>
+
+    <p>
+      <a href="https://github.com/kubohiroya/turbowarp-sesame"
+        >Source and full README</a
+      >
+    </p>
+  </body>
 </html>
