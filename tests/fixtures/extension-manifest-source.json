@@ -6,8 +6,12 @@
         "opcode": "speak",
         "blockType": "REPORTER",
         "arguments": {
-          "VOICE": {"type": "STRING", "menu": "voices", "defaultValue": "alto"},
-          "MESSAGE": {"type": "STRING", "defaultValue": "hello"}
+          "VOICE": {
+            "type": "STRING",
+            "menu": "voices",
+            "defaultValue": "alto"
+          },
+          "MESSAGE": { "type": "STRING", "defaultValue": "hello" }
         }
       },
       {
@@ -17,8 +21,8 @@
       }
     ],
     "menus": {
-      "voices": {"acceptReporters": true, "items": ["alto", "soprano"]},
-      "formats": {"items": ["plain"]}
+      "voices": { "acceptReporters": true, "items": ["alto", "soprano"] },
+      "formats": { "items": ["plain"] }
     }
   }
 }

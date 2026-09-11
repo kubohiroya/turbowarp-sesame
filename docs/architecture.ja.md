@@ -2,12 +2,25 @@
 
 [English](architecture.md)
 
+## 実行時の境界
+
+Direct modeはTurboWarpのsandbox内で動作します。Relay modeはブラウザのLocal Network Access制約により、同じ機能拡張を「サンドボックスなしで実行」を有効にして読み込みます。`SesameExtension`がblock値の変換、接続状態、error捕捉を担当し、両modeは`SesameTransport`契約を実装します。Relay設定時にも実行形態を検査し、sandbox内ではlocalhostへ通信する前にエラーを返します。
+
+```text
+Direct: TurboWarp -> SesameClient -> Candy House API
+Relay:  TurboWarp -> RelayClient -> 127.0.0.1 Capability Proxy -> Candy House API
+```
+
+Direct modeでは認証情報を機能拡張instance上だけに保持します。Relay modeではAPIキー、UUID、secretをTurboWarpへ渡さず、endpoint、デバイス別名、ペアリング後のtokenだけを保持します。tokenはstorageへ保存せず、機能拡張の再読込で失効します。`RelayClient`はHTTPのloopback originだけを許可し、外部hostへtokenを送信しません。
+
+遠隔操作は`config/feature-flags.ts`のbuild時定数で制御します。この確認をclient生成、署名、HTTP accessより前に行うため、OFFのbuildはcommand requestを送信できません。
+
 ## ビルド出力
 
 このプロジェクトは実行時の動作と互換性メタデータを分離し、リポジトリに保存された同じソース定義から両方を生成します。
 
 ```text
-src/index.ts + src/extension.ts
+src/index.ts + src/extension.ts + transports and clients
   -> vite-plugin-turbowarp-extension
   -> dist/<extension>.js
 
@@ -33,4 +46,4 @@ v1契約は次の情報を含みます。
 
 ## 差分の検出
 
-`dist/`はリリース成果物としてコミットされます。`npm run check:dist`は両方のファイルを再ビルドし、`dist/`配下に変更、削除、未追跡ファイルがある場合に失敗します。これにより、ローカル検証とCIの両方でmanifestとバンドルの差分を検出できます。
+`dist/`はリリース成果物としてコミットされます。`pnpm run check:dist`は両方のファイルを再ビルドし、`dist/`配下に変更、削除、未追跡ファイルがある場合に失敗します。これにより、ローカル検証とCIの両方でmanifestとバンドルの差分を検出できます。

@@ -1,14 +1,144 @@
 {
-  "extensionName": "TurboWarp-Example-Extension",
+  "extensionName": "TurboWarp-Sesame",
   "blocks": [
     {
-      "opcode": "hello",
-      "blockType": "REPORTER",
-      "text": "hello [NAME]",
-      "description": "Returns a localized greeting for the supplied name.",
+      "opcode": "configure",
+      "blockType": "COMMAND",
+      "text": "configure Direct mode API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]",
+      "description": "Selects Direct mode and keeps the Candy House credentials in memory until they are cleared or the extension reloads.",
       "arguments": {
-        "NAME": {"type": "STRING", "defaultValue": "world"}
+        "API_KEY": { "type": "STRING", "defaultValue": "api-key" },
+        "UUID": {
+          "type": "STRING",
+          "defaultValue": "00000000-0000-0000-0000-000000000000"
+        },
+        "SECRET_KEY": {
+          "type": "STRING",
+          "defaultValue": "00000000000000000000000000000000"
+        }
       }
+    },
+    {
+      "opcode": "configureRelay",
+      "blockType": "COMMAND",
+      "text": "configure local Relay [ENDPOINT] device alias [DEVICE_ALIAS]",
+      "description": "Selects Relay mode for a localhost Capability Proxy without storing Candy House credentials in the project.",
+      "arguments": {
+        "ENDPOINT": {
+          "type": "STRING",
+          "defaultValue": "http://127.0.0.1:8787"
+        },
+        "DEVICE_ALIAS": { "type": "STRING", "defaultValue": "front-door" }
+      }
+    },
+    {
+      "opcode": "pairRelay",
+      "blockType": "COMMAND",
+      "text": "pair local Relay with one-time code [CODE]",
+      "description": "Exchanges an eight-digit one-time code for a Relay token held only in extension memory.",
+      "arguments": {
+        "CODE": { "type": "STRING", "defaultValue": "00000000" }
+      }
+    },
+    {
+      "opcode": "clearCredentials",
+      "blockType": "COMMAND",
+      "text": "clear Sesame connection",
+      "description": "Removes Direct credentials or the local Relay session held by the running extension.",
+      "arguments": {}
+    },
+    {
+      "opcode": "isConfigured",
+      "blockType": "BOOLEAN",
+      "text": "Sesame connection ready?",
+      "description": "Reports whether Direct credentials or a paired Relay session are currently held in memory.",
+      "arguments": {}
+    },
+    {
+      "opcode": "relayPaired",
+      "blockType": "BOOLEAN",
+      "text": "local Relay paired?",
+      "description": "Reports whether the current Relay connection has an in-memory session token.",
+      "arguments": {}
+    },
+    {
+      "opcode": "connectionMode",
+      "blockType": "REPORTER",
+      "text": "Sesame connection mode",
+      "description": "Reports direct, relay, or not configured.",
+      "arguments": {}
+    },
+    {
+      "opcode": "getStatusField",
+      "blockType": "REPORTER",
+      "text": "Sesame status [FIELD]",
+      "description": "Fetches one field from the current Sesame status.",
+      "arguments": {
+        "FIELD": {
+          "type": "STRING",
+          "defaultValue": "CHSesame2Status",
+          "menu": "statusFields"
+        }
+      }
+    },
+    {
+      "opcode": "getHistory",
+      "blockType": "REPORTER",
+      "text": "Sesame history page [PAGE] length [LENGTH]",
+      "description": "Fetches up to 50 history records as a JSON string.",
+      "arguments": {
+        "PAGE": { "type": "NUMBER", "defaultValue": 0 },
+        "LENGTH": { "type": "NUMBER", "defaultValue": 10 }
+      }
+    },
+    {
+      "opcode": "sendCommand",
+      "blockType": "COMMAND",
+      "text": "Sesame [COMMAND] with history [HISTORY]",
+      "description": "Requests a lock, unlock, or toggle operation when remote commands are enabled in the build.",
+      "arguments": {
+        "COMMAND": {
+          "type": "STRING",
+          "defaultValue": "lock",
+          "menu": "commands"
+        },
+        "HISTORY": { "type": "STRING", "defaultValue": "TurboWarp" }
+      }
+    },
+    {
+      "opcode": "commandsEnabled",
+      "blockType": "BOOLEAN",
+      "text": "Sesame remote commands enabled?",
+      "description": "Reports the build-time safety flag for remote lock commands.",
+      "arguments": {}
+    },
+    {
+      "opcode": "lastError",
+      "blockType": "REPORTER",
+      "text": "last Sesame error",
+      "description": "Reports the most recent configuration or API error without exposing credentials.",
+      "arguments": {}
     }
-  ]
+  ],
+  "menus": {
+    "statusFields": {
+      "acceptReporters": true,
+      "items": [
+        "CHSesame2Status",
+        "batteryPercentage",
+        "batteryVoltage",
+        "position",
+        "timestamp",
+        "wm2State"
+      ]
+    },
+    "commands": {
+      "acceptReporters": false,
+      "items": [
+        { "text": "lock", "value": "lock" },
+        { "text": "unlock", "value": "unlock" },
+        { "text": "toggle", "value": "toggle" }
+      ]
+    }
+  }
 }

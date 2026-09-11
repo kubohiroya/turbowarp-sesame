@@ -1,47 +1,51 @@
-import {readFile, writeFile} from 'node:fs/promises';
+import { readFile, writeFile } from "node:fs/promises";
+import { format } from "prettier";
 
-const START = '<!-- BEGIN GENERATED BLOCKS -->';
-const END = '<!-- END GENERATED BLOCKS -->';
+const START = "<!-- BEGIN GENERATED BLOCKS -->";
+const END = "<!-- END GENERATED BLOCKS -->";
 
 const definitions = JSON.parse(
-  await readFile(new URL('../src/block-definitions.json', import.meta.url), 'utf8')
+  await readFile(
+    new URL("../src/block-definitions.json", import.meta.url),
+    "utf8",
+  ),
 );
-const readmeUrl = new URL('../README.md', import.meta.url);
-const readme = await readFile(readmeUrl, 'utf8');
+const readmeUrl = new URL("../README.md", import.meta.url);
+const readme = await readFile(readmeUrl, "utf8");
 
-const generated = definitions.blocks.map(renderBlock).join('\n\n');
+const generated = definitions.blocks.map(renderBlock).join("\n\n");
 const replacement = `${START}\n\n${generated}\n\n${END}`;
 
 if (!readme.includes(START) || !readme.includes(END)) {
-  throw new Error('README.md does not contain the generated block markers.');
+  throw new Error("README.md does not contain the generated block markers.");
 }
 
 const next = readme.replace(
   new RegExp(`${escapeRegExp(START)}[\\s\\S]*?${escapeRegExp(END)}`),
-  replacement
+  replacement,
 );
-await writeFile(readmeUrl, next);
+await writeFile(readmeUrl, await format(next, { parser: "markdown" }));
 
 function renderBlock(block) {
   const rows = [
-    ['Type', titleCase(block.blockType)],
-    ['Opcode', `\`${block.opcode}\``]
+    ["Type", titleCase(block.blockType)],
+    ["Opcode", `\`${block.opcode}\``],
   ];
   for (const [name, argument] of Object.entries(block.arguments ?? {})) {
     rows.push([
       `\`${name}\``,
-      `${titleCase(argument.type)}, default: \`${formatDefault(argument.defaultValue)}\``
+      `${titleCase(argument.type)}, default: \`${formatDefault(argument.defaultValue)}\``,
     ]);
   }
   return [
     `### \`${block.text}\``,
-    '',
+    "",
     block.description,
-    '',
-    '| Property | Value |',
-    '|---|---|',
-    ...rows.map(([name, value]) => `| ${name} | ${value} |`)
-  ].join('\n');
+    "",
+    "| Property | Value |",
+    "|---|---|",
+    ...rows.map(([name, value]) => `| ${name} | ${value} |`),
+  ].join("\n");
 }
 
 function titleCase(value) {
@@ -49,9 +53,12 @@ function titleCase(value) {
 }
 
 function formatDefault(value) {
-  return String(value).replaceAll('\\', '\\\\').replaceAll('\n', '\\n').replaceAll('`', '\\`');
+  return String(value)
+    .replaceAll("\\", "\\\\")
+    .replaceAll("\n", "\\n")
+    .replaceAll("`", "\\`");
 }
 
 function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

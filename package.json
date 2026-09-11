@@ -1,32 +1,34 @@
 {
-  "name": "@kubohiroya/turbowarp-extension-template",
-  "version": "0.2.0",
-  "description": "A reusable TypeScript template for developing TurboWarp extensions with Vite.",
+  "name": "@kubohiroya/turbowarp-sesame",
+  "version": "0.1.0",
+  "description": "A TurboWarp extension for the Candy House Sesame Web API.",
   "author": "Hiroya Kubo <hiroya@cuc.ac.jp>",
   "license": "MPL-2.0",
-  "homepage": "https://github.com/kubohiroya/turbowarp-extension-template#readme",
+  "homepage": "https://github.com/kubohiroya/turbowarp-sesame#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kubohiroya/turbowarp-extension-template.git"
+    "url": "git+https://github.com/kubohiroya/turbowarp-sesame.git"
   },
   "bugs": {
-    "url": "https://github.com/kubohiroya/turbowarp-extension-template/issues"
+    "url": "https://github.com/kubohiroya/turbowarp-sesame/issues"
   },
   "keywords": [
     "turbowarp",
     "scratch",
     "extension",
-    "template",
+    "sesame",
+    "smart-lock",
+    "candy-house",
     "vite",
     "typescript"
   ],
   "type": "module",
   "files": [
     "dist/",
+    "config/",
     "docs/",
     "schemas/",
     "src/",
-    "templates/",
     "README.md",
     "README.ja.md",
     "LICENSE"
@@ -44,13 +46,14 @@
     "typecheck": "tsc --noEmit",
     "build": "vite build",
     "lint": "eslint src tests vite.config.ts",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
     "test": "vitest run",
     "docs": "node scripts/generate-readme.mjs",
     "docs:check": "pnpm run docs && git diff --exit-code -- README.md",
-    "template:readme": "node scripts/apply-readme-template.mjs",
     "repo:check": "node scripts/check-repo.mjs",
     "pack:check": "npm pack --dry-run --ignore-scripts",
-    "check": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run docs:check && pnpm run check:dist && pnpm run repo:check && pnpm run pack:check",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run format && pnpm run test && pnpm run docs:check && pnpm run check:dist && pnpm run repo:check && pnpm run pack:check",
     "check:dist": "pnpm run build && node scripts/check-dist.mjs"
   },
   "devDependencies": {
@@ -60,6 +63,7 @@
     "eslint": "^9.39.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.66.0",
+    "prettier": "^3.6.2",
     "vite": "^8.2.2",
     "vitest": "^5.0.0"
   }

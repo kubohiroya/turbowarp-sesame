@@ -1,115 +1,246 @@
-# TurboWarp-Extension-Template
+# TurboWarp-Sesame
 
-[日本語](README.ja.md)
+[English](README.md) | [日本語](README.ja.md)
 
-A reusable TypeScript template for developing, testing, building, and releasing TurboWarp extensions with Vite.
+A TurboWarp extension for inspecting Candy House Sesame devices and, in explicitly enabled builds,
+requesting remote lock operations. It supports Direct mode and a localhost Relay mode that keeps
+provider credentials out of TurboWarp projects.
 
-## User guide
-
-Create a repository from this template, replace the package and extension metadata, implement blocks in `src/extension.ts`, and keep generated artifacts checked in.
-
-The template package is version-pinned when it is used as a reference:
-
-```bash
-pnpm add --save-exact @kubohiroya/turbowarp-extension-template@0.2.0
-```
+**User guide:** [English](https://kubohiroya.github.io/turbowarp-sesame/)
 
 ## What it does
 
-- builds a single TurboWarp-compatible JavaScript extension file;
-- emits a deterministic `dist/extension-manifest.json` API contract;
-- generates the README block reference from `src/block-definitions.json`;
-- verifies source, documentation, generated `dist/` output, repository policy, and npm package contents in one check.
+- Reads lock state, battery level, angle, timestamp, and Wi-Fi module state.
+- Retrieves recent Sesame history as JSON.
+- Can request lock, unlock, and toggle operations in a build where the safety flag is enabled.
+- Reports configuration and API failures through a block instead of stopping the project.
+- Pairs with `@kubohiroya/capability-proxy` using a short-lived one-time code.
 
 ## Requirements and safety
 
-- Node.js 22 or newer;
-- pnpm through Corepack;
-- TurboWarp's unsandboxed extension option only when your extension metadata sets `unsandboxed: true`.
+- Recommended: a localhost `@kubohiroya/capability-proxy`, a device alias, and its one-time code.
+- Direct mode: a Candy House API key, Sesame UUID, and 32-character hexadecimal secret key.
+- A Sesame device reachable through the Candy House cloud, such as through WiFi Module 2.
+- A browser with `fetch`, `TextEncoder`, and Web Crypto AES-CBC support.
+- Direct mode can run in the TurboWarp sandbox.
+- Relay mode must be loaded with **Run extension without sandbox** enabled because browsers restrict localhost access from sandboxed iframes.
 
-Only load generated extension code that you trust. Unsandboxed extensions run with browser page access.
+> [!CAUTION]
+> Values typed into Direct mode blocks are stored in the `.sb3` project. Never publish or share a
+> project containing real credentials. Relay mode does not pass the API key or secret to TurboWarp;
+> the paired Relay token stays only in extension runtime memory.
+
+Remote lock commands are disabled in default builds. A command accepted by the cloud does not prove
+that the physical lock moved; read the status again to confirm the result.
 
 ## Installation
 
-```bash
-corepack enable
-pnpm install --frozen-lockfile
-```
+1. Download [`dist/turbowarp-sesame.js`](dist/turbowarp-sesame.js?raw=1).
+2. Open **Extensions** in TurboWarp.
+3. Choose **Custom Extension**. Keep sandboxing enabled for Direct mode; enable **Run extension without sandbox** for Relay mode.
 
-## Quick start
+The reviewed JavaScript build is committed to this repository, so users do not need a build
+environment.
 
-1. Create a repository from this template.
-2. Update `package.json` metadata and `repo-policy.json`.
-3. Edit `src/config.ts`.
-4. Define blocks in `src/block-definitions.json`.
-5. Implement runtime behavior in `src/extension.ts`.
-6. Run `pnpm run docs`.
-7. Run `pnpm run check`.
-
-For continuous rebuilding during development:
+For package consumers:
 
 ```bash
-pnpm run dev
+pnpm add --save-exact @kubohiroya/turbowarp-sesame@0.1.0
 ```
+
+```text
+node_modules/@kubohiroya/turbowarp-sesame/dist/turbowarp-sesame.js
+```
+
+## Relay mode (recommended)
+
+1. Start [`@kubohiroya/capability-proxy`](https://github.com/kubohiroya/capability-proxy) on localhost.
+2. Load the custom extension with **Run extension without sandbox** enabled. Chrome and other browsers can deny localhost access from TurboWarp's sandbox iframe.
+3. Configure its endpoint and the device alias defined in the Relay configuration.
+4. Enter the eight-digit code printed by the Relay into the pairing block.
+5. Read status or history. Pair again after restarting the Relay.
+
+```text
+configure local Relay [http://127.0.0.1:8787] device alias [front-door]
+pair local Relay with one-time code (...)
+say (Sesame status [CHSesame2Status])
+clear Sesame connection
+```
+
+The endpoint and alias are not secrets. The pairing code works once within five minutes, and the
+resulting token is never written to a block or `.sb3` file.
+
+## Direct mode
+
+Obtain credentials from the Candy House developer portal and run the Direct configuration block.
+This compatibility mode is useful when a local Relay cannot be run, but saved block inputs may
+remain in the `.sb3` file.
 
 ## Block reference
 
+This section is generated from [`src/block-definitions.json`](src/block-definitions.json).
+
 <!-- BEGIN GENERATED BLOCKS -->
 
-### `hello [NAME]`
+### `configure Direct mode API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]`
 
-Returns a localized greeting for the supplied name.
+Selects Direct mode and keeps the Candy House credentials in memory until they are cleared or the extension reloads.
 
-| Property | Value |
-|---|---|
-| Type | Reporter |
-| Opcode | `hello` |
-| `NAME` | String, default: `world` |
+| Property     | Value                                                   |
+| ------------ | ------------------------------------------------------- |
+| Type         | Command                                                 |
+| Opcode       | `configure`                                             |
+| `API_KEY`    | String, default: `api-key`                              |
+| `UUID`       | String, default: `00000000-0000-0000-0000-000000000000` |
+| `SECRET_KEY` | String, default: `00000000000000000000000000000000`     |
+
+### `configure local Relay [ENDPOINT] device alias [DEVICE_ALIAS]`
+
+Selects Relay mode for a localhost Capability Proxy without storing Candy House credentials in the project.
+
+| Property       | Value                                    |
+| -------------- | ---------------------------------------- |
+| Type           | Command                                  |
+| Opcode         | `configureRelay`                         |
+| `ENDPOINT`     | String, default: `http://127.0.0.1:8787` |
+| `DEVICE_ALIAS` | String, default: `front-door`            |
+
+### `pair local Relay with one-time code [CODE]`
+
+Exchanges an eight-digit one-time code for a Relay token held only in extension memory.
+
+| Property | Value                       |
+| -------- | --------------------------- |
+| Type     | Command                     |
+| Opcode   | `pairRelay`                 |
+| `CODE`   | String, default: `00000000` |
+
+### `clear Sesame connection`
+
+Removes Direct credentials or the local Relay session held by the running extension.
+
+| Property | Value              |
+| -------- | ------------------ |
+| Type     | Command            |
+| Opcode   | `clearCredentials` |
+
+### `Sesame connection ready?`
+
+Reports whether Direct credentials or a paired Relay session are currently held in memory.
+
+| Property | Value          |
+| -------- | -------------- |
+| Type     | Boolean        |
+| Opcode   | `isConfigured` |
+
+### `local Relay paired?`
+
+Reports whether the current Relay connection has an in-memory session token.
+
+| Property | Value         |
+| -------- | ------------- |
+| Type     | Boolean       |
+| Opcode   | `relayPaired` |
+
+### `Sesame connection mode`
+
+Reports direct, relay, or not configured.
+
+| Property | Value            |
+| -------- | ---------------- |
+| Type     | Reporter         |
+| Opcode   | `connectionMode` |
+
+### `Sesame status [FIELD]`
+
+Fetches one field from the current Sesame status.
+
+| Property | Value                              |
+| -------- | ---------------------------------- |
+| Type     | Reporter                           |
+| Opcode   | `getStatusField`                   |
+| `FIELD`  | String, default: `CHSesame2Status` |
+
+### `Sesame history page [PAGE] length [LENGTH]`
+
+Fetches up to 50 history records as a JSON string.
+
+| Property | Value                 |
+| -------- | --------------------- |
+| Type     | Reporter              |
+| Opcode   | `getHistory`          |
+| `PAGE`   | Number, default: `0`  |
+| `LENGTH` | Number, default: `10` |
+
+### `Sesame [COMMAND] with history [HISTORY]`
+
+Requests a lock, unlock, or toggle operation when remote commands are enabled in the build.
+
+| Property  | Value                        |
+| --------- | ---------------------------- |
+| Type      | Command                      |
+| Opcode    | `sendCommand`                |
+| `COMMAND` | String, default: `lock`      |
+| `HISTORY` | String, default: `TurboWarp` |
+
+### `Sesame remote commands enabled?`
+
+Reports the build-time safety flag for remote lock commands.
+
+| Property | Value             |
+| -------- | ----------------- |
+| Type     | Boolean           |
+| Opcode   | `commandsEnabled` |
+
+### `last Sesame error`
+
+Reports the most recent configuration or API error without exposing credentials.
+
+| Property | Value       |
+| -------- | ----------- |
+| Type     | Reporter    |
+| Opcode   | `lastError` |
 
 <!-- END GENERATED BLOCKS -->
 
 ## Important behavior
 
-```text
-TypeScript source
-  -> Vite
-  -> vite-plugin-turbowarp-extension
-  -> dist/<extension-name>.js
+| Situation                                    | Behavior                                                                                   |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Credentials are invalid                      | The previous valid configuration is retained and `last Sesame error` explains the failure. |
+| API or network request fails                 | The block returns an empty value or `[]`; the project continues and the error is recorded. |
+| Remote command flag is OFF                   | No command request is sent.                                                                |
+| Remote command is accepted                   | Re-read status to verify that the physical device moved.                                   |
+| Credentials are cleared or extension reloads | In-memory credentials are discarded.                                                       |
 
-Extension config + block definitions
-  -> extension manifest plugin
-  -> dist/extension-manifest.json
-```
+## Enabling remote commands
 
-The generated JavaScript is a single, non-minified TurboWarp extension file with Extension Gallery metadata and the standard `(function (Scratch) { ... })(Scratch);` wrapper.
-
-Each build emits `dist/extension-manifest.json` with `formatVersion: 1`. It records the extension ID, block opcodes and types, argument IDs and types, and menu references in a deterministic order. Tools such as `sb3-toolchain` can compare this contract before updating an embedded extension or migrating its ID. See [the architecture document](docs/architecture.md) and the [JSON Schema](schemas/extension-manifest.schema.json) for the v1 contract.
+Remote commands are intentionally fixed OFF in [`config/feature-flags.ts`](config/feature-flags.ts).
+Review the source and security implications, change `sesameCommands` to `true`, and rebuild locally
+only when physical lock control is intended. Never distribute an enabled build without making that
+capability explicit.
 
 ## Compatibility
 
-The canonical README is `README.md`. Japanese documentation uses `README.ja.md`; new repositories should not create `README_ja.md`.
-
-Repository-level differences belong in `repo-policy.json`. Use policy exceptions for upstream forks, mixed-license content, legacy package names, or third-party bundles instead of weakening checks silently.
+| Identifier   | Value                          | Stability                                   |
+| ------------ | ------------------------------ | ------------------------------------------- |
+| Product name | `TurboWarp-Sesame`             | Human-facing                                |
+| Repository   | `kubohiroya/turbowarp-sesame`  | Current source                              |
+| npm package  | `@kubohiroya/turbowarp-sesame` | Public package contract                     |
+| Extension ID | `kubohiroyasesame`             | Stored in SB3; migration required to change |
 
 ## Development
 
-```bash
-pnpm run check
-```
-
-The check runs type checking, linting, tests, generated README validation, `dist/` reproducibility, repository policy validation, and an npm package dry run.
-
-## Release
-
-Keep `package.json` as the version source of truth. Before publishing, run:
+Requires Node.js 22.12 or newer and the pnpm version declared in `package.json`.
 
 ```bash
-pnpm run check
-npm pack --dry-run --ignore-scripts
+corepack enable
+pnpm install --frozen-lockfile
+pnpm check
 ```
 
-Release artifacts include `dist/example-extension.js`, `dist/extension-manifest.json`, `README.md`, `README.ja.md`, and `LICENSE`.
+See [`docs/architecture.md`](docs/architecture.md) for runtime and generated-artifact details.
 
 ## License
 
-SPDX-License-Identifier: MPL-2.0
+[Mozilla Public License 2.0](LICENSE) (SPDX: `MPL-2.0`).
