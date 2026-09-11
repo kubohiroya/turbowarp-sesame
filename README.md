@@ -22,7 +22,8 @@ provider credentials out of TurboWarp projects.
 - Direct mode: a Candy House API key, Sesame UUID, and 32-character hexadecimal secret key.
 - A Sesame device reachable through the Candy House cloud, such as through WiFi Module 2.
 - A browser with `fetch`, `TextEncoder`, and Web Crypto AES-CBC support.
-- The extension is sandbox-compatible and should normally be loaded in the sandbox.
+- Direct mode can run in the TurboWarp sandbox.
+- Relay mode must be loaded with **Run extension without sandbox** enabled because browsers restrict localhost access from sandboxed iframes.
 
 > [!CAUTION]
 > Values typed into Direct mode blocks are stored in the `.sb3` project. Never publish or share a
@@ -36,7 +37,7 @@ that the physical lock moved; read the status again to confirm the result.
 
 1. Download [`dist/turbowarp-sesame.js`](dist/turbowarp-sesame.js?raw=1).
 2. Open **Extensions** in TurboWarp.
-3. Choose **Custom Extension** and load the file without enabling the unsandboxed option.
+3. Choose **Custom Extension**. Keep sandboxing enabled for Direct mode; enable **Run extension without sandbox** for Relay mode.
 
 The reviewed JavaScript build is committed to this repository, so users do not need a build
 environment.
@@ -54,9 +55,10 @@ node_modules/@kubohiroya/turbowarp-sesame/dist/turbowarp-sesame.js
 ## Relay mode (recommended)
 
 1. Start [`@kubohiroya/capability-proxy`](https://github.com/kubohiroya/capability-proxy) on localhost.
-2. Configure its endpoint and the device alias defined in the Relay configuration.
-3. Enter the eight-digit code printed by the Relay into the pairing block.
-4. Read status or history. Pair again after restarting the Relay.
+2. Load the custom extension with **Run extension without sandbox** enabled. Chrome and other browsers can deny localhost access from TurboWarp's sandbox iframe.
+3. Configure its endpoint and the device alias defined in the Relay configuration.
+4. Enter the eight-digit code printed by the Relay into the pairing block.
+5. Read status or history. Pair again after restarting the Relay.
 
 ```text
 configure local Relay [http://127.0.0.1:8787] device alias [front-door]

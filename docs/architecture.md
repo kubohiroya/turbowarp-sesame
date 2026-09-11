@@ -4,9 +4,11 @@
 
 ## Runtime boundary
 
-The extension runs in TurboWarp's sandbox and selects Direct or Relay mode. `SesameExtension` owns
-block conversion, connection state, and error capture. Both modes implement the `SesameTransport`
-contract.
+Direct mode runs in TurboWarp's sandbox. For Relay mode, the same extension must be loaded with
+**Run extension without sandbox** enabled because of browser Local Network Access restrictions.
+`SesameExtension` owns block conversion, connection state, and error capture. It also rejects Relay
+configuration inside the sandbox before contacting localhost. Both modes implement the
+`SesameTransport` contract.
 
 ```text
 Direct: TurboWarp -> SesameClient -> Candy House API

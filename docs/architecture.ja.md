@@ -4,7 +4,7 @@
 
 ## 実行時の境界
 
-機能拡張はTurboWarpのsandbox内で動作し、Direct modeまたはRelay modeを選択します。`SesameExtension`がblock値の変換、接続状態、error捕捉を担当し、両modeは`SesameTransport`契約を実装します。
+Direct modeはTurboWarpのsandbox内で動作します。Relay modeはブラウザのLocal Network Access制約により、同じ機能拡張を「サンドボックスなしで実行」を有効にして読み込みます。`SesameExtension`がblock値の変換、接続状態、error捕捉を担当し、両modeは`SesameTransport`契約を実装します。Relay設定時にも実行形態を検査し、sandbox内ではlocalhostへ通信する前にエラーを返します。
 
 ```text
 Direct: TurboWarp -> SesameClient -> Candy House API

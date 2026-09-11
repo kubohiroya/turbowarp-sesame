@@ -502,6 +502,7 @@
   	}
   	configureRelay(args) {
   		this.capture(() => {
+  			requireUnsandboxedRelay();
   			const configuration = validateRelayConfiguration({
   				endpoint: Scratch.Cast.toString(args.ENDPOINT),
   				deviceAlias: Scratch.Cast.toString(args.DEVICE_ALIAS)
@@ -600,6 +601,9 @@
   		};
   	}
   };
+  function requireUnsandboxedRelay() {
+  	if (!Scratch.extensions.unsandboxed) throw new Error("Relay mode requires reloading this custom extension with \"Run extension without sandbox\" enabled so the browser can access localhost.");
+  }
   function isSesameCommand(value) {
   	return value === "lock" || value === "unlock" || value === "toggle";
   }

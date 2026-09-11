@@ -9,6 +9,7 @@ const credentials = {
 
 beforeEach(() => {
   vi.stubGlobal("Scratch", {
+    extensions: { unsandboxed: true },
     BlockType: { COMMAND: "command", REPORTER: "reporter", BOOLEAN: "boolean" },
     ArgumentType: { STRING: "string", NUMBER: "number", BOOLEAN: "boolean" },
     Cast: {
@@ -115,6 +116,22 @@ describe("SesameExtension", () => {
     });
     expect(extension.connectionMode()).toBe("not configured");
     expect(extension.lastError()).toContain("loopback hostname");
+  });
+
+  it("explains that Relay mode must run outside the TurboWarp sandbox", () => {
+    vi.stubGlobal("Scratch", {
+      ...Scratch,
+      extensions: { unsandboxed: false },
+    });
+    const extension = new SesameExtension();
+
+    extension.configureRelay({
+      ENDPOINT: "http://127.0.0.1:8787",
+      DEVICE_ALIAS: "front-door",
+    });
+
+    expect(extension.connectionMode()).toBe("not configured");
+    expect(extension.lastError()).toContain("without sandbox");
   });
 
   it("fetches a selected status field", async () => {

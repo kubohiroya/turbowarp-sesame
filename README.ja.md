@@ -20,7 +20,8 @@ Candy House Sesameの状態確認と、明示的に有効化したbuildでの遠
 - Direct mode: Candy HouseのAPIキー、Sesame UUID、32文字の16進数秘密鍵
 - WiFi Module 2などを通してCandy Houseクラウドから到達できるSesame
 - `fetch`、`TextEncoder`、Web Crypto AES-CBCに対応するブラウザ
-- sandbox対応のため、通常は「サンドボックスなし」を選択しないで読み込む
+- Direct modeはsandboxで実行可能
+- Relay modeはブラウザのlocalhostアクセス制約により「サンドボックスなしで実行」を有効にする必要がある
 
 > [!CAUTION]
 > Direct modeのブロックへ直接書いた値は`.sb3`プロジェクトに保存されます。実際の認証情報を含むプロジェクトを公開・共有しないでください。Relay modeではAPIキーとsecretをブロックへ渡しません。ペアリング後のRelay tokenは機能拡張の実行時メモリだけに保持します。
@@ -31,14 +32,15 @@ Candy House Sesameの状態確認と、明示的に有効化したbuildでの遠
 
 1. [`dist/turbowarp-sesame.js`](dist/turbowarp-sesame.js?raw=1)をダウンロードします。
 2. TurboWarpの**機能拡張**を開きます。
-3. **カスタム機能拡張**からfileを選び、「サンドボックスなし」を有効にせず読み込みます。
+3. **カスタム機能拡張**からfileを選びます。Direct modeでは通常どおりsandbox内で読み込み、Relay modeでは「サンドボックスなしで実行」を有効にします。
 
 ## Relay mode（推奨）
 
 1. [`@kubohiroya/capability-proxy`](https://github.com/kubohiroya/capability-proxy)をlocalhostで起動します。
-2. `configure local Relay ...`でendpointとRelay設定内のデバイス別名を指定します。
-3. Relayの標準出力に表示された8桁コードを`pair local Relay ...`へ入力します。
-4. 状態または履歴を取得します。Relay再起動後は再度ペアリングします。
+2. カスタム機能拡張を「サンドボックスなしで実行」を有効にして読み込みます。ChromeなどはTurboWarpのsandbox iframeからlocalhostへの通信を許可しないためです。
+3. `configure local Relay ...`でendpointとRelay設定内のデバイス別名を指定します。
+4. Relayの標準出力に表示された8桁コードを`pair local Relay ...`へ入力します。
+5. 状態または履歴を取得します。Relay再起動後は再度ペアリングします。
 
 ```text
 configure local Relay [http://127.0.0.1:8787] device alias [front-door]

@@ -28,16 +28,17 @@
   <body>
     <h1>TurboWarp-Sesame</h1>
     <p>
-      A sandboxed TurboWarp extension with Direct and localhost Relay modes for
-      the Candy House Sesame Web API.
+      A TurboWarp extension with sandboxed Direct mode and a localhost Relay
+      mode for the Candy House Sesame Web API.
     </p>
 
     <h2>Setup</h2>
     <ol>
       <li>Start <code>@kubohiroya/capability-proxy</code> on localhost.</li>
       <li>
-        Load <code>dist/turbowarp-sesame.js</code> as a sandboxed custom
-        extension.
+        Load <code>dist/turbowarp-sesame.js</code> with
+        <strong>Run extension without sandbox</strong> enabled. Browsers can
+        deny localhost access from TurboWarp's sandbox iframe.
       </li>
       <li>Configure the Relay endpoint and device alias.</li>
       <li>Pair using the one-time code printed by the Relay.</li>

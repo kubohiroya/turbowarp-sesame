@@ -87,6 +87,7 @@ export class SesameExtension implements TurboWarpExtension {
     DEVICE_ALIAS: unknown;
   }): void {
     this.capture(() => {
+      requireUnsandboxedRelay();
       const configuration = validateRelayConfiguration({
         endpoint: Scratch.Cast.toString(args.ENDPOINT),
         deviceAlias: Scratch.Cast.toString(args.DEVICE_ALIAS),
@@ -244,6 +245,14 @@ export class SesameExtension implements TurboWarpExtension {
         ]),
       ),
     };
+  }
+}
+
+function requireUnsandboxedRelay(): void {
+  if (!Scratch.extensions.unsandboxed) {
+    throw new Error(
+      'Relay mode requires reloading this custom extension with "Run extension without sandbox" enabled so the browser can access localhost.',
+    );
   }
 }
 
