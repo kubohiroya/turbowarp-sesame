@@ -68,7 +68,7 @@ drift in local checks and CI.
 
 ## Operations
 
-- [Running the keyholder on its own domain](keyholder-domain.md)
+- [Hosting the keyholder](keyholder-hosting.md)
 
 ## Decision records
 

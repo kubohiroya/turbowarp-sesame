@@ -94,7 +94,7 @@ device secretはTurboWarpへ渡りません。keyholderページが自身のorig
 - **オーナー鍵かマネージャー鍵**をシェアしてください。ゲスト鍵はsecretの半分をサーバーが保持しているため、Bluetoothセッションを確立できません。
 - Bluetoothにはページング付きの履歴がないため、履歴は取得できません。
 - 鍵はkeyholderのoriginの、単一のブラウザプロファイルにだけ保存されます。閲覧データの消去で失われ、デバイス間で同期されません。
-- 可能であればkeyholderは専用ドメインでホストしてください。`*.github.io`のような共有ホストでは、そのホスト上の他のあらゆるページがoriginを共有し、レスポンスヘッダーを設定できないためどのサイトからでも埋め込まれます。[keyholderを専用ドメインで運用する](docs/keyholder-domain.ja.md)を参照してください。
+- 可能であればkeyholderは専用ドメインでホストしてください。`*.github.io`のような共有ホストでは、そのホスト上の他のあらゆるページがoriginを共有し、レスポンスヘッダーを設定できないためどのサイトからでも埋め込まれます。[keyholderのホスティング](docs/keyholder-hosting.ja.md)を参照してください。
 
 ## Direct mode
 

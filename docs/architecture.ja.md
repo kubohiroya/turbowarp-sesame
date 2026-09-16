@@ -52,7 +52,7 @@ v1契約は次の情報を含みます。
 
 ## 運用
 
-- [keyholderを専用ドメインで運用する](keyholder-domain.ja.md)
+- [keyholderのホスティング](keyholder-hosting.ja.md)
 
 ## 決定記録
 
