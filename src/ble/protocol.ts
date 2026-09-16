@@ -109,6 +109,27 @@ export function decodeMessage(data: Uint8Array): SesameMessage {
   return { type, itemCode, result, payload: data.slice(3) };
 }
 
+/**
+ * Builds the 13-byte AES-CCM initialization vector of the security layer.
+ *
+ * The documented layout is a packed struct on a little-endian device:
+ * `int64_t count`, one unused zero byte, then the four-byte session random
+ * code. The counter advances by one per operation and is tracked separately
+ * for each direction, so a frame sent and a frame received never share an IV.
+ */
+export function ccmNonce(
+  count: number | bigint,
+  randomCode: Uint8Array,
+): Uint8Array {
+  if (randomCode.length !== 4) {
+    throw new TypeError("Sesame session random code must be four bytes.");
+  }
+  const nonce = new Uint8Array(13);
+  new DataView(nonce.buffer).setBigInt64(0, BigInt(count), true);
+  nonce.set(randomCode, 9);
+  return nonce;
+}
+
 export interface MechStatus {
   /** Raw battery reading. See {@link batteryVoltage}. */
   battery: number;
