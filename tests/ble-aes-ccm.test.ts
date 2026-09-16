@@ -58,9 +58,10 @@ describe("AES-CCM against the platform implementation", () => {
     const cipher = crypto.createCipheriv("aes-128-ccm", key, nonce, {
       authTagLength: tagLength,
     });
-    if (additionalData.length > 0) {
-      cipher.setAAD(additionalData, { plaintextLength: plaintext.length });
-    }
+    // CCM needs the plaintext length up front, so setAAD is required even when
+    // there is no additional data. Skipping it makes getAuthTag fail with
+    // ERR_OSSL_TAG_NOT_SET on some OpenSSL builds and silently work on others.
+    cipher.setAAD(additionalData, { plaintextLength: plaintext.length });
     const output = Buffer.concat([cipher.update(plaintext), cipher.final()]);
     return output.toString("hex") + cipher.getAuthTag().toString("hex");
   };
