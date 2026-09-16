@@ -171,6 +171,33 @@ and click it. The message says which stage failed:
 **If the chooser opens but lists nothing**, the lock is out of range, or a phone
 is holding the connection. Close the sesame app and retry.
 
+### Which entry is the lock?
+
+The chooser lists every Candy House product in range, and a Sesame does not
+advertise a readable name. Expect something like:
+
+```text
+WM2                             a WiFi Module 2, not a lock
+Dp7YKHj4nqnf1Ds8DgHfNA          a Sesame
+ESAEHgUHBgnDAA4B/////w          a Sesame
+Unknown or unsupported device   no name at all
+```
+
+Those base64 strings are **the device's 16-byte UUID**. Decode one and it
+becomes the UUID the sesame app shows for that lock:
+
+```text
+Dp7YKHj4nqnf1Ds8DgHfNA  ->  0E9ED828-78F8-9EA9-DFD4-3B3C0E01DF34
+```
+
+So: find your lock's UUID in the sesame app and pick the entry that matches. If
+pairing recorded a UUID, the chooser is filtered to that one device and the
+question does not arise; the shortest sharing codes carry no UUID, which is why
+it can.
+
+Picking the wrong device is not dangerous. Login fails, because the key does
+not belong to it, and you can try another.
+
 Choose the device.
 
 **Expect within a few seconds:** `Connected. L locks, U unlocks.`

@@ -946,6 +946,11 @@
   }
   //#endregion
   //#region src/ble/web-bluetooth.ts
+  /** The name a device with this UUID advertises, for filtering the chooser. */
+  function nameForDeviceUuid(uuid) {
+  	const bytes = uuid.replace(/-/gu, "").match(/.{2}/gu) ?? [];
+  	return btoa(bytes.map((pair) => String.fromCharCode(Number.parseInt(pair, 16))).join("")).replace(/=+$/u, "");
+  }
   /** True when this browser exposes Web Bluetooth at all. */
   function isWebBluetoothAvailable() {
   	return bluetooth() !== void 0;
@@ -957,11 +962,15 @@
   * activation, which a block evaluated in the VM's step loop only has for a few
   * seconds after a click.
   */
-  async function requestSesameChannel() {
+  async function requestSesameChannel(uuid) {
   	const api = bluetooth();
   	if (api === void 0) throw new Error("This browser has no Web Bluetooth. Chrome or Edge on desktop or Android is required; use Relay mode otherwise.");
+  	const byName = uuid === void 0 ? [] : [{
+  		name: nameForDeviceUuid(uuid),
+  		services: [SERVICE_UUID]
+  	}];
   	const device = await api.requestDevice({
-  		filters: [{ services: [SERVICE_UUID] }],
+  		filters: [...byName, { services: [SERVICE_UUID] }],
   		optionalServices: [SERVICE_UUID]
   	});
   	const server = device.gatt;
@@ -1312,7 +1321,8 @@
   			const paired = await this.keyholder(connection).pair();
   			this.connection = {
   				...connection,
-  				deviceAlias: paired.deviceName
+  				deviceAlias: paired.deviceName,
+  				...paired.uuid === void 0 ? {} : { deviceUuid: paired.uuid }
   			};
   		}, void 0);
   	}
@@ -1321,7 +1331,7 @@
   			const connection = this.requireBluetooth();
   			if (connection.transport?.isLoggedIn() === true) return;
   			const transport = new SesameBleTransport({
-  				channel: await requestSesameChannel(),
+  				channel: await requestSesameChannel(connection.deviceUuid),
   				keyholder: this.keyholder(connection),
   				deviceName: connection.deviceAlias
   			});
