@@ -9,6 +9,8 @@ Direct modeはTurboWarpのsandbox内で動作します。Relay modeはブラウ�
 ```text
 Direct: TurboWarp -> SesameClient -> Candy House API
 Relay:  TurboWarp -> RelayClient -> 127.0.0.1 keybroker -> Candy House API
+BLE:    TurboWarp -> SesameBleTransport -> GATT -> Sesame
+                 \-> keyholder iframe (own origin) holds the key and seals frames
 ```
 
 Direct modeでは認証情報を機能拡張instance上だけに保持します。Relay modeではAPIキー、UUID、secretをTurboWarpへ渡さず、endpoint、デバイス別名、ペアリング後のtokenだけを保持します。tokenはstorageへ保存せず、機能拡張の再読込で失効します。`RelayClient`はHTTPのloopback originだけを許可し、外部hostへtokenを送信しません。

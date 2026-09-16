@@ -13,6 +13,8 @@ configuration inside the sandbox before contacting localhost. Both modes impleme
 ```text
 Direct: TurboWarp -> SesameClient -> Candy House API
 Relay:  TurboWarp -> RelayClient -> 127.0.0.1 keybroker -> Candy House API
+BLE:    TurboWarp -> SesameBleTransport -> GATT -> Sesame
+                 \-> keyholder iframe (own origin) holds the key and seals frames
 ```
 
 Direct credentials live only on the extension instance. Relay mode never receives the provider API

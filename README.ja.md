@@ -13,10 +13,13 @@ Candy House Sesameの状態確認と、明示的に有効化したbuildでの遠
 - 安全フラグを有効にしたbuildでの施錠、解錠、トグル要求
 - 設定／APIエラーをプロジェクトを停止させずブロックから確認
 - `@kubohiroya/keybroker`とのワンタイムコードによるローカルペアリング
+- Bluetooth LEによる直接制御。クラウドもWiFi Module 2も不要
+- 鍵が動いたことを機器が報告したときに動くハットブロック。これはBluetoothでしか得られません
 
 ## 動作条件と安全上の注意
 
-- 推奨: localhostで起動した`@kubohiroya/keybroker`、デバイス別名、起動時のワンタイムコード
+- Bluetooth modeの推奨環境: desktopまたはAndroidのChromeかEdge、オーナー鍵またはマネージャー鍵の共有QRコード
+- クラウド経由の推奨環境: localhostで起動した`@kubohiroya/keybroker`、デバイス別名、起動時のワンタイムコード
 - Direct mode: Candy HouseのAPIキー、Sesame UUID、32文字の16進数秘密鍵
 - WiFi Module 2などを通してCandy Houseクラウドから到達できるSesame
 - `fetch`、`TextEncoder`、Web Crypto AES-CBCに対応するブラウザ
@@ -50,6 +53,27 @@ clear Sesame connection
 ```
 
 endpointとデバイス別名は秘密ではありません。8桁コードは5分以内に一度だけ利用でき、交換後に受け取るRelay tokenはブロックや`.sb3`へ保存されません。
+
+## Bluetooth mode
+
+機器と直接通信します。Candy Houseのクラウドも WiFi Module 2 も不要で、クラウドの受理応答ではなく実際の機械状態が得られます。
+
+```text
+configure Bluetooth keyholder [https://.../keyholder/] device alias [front-door]
+pair Sesame by scanning its sharing QR code
+connect to Sesame over Bluetooth
+when the Sesame state changes
+say (Sesame status [CHSesame2Status])
+```
+
+device secretはTurboWarpへ渡りません。keyholderページが自身のoriginで保持し、この機能拡張が機器へ書き込む前にすべてのフレームを封じます。[ADR 0001](docs/adr/0001-ble-transport-and-key-custody.ja.md)を参照してください。
+
+注意:
+
+- 「サンドボックスなしで実行」と、desktopまたはAndroidのChromeかEdgeが必要です。Safari、Firefox、iOSにはWeb Bluetoothがないため、Relay modeを使ってください。
+- `connect to Sesame over Bluetooth`はクリック直後に実行してください。ブラウザのデバイス選択画面は直近のユーザー操作を要求します。
+- **オーナー鍵かマネージャー鍵**をシェアしてください。ゲスト鍵はsecretの半分をサーバーが保持しているため、Bluetoothセッションを確立できません。
+- Bluetoothにはページング付きの履歴がないため、履歴は取得できません。
 
 ## Direct mode
 

@@ -10,7 +10,12 @@ const credentials = {
 beforeEach(() => {
   vi.stubGlobal("Scratch", {
     extensions: { unsandboxed: true },
-    BlockType: { COMMAND: "command", REPORTER: "reporter", BOOLEAN: "boolean" },
+    BlockType: {
+      COMMAND: "command",
+      REPORTER: "reporter",
+      BOOLEAN: "boolean",
+      HAT: "hat",
+    },
     ArgumentType: { STRING: "string", NUMBER: "number", BOOLEAN: "boolean" },
     Cast: {
       toString: (value: unknown) => String(value),
@@ -189,5 +194,131 @@ describe("SesameExtension", () => {
     expect(extension.lastError()).toBe(
       "Remote lock commands are disabled in this build.",
     );
+  });
+});
+
+describe("Bluetooth mode", () => {
+  const keyholder = "https://keys.example/keyholder/";
+
+  beforeEach(() => {
+    vi.stubGlobal("navigator", {
+      bluetooth: { requestDevice: () => undefined },
+    });
+  });
+
+  const configured = () => {
+    const extension = new SesameExtension();
+    extension.configureBluetooth({
+      KEYHOLDER_URL: keyholder,
+      DEVICE_ALIAS: "front-door",
+    });
+    return extension;
+  };
+
+  it("selects Bluetooth mode without storing any credential", () => {
+    const extension = configured();
+    expect(extension.lastError()).toBe("");
+    expect(extension.connectionMode()).toBe("bluetooth");
+    expect(JSON.stringify(extension)).not.toContain("secret");
+  });
+
+  it("is not configured until a session is logged in", () => {
+    const extension = configured();
+    expect(extension.bluetoothConnected()).toBe(false);
+    expect(extension.isConfigured()).toBe(false);
+  });
+
+  it("rejects a keyholder that is not reached over HTTPS", () => {
+    const extension = new SesameExtension();
+    extension.configureBluetooth({
+      KEYHOLDER_URL: "http://keys.example/keyholder/",
+      DEVICE_ALIAS: "front-door",
+    });
+    expect(extension.lastError()).toMatch(/HTTPS/u);
+    expect(extension.connectionMode()).toBe("not configured");
+  });
+
+  it("rejects a keyholder URL carrying a query or fragment", () => {
+    const extension = new SesameExtension();
+    extension.configureBluetooth({
+      KEYHOLDER_URL: "https://keys.example/keyholder/?device=front-door",
+      DEVICE_ALIAS: "front-door",
+    });
+    expect(extension.lastError()).toMatch(/origin and path/u);
+  });
+
+  it("requires a device alias", () => {
+    const extension = new SesameExtension();
+    extension.configureBluetooth({
+      KEYHOLDER_URL: keyholder,
+      DEVICE_ALIAS: "   ",
+    });
+    expect(extension.lastError()).toMatch(/device alias/u);
+  });
+
+  it("explains that the sandbox cannot reach Bluetooth", () => {
+    vi.stubGlobal("Scratch", {
+      ...(globalThis as unknown as { Scratch: Record<string, unknown> })
+        .Scratch,
+      extensions: { unsandboxed: false },
+    });
+    const extension = new SesameExtension();
+    extension.configureBluetooth({
+      KEYHOLDER_URL: keyholder,
+      DEVICE_ALIAS: "front-door",
+    });
+    expect(extension.lastError()).toMatch(/without sandbox/u);
+  });
+
+  it("explains when the browser has no Web Bluetooth", () => {
+    vi.stubGlobal("navigator", {});
+    const extension = new SesameExtension();
+    extension.configureBluetooth({
+      KEYHOLDER_URL: keyholder,
+      DEVICE_ALIAS: "front-door",
+    });
+    expect(extension.lastError()).toMatch(/no Web Bluetooth/u);
+  });
+
+  it("reports a clear error when used before connecting", async () => {
+    const extension = configured();
+    await extension.getStatusField({ FIELD: "CHSesame2Status" });
+    expect(extension.lastError()).toMatch(
+      /Connect to the Sesame over Bluetooth/u,
+    );
+  });
+
+  it("asks for pairing before a keyholder is configured", async () => {
+    const extension = new SesameExtension();
+    await extension.pairBluetooth();
+    expect(extension.lastError()).toMatch(/Configure Bluetooth mode first/u);
+  });
+
+  it("publishes the state-change hat and the Bluetooth blocks", () => {
+    const info = new SesameExtension().getInfo() as {
+      blocks: Array<{ opcode: string; blockType: string }>;
+    };
+    const opcodes = info.blocks.map((block) => block.opcode);
+    expect(opcodes).toContain("configureBluetooth");
+    expect(opcodes).toContain("pairBluetooth");
+    expect(opcodes).toContain("connectBluetooth");
+    expect(opcodes).toContain("whenStateChanges");
+    expect(
+      info.blocks.find((block) => block.opcode === "whenStateChanges")
+        ?.blockType,
+    ).toBe("hat");
+  });
+
+  it("reports no state change until one is observed", () => {
+    const extension = configured();
+    expect(extension.whenStateChanges()).toBe(false);
+    expect(extension.whenStateChanges()).toBe(false);
+  });
+
+  it("forgets the connection when cleared", () => {
+    const extension = configured();
+    extension.clearCredentials();
+    expect(extension.connectionMode()).toBe("not configured");
+    expect(extension.bluetoothConnected()).toBe(false);
   });
 });

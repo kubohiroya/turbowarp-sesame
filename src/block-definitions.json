@@ -7,7 +7,10 @@
       "text": "configure Direct mode API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]",
       "description": "Selects Direct mode and keeps the Candy House credentials in memory until they are cleared or the extension reloads.",
       "arguments": {
-        "API_KEY": { "type": "STRING", "defaultValue": "api-key" },
+        "API_KEY": {
+          "type": "STRING",
+          "defaultValue": "api-key"
+        },
         "UUID": {
           "type": "STRING",
           "defaultValue": "00000000-0000-0000-0000-000000000000"
@@ -22,13 +25,16 @@
       "opcode": "configureRelay",
       "blockType": "COMMAND",
       "text": "configure local Relay [ENDPOINT] device alias [DEVICE_ALIAS]",
-      "description": "Selects Relay mode for a localhost Capability Proxy without storing Candy House credentials in the project.",
+      "description": "Selects Relay mode for a localhost keybroker without storing Candy House credentials in the project.",
       "arguments": {
         "ENDPOINT": {
           "type": "STRING",
           "defaultValue": "http://127.0.0.1:8787"
         },
-        "DEVICE_ALIAS": { "type": "STRING", "defaultValue": "front-door" }
+        "DEVICE_ALIAS": {
+          "type": "STRING",
+          "defaultValue": "front-door"
+        }
       }
     },
     {
@@ -37,8 +43,55 @@
       "text": "pair local Relay with one-time code [CODE]",
       "description": "Exchanges an eight-digit one-time code for a Relay token held only in extension memory.",
       "arguments": {
-        "CODE": { "type": "STRING", "defaultValue": "00000000" }
+        "CODE": {
+          "type": "STRING",
+          "defaultValue": "00000000"
+        }
       }
+    },
+    {
+      "opcode": "configureBluetooth",
+      "blockType": "COMMAND",
+      "text": "configure Bluetooth keyholder [KEYHOLDER_URL] device alias [DEVICE_ALIAS]",
+      "description": "Selects Bluetooth mode. The keyholder page holds the device secret on its own origin, so no credential is stored in the project.",
+      "arguments": {
+        "KEYHOLDER_URL": {
+          "type": "STRING",
+          "defaultValue": "https://kubohiroya.github.io/turbowarp-sesame/keyholder/"
+        },
+        "DEVICE_ALIAS": {
+          "type": "STRING",
+          "defaultValue": "front-door"
+        }
+      }
+    },
+    {
+      "opcode": "pairBluetooth",
+      "blockType": "COMMAND",
+      "text": "pair Sesame by scanning its sharing QR code",
+      "description": "Opens the keyholder so it can scan an owner or manager sharing QR code from the sesame app. Guest codes cannot work over Bluetooth.",
+      "arguments": {}
+    },
+    {
+      "opcode": "connectBluetooth",
+      "blockType": "COMMAND",
+      "text": "connect to Sesame over Bluetooth",
+      "description": "Opens the browser's device chooser and logs in. Run this straight after a click, because the chooser needs a recent user gesture.",
+      "arguments": {}
+    },
+    {
+      "opcode": "bluetoothConnected",
+      "blockType": "BOOLEAN",
+      "text": "Sesame Bluetooth connected?",
+      "description": "Reports whether a Bluetooth session is logged in and usable.",
+      "arguments": {}
+    },
+    {
+      "opcode": "whenStateChanges",
+      "blockType": "HAT",
+      "text": "when the Sesame state changes",
+      "description": "Runs when the lock reports that it moved. Only Bluetooth reports this; the cloud modes cannot.",
+      "arguments": {}
     },
     {
       "opcode": "clearCredentials",
@@ -87,8 +140,14 @@
       "text": "Sesame history page [PAGE] length [LENGTH]",
       "description": "Fetches up to 50 history records as a JSON string.",
       "arguments": {
-        "PAGE": { "type": "NUMBER", "defaultValue": 0 },
-        "LENGTH": { "type": "NUMBER", "defaultValue": 10 }
+        "PAGE": {
+          "type": "NUMBER",
+          "defaultValue": 0
+        },
+        "LENGTH": {
+          "type": "NUMBER",
+          "defaultValue": 10
+        }
       }
     },
     {
@@ -102,7 +161,10 @@
           "defaultValue": "lock",
           "menu": "commands"
         },
-        "HISTORY": { "type": "STRING", "defaultValue": "TurboWarp" }
+        "HISTORY": {
+          "type": "STRING",
+          "defaultValue": "TurboWarp"
+        }
       }
     },
     {
@@ -135,9 +197,18 @@
     "commands": {
       "acceptReporters": false,
       "items": [
-        { "text": "lock", "value": "lock" },
-        { "text": "unlock", "value": "unlock" },
-        { "text": "toggle", "value": "toggle" }
+        {
+          "text": "lock",
+          "value": "lock"
+        },
+        {
+          "text": "unlock",
+          "value": "unlock"
+        },
+        {
+          "text": "toggle",
+          "value": "toggle"
+        }
       ]
     }
   }

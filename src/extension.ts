@@ -1,5 +1,14 @@
 import { featureFlags } from "../config/feature-flags.js";
 import definitions from "./block-definitions.json";
+import { SesameBleTransport, type BleTransport } from "./ble/ble-transport.js";
+import {
+  RemoteKeyholder,
+  validateKeyholderUrl,
+} from "./ble/remote-keyholder.js";
+import {
+  isWebBluetoothAvailable,
+  requestSesameChannel,
+} from "./ble/web-bluetooth.js";
 import { extensionConfig } from "./config.js";
 import {
   pairWithRelay,
@@ -15,7 +24,7 @@ import {
 } from "./sesame-client.js";
 import { requireCapability, type SesameTransport } from "./transport.js";
 
-type BlockTypeName = "COMMAND" | "REPORTER" | "BOOLEAN";
+type BlockTypeName = "COMMAND" | "REPORTER" | "BOOLEAN" | "HAT";
 type ArgumentTypeName = "STRING" | "NUMBER" | "BOOLEAN";
 
 interface DefinitionArgument {
@@ -48,8 +57,21 @@ export class SesameExtension implements TurboWarpExtension {
         configuration: RelayConfiguration;
         session?: RelaySession;
       }
+    | {
+        mode: "bluetooth";
+        keyholderUrl: string;
+        deviceAlias: string;
+        keyholder?: RemoteKeyholder;
+        transport?: BleTransport;
+      }
     | undefined;
   private lastErrorMessage = "";
+  /**
+   * Set when the lock reports that it moved, and cleared by the hat block that
+   * reads it. Edge-activated hats are polled, so the flag is what carries a
+   * push that arrives between polls.
+   */
+  private stateChanged = false;
 
   public getInfo(): Record<string, unknown> {
     return {
@@ -113,13 +135,84 @@ export class SesameExtension implements TurboWarpExtension {
     }, undefined);
   }
 
+  public configureBluetooth(args: {
+    KEYHOLDER_URL: unknown;
+    DEVICE_ALIAS: unknown;
+  }): void {
+    this.capture(() => {
+      requireUnsandboxedBluetooth();
+      const keyholderUrl = validateKeyholderUrl(
+        Scratch.Cast.toString(args.KEYHOLDER_URL),
+      );
+      const deviceAlias = Scratch.Cast.toString(args.DEVICE_ALIAS).trim();
+      if (deviceAlias.length === 0) {
+        throw new TypeError("Give the Sesame a device alias.");
+      }
+      void this.releaseBluetooth();
+      this.connection = { mode: "bluetooth", keyholderUrl, deviceAlias };
+    });
+  }
+
+  public async pairBluetooth(): Promise<void> {
+    await this.captureAsync(async () => {
+      const connection = this.requireBluetooth();
+      const keyholder = this.keyholder(connection);
+      const paired = await keyholder.pair();
+      this.connection = { ...connection, deviceAlias: paired.deviceName };
+    }, undefined);
+  }
+
+  public async connectBluetooth(): Promise<void> {
+    await this.captureAsync(async () => {
+      const connection = this.requireBluetooth();
+      if (connection.transport?.isLoggedIn() === true) return;
+      // Opened before anything awaits, so the chooser still sees the gesture
+      // that started this block.
+      const channel = await requestSesameChannel();
+      const transport = new SesameBleTransport({
+        channel,
+        keyholder: this.keyholder(connection),
+        deviceName: connection.deviceAlias,
+      });
+      transport.onStatusChange(() => {
+        this.stateChanged = true;
+      });
+      try {
+        await transport.connect();
+      } catch (error) {
+        await transport.close();
+        throw error;
+      }
+      this.connection = { ...connection, transport };
+    }, undefined);
+  }
+
+  public bluetoothConnected(): boolean {
+    return (
+      this.connection?.mode === "bluetooth" &&
+      this.connection.transport?.isLoggedIn() === true
+    );
+  }
+
+  public whenStateChanges(): boolean {
+    if (!this.stateChanged) return false;
+    this.stateChanged = false;
+    return true;
+  }
+
   public clearCredentials(): void {
+    void this.releaseBluetooth();
     this.connection = undefined;
     this.lastErrorMessage = "";
+    this.stateChanged = false;
   }
 
   public isConfigured(): boolean {
-    return this.connection?.mode === "direct" || this.relayPaired();
+    return (
+      this.connection?.mode === "direct" ||
+      this.relayPaired() ||
+      this.bluetoothConnected()
+    );
   }
 
   public relayPaired(): boolean {
@@ -213,7 +306,43 @@ export class SesameExtension implements TurboWarpExtension {
     if (this.connection?.mode === "relay") {
       throw new Error("Pair with the local relay first.");
     }
-    throw new Error("Configure Direct mode or the local relay first.");
+    if (this.connection?.mode === "bluetooth") {
+      const transport = this.connection.transport;
+      if (transport === undefined || !transport.isLoggedIn()) {
+        throw new Error("Connect to the Sesame over Bluetooth first.");
+      }
+      return transport;
+    }
+    throw new Error(
+      "Configure Direct mode, the local relay, or Bluetooth first.",
+    );
+  }
+
+  private requireBluetooth(): Extract<
+    NonNullable<typeof this.connection>,
+    { mode: "bluetooth" }
+  > {
+    if (this.connection?.mode !== "bluetooth") {
+      throw new Error("Configure Bluetooth mode first.");
+    }
+    return this.connection;
+  }
+
+  private keyholder(connection: {
+    keyholderUrl: string;
+    keyholder?: RemoteKeyholder;
+  }): RemoteKeyholder {
+    connection.keyholder ??= new RemoteKeyholder({
+      url: connection.keyholderUrl,
+    });
+    return connection.keyholder;
+  }
+
+  private async releaseBluetooth(): Promise<void> {
+    if (this.connection?.mode !== "bluetooth") return;
+    const { transport, keyholder } = this.connection;
+    await transport?.close().catch(() => undefined);
+    keyholder?.dispose();
   }
 
   private capture(action: () => void): void {
@@ -255,6 +384,19 @@ export class SesameExtension implements TurboWarpExtension {
         ]),
       ),
     };
+  }
+}
+
+function requireUnsandboxedBluetooth(): void {
+  if (!Scratch.extensions.unsandboxed) {
+    throw new Error(
+      'Bluetooth mode requires reloading this custom extension with "Run extension without sandbox" enabled.',
+    );
+  }
+  if (!isWebBluetoothAvailable()) {
+    throw new Error(
+      "This browser has no Web Bluetooth. Chrome or Edge on desktop or Android is required; use Relay mode otherwise.",
+    );
   }
 }
 
