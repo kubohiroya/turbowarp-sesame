@@ -67,13 +67,18 @@ describe("AES-CCM against the platform implementation", () => {
   };
 
   // Every supported nonce length crossed with every supported tag length,
-  // with and without additional data, across payloads that do and do not
-  // land on a block boundary.
+  // with and without additional data, across payloads that do and do not land
+  // on a block boundary.
+  //
+  // An empty payload is left out on purpose: older OpenSSL builds refuse to
+  // produce a CCM tag for one, so node cannot act as an oracle there. It is
+  // covered separately below, and a Sesame frame is never empty in any case —
+  // every request carries at least an item code.
   it.each([7, 8, 9, 10, 11, 12, 13])(
     "agrees with node for a %i-byte nonce",
     async (nonceLength) => {
       for (const tagLength of [4, 6, 8, 10, 12, 14, 16]) {
-        for (const plaintextLength of [0, 1, 15, 16, 17, 47]) {
+        for (const plaintextLength of [1, 15, 16, 17, 47]) {
           for (const additionalLength of [0, 1, 20]) {
             const rawKey = crypto.randomBytes(16);
             const nonce = crypto.randomBytes(nonceLength);
@@ -98,6 +103,49 @@ describe("AES-CCM against the platform implementation", () => {
       }
     },
   );
+});
+
+describe("AES-CCM with an empty payload", () => {
+  // Checked without node, for the reason given above. This exercises the same
+  // first block, additional-data encoding, and counter generation as every
+  // other case; only the message blocks are absent.
+  const parameters = async () => ({
+    key: await importCcmKey(un("404142434445464748494a4b4c4d4e4f")),
+    nonce: un("10111213141516"),
+    additionalData: un("00"),
+    tagLength: 4,
+  });
+
+  it("produces a tag and no ciphertext", async () => {
+    const { ciphertext, tag } = await encrypt(
+      await parameters(),
+      new Uint8Array(),
+    );
+    expect(ciphertext).toHaveLength(0);
+    expect(tag).toHaveLength(4);
+  });
+
+  it("round-trips", async () => {
+    const options = await parameters();
+    const sealed = await seal(options, new Uint8Array());
+    expect(sealed).toHaveLength(4);
+    expect(await open(options, sealed)).toHaveLength(0);
+  });
+
+  it("still authenticates the additional data", async () => {
+    const options = await parameters();
+    const sealed = await seal(options, new Uint8Array());
+    await expect(
+      open({ ...options, additionalData: un("01") }, sealed),
+    ).rejects.toThrow(/tag mismatch/u);
+  });
+
+  it("rejects a tampered tag", async () => {
+    const options = await parameters();
+    const sealed = await seal(options, new Uint8Array());
+    sealed[0] = (sealed[0] ?? 0) ^ 0x01;
+    await expect(open(options, sealed)).rejects.toThrow(/tag mismatch/u);
+  });
 });
 
 describe("AES-CCM authentication", () => {
