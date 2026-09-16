@@ -91,7 +91,9 @@ base64の値はパックされたレコードへデコードされます。そ�
 
 **スキャンはkeyholder originの最上位ウィンドウで行い、iframeでもTurboWarpのページでも行いません。** QRはsecretを平文で運ぶため、それをデコードしたページはsecretを保持することになります。TurboWarpのページにデコードさせれば決定3が無効になります。iframeでも実行できません。`camera` Permissions Policyの既定allowlistは`bluetooth`と同じく`self`であり、TurboWarpは`allow="camera"`を付与しないためです。keyholder originの最上位browsing contextはそれ自身が`self`なので、そこではカメラが使えます。ペアリングはそのウィンドウを開き、スキャンし、secretを非抽出可能な`CryptoKey`としてimportし、ラップして閉じます。機能拡張が知るのはデバイス名とペアリングが成功したことだけです。以降のセッションはカメラを必要としないiframeを通ります。
 
-デコードはプラットフォームが提供する`BarcodeDetector`を使い（macOS、Android、ChromeOS）、それ以外ではバンドルしたデコーダを使います。WindowsとLinuxのChromeにはプラットフォーム側のバーコード対応がないためです。いずれの場合も映像フレームはkeyholderの外へ出ません。
+デコードはプラットフォームが提供する`BarcodeDetector`を使います（macOS、Android、ChromeOS）。WindowsとLinuxのChromeにはプラットフォーム側のバーコード対応がありませんが、それを補うサードパーティのデコーダはバンドルしません。このページはドアの鍵を保持しており、その傍らで動くコードは少ないほど良いからです。該当環境では、各自のQRリーダーが出力したテキストを貼り付けてもらいます。体験は劣りますが、結果は劣りません。いずれの場合も映像フレームはkeyholderの外へ出ません。
+
+keyholderの隔離はoriginの強さを超えません。`*.github.io`のような共有ホストから配信する場合、そのホスト上の他のあらゆるページがoriginを共有し、したがって保存された鍵も共有します。本番のkeyholderには専用ドメインが適切です。GitHub Pagesのアドレスは使える既定値ではありますが、強い境界ではありません。
 
 ### 7. QRコードの鍵レベルは参考情報であり、ポリシーは別に保存する
 

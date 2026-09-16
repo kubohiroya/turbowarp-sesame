@@ -151,9 +151,17 @@ it, and closes; the extension learns only a device name and that pairing
 succeeded. Sessions afterwards run through the iframe, which needs no camera.
 
 Decoding uses `BarcodeDetector` where the platform provides it — macOS,
-Android, and ChromeOS — and a bundled decoder elsewhere, since Chrome on
-Windows and Linux has no platform barcode support. Either way the video frames
-stay inside the keyholder.
+Android, and ChromeOS. Chrome on Windows and Linux has no platform barcode
+support, and no third-party decoder is bundled to cover it: this page holds a
+door key, and the less code running beside it the better. There the person
+pastes the text their own QR reader produced, which is a worse experience but
+not a worse outcome. Either way the video frames stay inside the keyholder.
+
+The keyholder's isolation is only as good as its origin. Served from a shared
+host such as `*.github.io`, every other page on that host shares the origin and
+therefore the stored keys. A dedicated domain is the right home for a
+production keyholder; the GitHub Pages address is a usable default, not a
+strong boundary.
 
 ### 7. The key level in the QR code is advisory, and policy is stored separately
 

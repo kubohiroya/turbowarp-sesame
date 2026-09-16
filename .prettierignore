@@ -1,3 +1,5 @@
 dist/
+# Build output, not hand-written source.
+docs/keyholder/keyholder.js
 pnpm-lock.yaml
 LICENSE

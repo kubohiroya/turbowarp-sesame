@@ -66,7 +66,7 @@ when the Sesame state changes
 say (Sesame status [CHSesame2Status])
 ```
 
-device secretはTurboWarpへ渡りません。keyholderページが自身のoriginで保持し、この機能拡張が機器へ書き込む前にすべてのフレームを封じます。[ADR 0001](docs/adr/0001-ble-transport-and-key-custody.ja.md)を参照してください。
+device secretはTurboWarpへ渡りません。keyholderページが自身のoriginで保持し、この機能拡張が機器へ書き込む前にすべてのフレームを封じます。ページは[`docs/keyholder/`](docs/keyholder/)にあり、サーバーへ一切接続しません。ペアリングも鍵の解錠もブラウザ内だけで完結します。[ADR 0001](docs/adr/0001-ble-transport-and-key-custody.ja.md)を参照してください。
 
 注意:
 
@@ -74,6 +74,8 @@ device secretはTurboWarpへ渡りません。keyholderページが自身のorig
 - `connect to Sesame over Bluetooth`はクリック直後に実行してください。ブラウザのデバイス選択画面は直近のユーザー操作を要求します。
 - **オーナー鍵かマネージャー鍵**をシェアしてください。ゲスト鍵はsecretの半分をサーバーが保持しているため、Bluetoothセッションを確立できません。
 - Bluetoothにはページング付きの履歴がないため、履歴は取得できません。
+- 鍵はkeyholderのoriginの、単一のブラウザプロファイルにだけ保存されます。閲覧データの消去で失われ、デバイス間で同期されません。
+- 可能であればkeyholderは専用ドメインでホストしてください。`*.github.io`のような共有ホストでは、そのホスト上の他のあらゆるページがoriginを共有します。
 
 ## Direct mode
 

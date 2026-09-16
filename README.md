@@ -88,7 +88,9 @@ say (Sesame status [CHSesame2Status])
 
 The device secret never reaches TurboWarp. It lives in the keyholder page on its
 own origin, which seals every frame before this extension writes it to the lock.
-See [ADR 0001](docs/adr/0001-ble-transport-and-key-custody.md).
+The page is in [`docs/keyholder/`](docs/keyholder/) and contacts no server;
+pairing and unlocking happen entirely in the browser. See
+[ADR 0001](docs/adr/0001-ble-transport-and-key-custody.md).
 
 Notes:
 
@@ -99,6 +101,10 @@ Notes:
 - Share an **owner or manager** key. A guest key has half of its secret withheld
   by the server and cannot open a Bluetooth session at all.
 - History is unavailable over Bluetooth, which has no paginated history.
+- Keys are kept in one browser profile on the keyholder's origin. Clearing site
+  data erases them, and they do not sync between devices.
+- Host the keyholder on a domain of its own where you can. On a shared host such
+  as `*.github.io`, every other page on that host shares the origin.
 
 ## Direct mode
 

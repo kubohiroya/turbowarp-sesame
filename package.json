@@ -44,8 +44,8 @@
   "scripts": {
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit",
-    "build": "vite build",
-    "lint": "eslint src tests vite.config.ts",
+    "build": "vite build && vite build --config vite.keyholder.config.ts",
+    "lint": "eslint src tests vite.config.ts vite.keyholder.config.ts",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "test": "vitest run",
