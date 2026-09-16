@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360">
+  <rect width="480" height="360" fill="#fdf6e6"/>
+  <text x="240" y="96" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="bold" fill="#8a5a00" text-anchor="middle">TurboWarp-Sesame</text>
+  <text x="240" y="132" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#6b4a12" text-anchor="middle">Bluetooth standalone app</text>
+  <text x="40" y="186" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3d3323">1. Load this project with "Run extension without sandbox" ticked.</text>
+  <text x="40" y="212" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3d3323">2. Open the keyholder page and pair an owner or manager key.</text>
+  <text x="40" y="238" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3d3323">3. Press SPACE here to connect over Bluetooth.</text>
+  <text x="40" y="264" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3d3323">4. Press L to lock, U to unlock.</text>
+  <text x="40" y="306" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#7a6a4a">Lock control is enabled in this build. Chrome or Edge required.</text>
+</svg>

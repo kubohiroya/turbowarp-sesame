@@ -54,6 +54,25 @@ clear Sesame connection
 
 endpointとデバイス別名は秘密ではありません。8桁コードは5分以内に一度だけ利用でき、交換後に受け取るRelay tokenはブロックや`.sb3`へ保存されません。
 
+## スタンドアロンアプリ（`turbowarp-sesame-app.sb3`）
+
+ファイル1個。サーバー不要、機能拡張の手動読み込みも不要です。
+
+1. [`dist/turbowarp-sesame-app.sb3`](dist/turbowarp-sesame-app.sb3?raw=1)をダウンロードします。
+2. [turbowarp.org](https://turbowarp.org)で開きます。機能拡張は`data:` URLとしてファイルの中を一緒に運ばれるため、何も取得しません。
+3. カスタム機能拡張を読み込むか尋ねられたら、**「サンドボックスなしで実行」にチェックして**許可します。sandbox内ではWeb Bluetoothが使えないためです。この選択はTurboWarpが記憶します。
+4. keyholderページを開き、オーナー鍵かマネージャー鍵をペアリングします。
+5. プロジェクトに戻り、SPACEで接続、Lで施錠、Uで解錠します。
+
+> [!IMPORTANT]
+> このbuildは遠隔操作を**有効**にしています。`dist/turbowarp-sesame.js`は無効のままです。両者の違いはこれだけで、機能拡張IDとすべてのopcodeは同一なので、プロジェクトはどちらでも動きます。
+>
+> それでもこのファイル単体では何も開けません。device secretもAPIキーもtokenも含みません。操作するには、keyholder（独自のorigin）でパスキーまたはパスフレーズの背後に共有QRコードをペアリングし、かつ鍵のBluetooth圏内にいる必要があります。
+
+`scripts/build-sb3.mjs`はファイル内に資格情報が現れるとbuildを失敗させ、`tests/app-sb3.test.ts`が生成物に対して同じ性質を検査します。
+
+TurboWarp Desktopではなくウェブ版を使ってください。ElectronはBluetoothのデバイス選択を独自に実装する必要があり、desktop版はそれを提供していません。
+
 ## Bluetooth mode
 
 機器と直接通信します。Candy Houseのクラウドも WiFi Module 2 も不要で、クラウドの受理応答ではなく実際の機械状態が得られます。

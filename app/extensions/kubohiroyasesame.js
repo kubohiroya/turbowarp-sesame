@@ -1,6 +1,6 @@
 // Name: TurboWarp-Sesame
 // ID: kubohiroyasesame
-// Description: Control and inspect Candy House Sesame devices from TurboWarp.
+// Description: Control and inspect Candy House Sesame devices from TurboWarp. Lock control is enabled in this build.
 // By: Hiroya Kubo
 // License: MPL-2.0
 
@@ -21,7 +21,7 @@
   };
   //#endregion
   //#region config/feature-flags.ts
-  var featureFlags = { sesameCommands: false };
+  var featureFlags = { sesameCommands: true };
   var block_definitions_default = {
   	extensionName: "TurboWarp-Sesame",
   	blocks: [

@@ -1,0 +1,12 @@
+{
+  "formatVersion": 1,
+  "extensions": [
+    {
+      "id": "kubohiroyasesame",
+      "path": "extensions/kubohiroyasesame.js",
+      "mediaType": "application/javascript",
+      "parameters": [],
+      "encoding": "base64"
+    }
+  ]
+}

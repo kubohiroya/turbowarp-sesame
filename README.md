@@ -73,6 +73,37 @@ clear Sesame connection
 The endpoint and alias are not secrets. The pairing code works once within five minutes, and the
 resulting token is never written to a block or `.sb3` file.
 
+## Standalone app (`turbowarp-sesame-app.sb3`)
+
+One file, no server, no extension to load by hand.
+
+1. Download
+   [`dist/turbowarp-sesame-app.sb3`](dist/turbowarp-sesame-app.sb3?raw=1).
+2. Open it at [turbowarp.org](https://turbowarp.org). The extension travels
+   inside the file as a `data:` URL, so nothing is fetched.
+3. When TurboWarp asks whether to load the custom extension, **tick "run
+   without sandbox"** and allow it. Web Bluetooth is unavailable inside the
+   sandbox, and TurboWarp remembers the choice.
+4. Open the keyholder page and pair an owner or manager key.
+5. Back in the project: SPACE connects, L locks, U unlocks.
+
+> [!IMPORTANT]
+> This build has lock control **enabled**, unlike
+> `dist/turbowarp-sesame.js`, which keeps it off. That is the only difference
+> between the two: the extension ID and every opcode are identical, so a
+> project works with either.
+>
+> The file still cannot open anything on its own. It holds no device secret,
+> no API key, and no token. Control requires pairing a sharing QR code in the
+> keyholder, on its own origin, behind a passkey or passphrase — and being
+> within Bluetooth range of the lock.
+
+`scripts/build-sb3.mjs` fails the build if any credential appears in the file,
+and `tests/app-sb3.test.ts` checks the same properties on the built artifact.
+
+Use the web version rather than TurboWarp Desktop: Electron needs its own
+Bluetooth device-chooser handling, which the desktop app does not provide.
+
 ## Bluetooth mode
 
 Talks to the lock directly. No Candy House cloud, no WiFi Module 2, and genuine

@@ -1,0 +1,311 @@
+{
+  "targets": [
+    {
+      "isStage": true,
+      "name": "Stage",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {
+        "s1_hat": {
+          "opcode": "event_whenflagclicked",
+          "next": "s1_say",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 40
+        },
+        "s1_say": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "s1_hat",
+          "inputs": {
+            "MESSAGE": [1, [10, "Press SPACE to connect over Bluetooth."]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s2_hat": {
+          "opcode": "event_whenkeypressed",
+          "next": "s2_configure",
+          "parent": null,
+          "inputs": {},
+          "fields": {
+            "KEY_OPTION": ["space", null]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 160
+        },
+        "s2_configure": {
+          "opcode": "kubohiroyasesame_configureBluetooth",
+          "next": "s2_connect",
+          "parent": "s2_hat",
+          "inputs": {
+            "KEYHOLDER_URL": [
+              1,
+              [10, "https://kubohiroya.github.io/turbowarp-sesame/keyholder/"]
+            ],
+            "DEVICE_ALIAS": [1, [10, "front-door"]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s2_connect": {
+          "opcode": "kubohiroyasesame_connectBluetooth",
+          "next": "s2_if",
+          "parent": "s2_configure",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s2_if": {
+          "opcode": "control_if_else",
+          "next": null,
+          "parent": "s2_connect",
+          "inputs": {
+            "CONDITION": [2, "s2_connected"],
+            "SUBSTACK": [2, "s2_say_ok"],
+            "SUBSTACK2": [2, "s2_say_err"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s2_connected": {
+          "opcode": "kubohiroyasesame_bluetoothConnected",
+          "next": null,
+          "parent": "s2_if",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s2_say_ok": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "s2_if",
+          "inputs": {
+            "MESSAGE": [1, [10, "Connected. L locks, U unlocks."]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s2_say_err": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "s2_if",
+          "inputs": {
+            "MESSAGE": [3, "s2_error", [10, ""]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s2_error": {
+          "opcode": "kubohiroyasesame_lastError",
+          "next": null,
+          "parent": "s2_say_err",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s3_hat": {
+          "opcode": "event_whenkeypressed",
+          "next": "s3_cmd",
+          "parent": null,
+          "inputs": {},
+          "fields": {
+            "KEY_OPTION": ["l", null]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 420
+        },
+        "s3_cmd": {
+          "opcode": "kubohiroyasesame_sendCommand",
+          "next": "s3_say",
+          "parent": "s3_hat",
+          "inputs": {
+            "HISTORY": [1, [10, "scratch"]],
+            "COMMAND": [1, "s3_menu"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s3_menu": {
+          "opcode": "kubohiroyasesame_menu_commands",
+          "next": null,
+          "parent": "s3_cmd",
+          "inputs": {},
+          "fields": {
+            "commands": ["lock", null]
+          },
+          "shadow": true,
+          "topLevel": false
+        },
+        "s3_say": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "s3_cmd",
+          "inputs": {
+            "MESSAGE": [3, "s3_status", [10, ""]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s3_status": {
+          "opcode": "kubohiroyasesame_lastError",
+          "next": null,
+          "parent": "s3_say",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s4_hat": {
+          "opcode": "event_whenkeypressed",
+          "next": "s4_cmd",
+          "parent": null,
+          "inputs": {},
+          "fields": {
+            "KEY_OPTION": ["u", null]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 560
+        },
+        "s4_cmd": {
+          "opcode": "kubohiroyasesame_sendCommand",
+          "next": "s4_say",
+          "parent": "s4_hat",
+          "inputs": {
+            "HISTORY": [1, [10, "scratch"]],
+            "COMMAND": [1, "s4_menu"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s4_menu": {
+          "opcode": "kubohiroyasesame_menu_commands",
+          "next": null,
+          "parent": "s4_cmd",
+          "inputs": {},
+          "fields": {
+            "commands": ["unlock", null]
+          },
+          "shadow": true,
+          "topLevel": false
+        },
+        "s4_say": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "s4_cmd",
+          "inputs": {
+            "MESSAGE": [3, "s4_status", [10, ""]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s4_status": {
+          "opcode": "kubohiroyasesame_lastError",
+          "next": null,
+          "parent": "s4_say",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s5_hat": {
+          "opcode": "kubohiroyasesame_whenStateChanges",
+          "next": "s5_say",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 700
+        },
+        "s5_say": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "s5_hat",
+          "inputs": {
+            "MESSAGE": [3, "s5_status", [10, ""]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s5_status": {
+          "opcode": "kubohiroyasesame_getStatusField",
+          "next": null,
+          "parent": "s5_say",
+          "inputs": {
+            "FIELD": [1, "s5_field_menu"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s5_field_menu": {
+          "opcode": "kubohiroyasesame_menu_statusFields",
+          "next": null,
+          "parent": "s5_status",
+          "inputs": {},
+          "fields": {
+            "statusFields": ["CHSesame2Status", null]
+          },
+          "shadow": true,
+          "topLevel": false
+        }
+      },
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "name": "instructions",
+          "bitmapResolution": 1,
+          "dataFormat": "svg",
+          "assetId": "32c876ffa0d76f8792255fe7d94292d2",
+          "md5ext": "32c876ffa0d76f8792255fe7d94292d2.svg",
+          "rotationCenterX": 240,
+          "rotationCenterY": 180
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 0,
+      "tempo": 60,
+      "videoTransparency": 50,
+      "videoState": "off",
+      "textToSpeechLanguage": null
+    }
+  ],
+  "monitors": [],
+  "extensions": ["kubohiroyasesame"],
+  "extensionURLs": {
+    "kubohiroyasesame": "embedded-extension:extensions/kubohiroyasesame.js"
+  },
+  "meta": {
+    "semver": "3.0.0",
+    "vm": "0.2.0",
+    "agent": ""
+  }
+}

@@ -25,6 +25,7 @@
   "type": "module",
   "files": [
     "dist/",
+    "app/",
     "config/",
     "docs/",
     "schemas/",
@@ -44,8 +45,8 @@
   "scripts": {
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit",
-    "build": "vite build && vite build --config vite.keyholder.config.ts",
-    "lint": "eslint src tests vite.config.ts vite.keyholder.config.ts",
+    "build": "vite build && vite build --config vite.keyholder.config.ts && vite build --config vite.app.config.ts && node scripts/build-sb3.mjs",
+    "lint": "eslint src tests vite.config.ts vite.keyholder.config.ts vite.app.config.ts",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "test": "vitest run",
@@ -58,12 +59,14 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@kubohiroya/sb3-toolchain": "0.13.0",
     "@kubohiroya/vite-plugin-turbowarp-extension": "0.3.0",
     "@types/node": "^24.13.3",
     "eslint": "^9.39.5",
+    "jszip": "^3.10.2",
+    "prettier": "^3.6.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.66.0",
-    "prettier": "^3.6.2",
     "vite": "^8.2.2",
     "vitest": "^5.0.0"
   }
