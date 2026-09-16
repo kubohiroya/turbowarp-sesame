@@ -11,14 +11,15 @@ something else. The expected text is quoted exactly as the code produces it.
 
 ## What has not been verified
 
-Three things were inferred from published source and specifications rather than
-observed. If this procedure fails, these are the likeliest places.
+Two things remain inferred from published source and specifications rather than
+observed. If this procedure fails, these are the likeliest places. Step 4 was
+the third, and has since been confirmed.
 
-| Step | Inference                                                                                | Read from                                     |
-| ---- | ---------------------------------------------------------------------------------------- | --------------------------------------------- |
-| 4    | Loading a project whose extension is a `data:` URL offers a "run without sandbox" choice | `scratch-gui`'s `canLoadExtensionFromProject` |
-| 5    | The device chooser lists a Sesame when filtered on service `0xFD81`                      | CANDY HOUSE's advertising documentation       |
-| 7    | The lock pushes `mech_status` unprompted when it moves                                   | CANDY HOUSE's `81_mechstatus` documentation   |
+| Step | Inference                                                                                | State                                                                                                     |
+| ---- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 4    | Loading a project whose extension is a `data:` URL offers a "run without sandbox" choice | **Confirmed.** The dialog carries the checkbox, and ticking it loads the extension with no sandbox iframe |
+| 5    | The device chooser lists a Sesame when filtered on service `0xFD81`                      | Inferred, from CANDY HOUSE's advertising documentation. Needs a lock in range                             |
+| 7    | The lock pushes `mech_status` unprompted when it moves                                   | Inferred, from CANDY HOUSE's `81_mechstatus` documentation                                                |
 
 ## Before you start
 
@@ -133,12 +134,19 @@ Download
 
 Open <https://turbowarp.org> and drag the file onto the page.
 
-**Expect:** a dialog asking whether to load a custom extension, **with a
-checkbox offering to run it without the sandbox**. Tick it, then allow.
+**Expect:** a dialog headed _Extension security_ (拡張機能セキュリティ), showing
+the extension's name, ID, and description — including _Lock control is enabled
+in this build_ — above a checkbox reading **Run without sandbox**
+(サンドボックスなしで実行する).
 
-**This is the inference most worth confirming.** If no such checkbox appears,
-stop and note the dialog's exact wording. Without it the extension runs
-sandboxed, Web Bluetooth is unavailable, and step 5 cannot succeed.
+**Tick the checkbox**, then allow (許可). Ticking it replaces the mild notice
+with a blunt warning that unsandboxed code can damage the project, delete
+settings, or steal passwords. That warning is correct, and it is exactly why
+the device secret lives in the keyholder on another origin rather than here.
+
+If you do not tick it the extension still loads, but sandboxed, where Web
+Bluetooth does not exist — step 5 then fails with a message saying so.
+TurboWarp remembers the choice for later loads.
 
 **Expect after loading:** the stage shows the instructions backdrop, and the
 Sesame blocks appear in the palette.
