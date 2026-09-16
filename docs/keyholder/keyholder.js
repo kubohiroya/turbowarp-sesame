@@ -40,18 +40,18 @@ function r(t) {
 	let n = t.secret.trim().toLowerCase().replace(/\s+/gu, "");
 	if (!/^[0-9a-f]{32}$/u.test(n)) throw Error("The secret key must be exactly 32 hexadecimal characters.");
 	if (n.startsWith(e)) throw Error("That is a guest key's secret, which is missing the half Bluetooth needs. Use an owner or manager key.");
-	let r = t.uuid.trim().toUpperCase();
-	if (!/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/u.test(r)) throw Error("The device UUID must look like 00000000-0000-0000-0000-000000000000.");
-	let i = t.model ?? 5;
-	if (!Number.isInteger(i) || i < 0 || i > 20) throw Error(`Unknown product model: ${String(i)}.`);
-	let a = t.name?.trim();
+	let r = t.uuid?.trim() ?? "", i = r.length === 0 ? void 0 : r.toUpperCase();
+	if (i !== void 0 && !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/u.test(i)) throw Error("The device UUID must look like 00000000-0000-0000-0000-000000000000, or be left empty.");
+	let a = t.model ?? 5;
+	if (!Number.isInteger(a) || a < 0 || a > 20) throw Error(`Unknown product model: ${String(a)}.`);
+	let o = t.name?.trim();
 	return {
-		model: i,
+		model: a,
 		secret: n,
 		publicKey: t.publicKey ?? "",
 		keyIndex: "",
-		uuid: r,
-		...a === void 0 || a.length === 0 ? {} : { name: a }
+		...i === void 0 ? {} : { uuid: i },
+		...o === void 0 || o.length === 0 ? {} : { name: o }
 	};
 }
 function i(e) {
@@ -65,17 +65,15 @@ function a(e) {
 	return `${e.length} bytes beginning ${t}`;
 }
 function o(t, n) {
-	let r = s(n);
-	if (r === void 0) throw Error(`This sesame QR code carries a key but no device UUID (parameters ${c(n)}). Enter the key by hand instead — see docs/device-testing.md.`);
-	let i = d(t, 0, 16);
+	let r = s(n), i = d(t, 0, 16);
 	if (i.startsWith(e)) throw Error("This is a guest key, which does not contain the half of the secret that Bluetooth needs. Share an owner or manager key instead.");
-	let a = l(n.get("l")), o = n.get("n") ?? void 0, u = Number.parseInt(n.get("m") ?? "", 10);
+	let a = l(n.get("l")), o = n.get("n") ?? void 0, c = Number.parseInt(n.get("m") ?? "", 10);
 	return {
-		model: Number.isInteger(u) && u >= 0 && u <= 20 ? u : 5,
+		model: Number.isInteger(c) && c >= 0 && c <= 20 ? c : 5,
 		secret: i,
 		publicKey: "",
 		keyIndex: "",
-		uuid: r,
+		...r === void 0 ? {} : { uuid: r },
 		...a === void 0 ? {} : { level: a },
 		...o === void 0 || o.length === 0 ? {} : { name: o }
 	};
@@ -607,7 +605,7 @@ var Ee = "sesame-keyholder", H = "devices", De = 1, Oe = class {
 			iv: K(s)
 		})), l = {
 			deviceName: i,
-			uuid: t.uuid,
+			...t.uuid === void 0 ? {} : { uuid: t.uuid },
 			model: t.model,
 			publicKey: t.publicKey,
 			...t.level === void 0 ? {} : { level: t.level },
@@ -659,7 +657,7 @@ function je(e) {
 function G(e) {
 	return {
 		deviceName: e.deviceName,
-		uuid: e.uuid,
+		...e.uuid === void 0 ? {} : { uuid: e.uuid },
 		...e.level === void 0 ? {} : { level: e.level },
 		pairedAt: e.pairedAt
 	};
@@ -708,7 +706,7 @@ function Pe(e) {
 	let t = document.createElement("li"), n = document.createElement("strong");
 	n.textContent = e.deviceName;
 	let r = document.createElement("span");
-	r.textContent = `${e.uuid}${e.level === void 0 ? "" : ` · ${e.level} key`}`;
+	r.textContent = [e.uuid ?? "UUID not in the sharing code", ...e.level === void 0 ? [] : [`${e.level} key`]].join(" · ");
 	let i = document.createElement("button");
 	return i.type = "button", i.textContent = "Forget", i.addEventListener("click", () => {
 		(async () => {
@@ -759,7 +757,8 @@ async function $(e) {
 				iterations: f
 			});
 		}
-		Y(`Paired "${r}" (${i(e).uuid}).`), J("paste").value = "", J("passphrase").value = "", await Z();
+		let a = i(e).uuid;
+		Y(a === void 0 ? `Paired "${r}". The sharing code carried no device UUID, which Bluetooth does not need.` : `Paired "${r}" (${a}).`), J("paste").value = "", J("passphrase").value = "", await Z();
 	} catch (e) {
 		Y(e instanceof Error ? e.message : String(e), "error");
 	}

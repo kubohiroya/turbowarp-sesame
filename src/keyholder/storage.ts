@@ -9,8 +9,8 @@
 export interface VaultRecord {
   /** Alias the extension refers to this device by. */
   deviceName: string;
-  /** Device UUID from the sharing QR code, for showing which lock this is. */
-  uuid: string;
+  /** Device UUID, when the sharing code carried one. For display only. */
+  uuid?: string;
   /** Product model byte. */
   model: number;
   /** The device's public key, hexadecimal. Not a secret. */
