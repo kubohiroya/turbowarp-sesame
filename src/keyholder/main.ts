@@ -191,8 +191,24 @@ function wire(): void {
   });
 }
 
+/**
+ * Registers the service worker that caches this page.
+ *
+ * Without it, a host that is down or unreachable means a lock that cannot be
+ * opened, even though Bluetooth itself needs no network. Registration failing
+ * is not an error worth showing: the page works, it just needs the network
+ * each time.
+ */
+function cacheThisPage(): void {
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(() => {
+    // Private windows, blocked site data, and insecure origins all land here.
+  });
+}
+
 async function start(): Promise<void> {
   wire();
+  cacheThisPage();
   const passkeys = isWebAuthnAvailable();
   const checkbox = element<HTMLInputElement>("use-passkey");
   checkbox.checked = passkeys;

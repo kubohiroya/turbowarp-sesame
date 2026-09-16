@@ -82,14 +82,41 @@ keyholderは、そこでペアリングしたすべての鍵のdevice secretを�
 Cloudflare Pages / Netlify 向けの`_headers`（サイトのルートに配置）:
 
 ```text
-/*
+/
   Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'
   Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains
   Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff
   Cross-Origin-Opener-Policy: same-origin
+
+/index.html
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'
+  Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  Cross-Origin-Opener-Policy: same-origin
+
+/keyholder.js
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'
+  Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  Cross-Origin-Opener-Policy: same-origin
+
+/sw.js
+  Content-Security-Policy: default-src 'none'; script-src 'self'; connect-src 'self'
+  Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  Cross-Origin-Opener-Policy: same-origin
+  Service-Worker-Allowed: /
 ```
+
+`/*`でまとめず1パスずつ列挙しているのは、**Service Workerだけ他と違うポリシーを必要とする**からです。同じヘッダーを設定する2つのルールがマッチしたときの合成のしかたはホストによって異なるため、各パスを列挙してその挙動に依存しないようにしています。
 
 各行の意図:
 
@@ -98,6 +125,7 @@ Cloudflare Pages / Netlify 向けの`_headers`（サイトのルートに配置�
 - **`style-src 'unsafe-inline'`**が必要なのは`index.html`が`<style>`ブロックを持つからだけです。CSSをファイルへ切り出して落とすのは、やる価値のある引き締めです
 - **`camera=(self)`**はペアリングが行われる最上位ページでカメラを許可します。埋め込み時に誤って有効化することはありません。クロスオリジンframeでは親が`allow="camera"`を付与する必要があり、TurboWarpはそれをしないからです
 - **`bluetooth=()`**は、keyholderがBluetoothに一切触れないことを宣言します。それはTurboWarpページの仕事です
+- **`connect-src 'self'`は`/sw.js`だけ。** ページ本体はネットワークへ一切到達してはなりませんが、Service Workerはキャッシュする2ファイルをfetchする必要があります。専用のポリシーを与えることで、この例外を必要とする1スクリプトに閉じ込め、ページ側を開かずに済ませています
 
 `Cross-Origin-Embedder-Policy`は設定しないでください。ここでは不要で、埋め込みを壊します。
 
@@ -128,6 +156,19 @@ server {
     add_header Cross-Origin-Opener-Policy "same-origin" always;
 
     location / { try_files $uri $uri/ =404; }
+
+    # Service Workerはキャッシュ対象のファイルをfetchする必要があるため、
+    # 専用のポリシーを与える。全ヘッダーを意図的に書き直している。
+    # locationブロック内のadd_headerは、serverブロックからの継承を破棄するため。
+    location = /sw.js {
+        add_header Content-Security-Policy "default-src 'none'; script-src 'self'; connect-src 'self'" always;
+    add_header Permissions-Policy "camera=(self), bluetooth=(), geolocation=(), microphone=()" always;
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Cross-Origin-Opener-Policy "same-origin" always;
+        add_header Service-Worker-Allowed "/" always;
+    }
 }
 
 server {
@@ -137,7 +178,7 @@ server {
 }
 ```
 
-**`location`ブロックの中に`add_header`を1つでも書くと、serverブロックから継承した`add_header`がすべて消えます。** `location /`はこのままにしてください。もし何か足すなら、全ヘッダーをそこにも書き直すことになります。`always`はエラーレスポンスにもヘッダーを付けるために必要です。
+**`location`ブロックの中に`add_header`を1つでも書くと、serverブロックから継承した`add_header`がすべて消えます。** 上の`/sw.js`ブロックが全ヘッダーを書き直しているのはそのためです。`location /`はそのままにし、もしそこに何か足すなら全ヘッダーを書き直してください。`always`はエラーレスポンスにもヘッダーを付けるために必要です。
 
 ### Apache
 
@@ -158,6 +199,14 @@ server {
     Header always set Referrer-Policy "no-referrer"
     Header always set X-Content-Type-Options "nosniff"
     Header always set Cross-Origin-Opener-Policy "same-origin"
+
+    # Service Workerはキャッシュ対象のファイルをfetchする必要があるため、
+    # 専用のポリシーを与える。Header always set は指定した名前のヘッダーだけを
+    # 置き換える。
+    <Files "sw.js">
+        Header always set Content-Security-Policy "default-src 'none'; script-src 'self'; connect-src 'self'"
+        Header always set Service-Worker-Allowed "/"
+    </Files>
 
     <Directory /var/www/sesame-keyholder>
         Require all granted
@@ -185,7 +234,7 @@ certbotは自前の更新タイマーを入れます。`systemctl list-timers | 
 
 **到達性。** ブラウザは、**その錠前を使う場所から**keyholderへ到達できなければなりません。組織の内部からしか到達できないサーバーでは、自宅から開けたい錠前には使えません。最初に確認してください。ここを見落とすと最も時間を無駄にします。
 
-**可用性が「ドアを開けられること」の前提条件になります。** Bluetoothセッションは、keyholderが読み込まれるまで始まりません。Bluetooth自体はネットワークに触れませんが、ページは触れます。計画停止や再起動が、そのまま鍵操作の停止になります。**keyholderにService Workerを持たせる価値は、ここが最も高くなります** — 一度キャッシュされればサーバー停止中でも読み込めます。
+**可用性が「ドアを開けられること」の前提条件になります。** Bluetoothセッションは、keyholderが読み込まれるまで始まりません。Bluetooth自体はネットワークに触れませんが、ページは触れます。計画停止や再起動が、そのまま鍵操作の停止になりかねません — それを防ぐためにService Workerがあります。`sw.js`として同梱され、初回訪問時に自分を登録します。以降はページがディスクから読み込まれ、サーバーの停止が問題でなくなります。他の2ファイルと一緒にデプロイし、上のヘッダー規則を与えてください。
 
 **名前の継続性。** 組織や勤務先のホスト名は、あなたの所有物ではありません。それが無くなれば保存済みの鍵もすべて失われます。さらに悪いことに、**後から別の誰かがそのホスト名を引き継いで別のサイトを立てると、その相手のページがあなたの保存済みsecretと同じoriginで動きます。** そのホストを運用から外すときは、名前が単に引き継がれないようにしてください。自分が持つドメインからの`CNAME`にしておけば、この問題全体を回避できます。
 
@@ -203,7 +252,7 @@ pnpm run build
 rsync -av --delete docs/keyholder/ user@server:/var/www/sesame-keyholder/
 ```
 
-**そのディレクトリに他のものを置かないでください。** その空白が境界の実体です。
+コピーされるのは3ファイルです。`index.html`、`keyholder.js`、そしてService Workerの`sw.js`。**そのディレクトリに他のものを置かないでください** — その空白が境界の実体です。
 
 ビルドは決定的で、両ファイルともコミットされています。したがって誰でもこのリポジトリをcloneし、`pnpm run build`を実行して、あなたが配信しているものと突き合わせられます。**自分で管理するハッシュを公開するより強い完全性の担保**であり、追加の仕組みを必要としません。
 
@@ -233,6 +282,9 @@ curl -sI https://keyholder.example.org/ | grep -iE 'content-security-policy|perm
 curl -sI https://keyholder.example.org/ | grep -i content-type            # text/html
 curl -sI https://keyholder.example.org/keyholder.js | grep -i content-type # text/javascript
 
+# Service Workerが配信され、fetchを許すポリシーが付いているか
+curl -sI https://keyholder.example.org/sw.js | grep -iE 'content-type|content-security-policy'
+
 # 平文HTTPが何も配信せずリダイレクトするか
 curl -sI http://keyholder.example.org/ | head -1
 
@@ -248,6 +300,7 @@ curl -s https://keyholder.example.org/ | grep -qi '<title>Sesame keyholder' && e
 - スタンドアロンSB3をTurboWarpで開いて接続する。iframeが読み込まれ、セッションが始まること
 - DevToolsのネットワークパネルを開いたまま1セッション通して使う。**初回読み込み以降、リクエストが1件も出ないこと。** ブロックされたリクエストはCSP違反として現れ、何かが外部通信を始めた合図になります
 - 任意の別ページに`<iframe src="https://keyholder.example.org/">`を置く。**拒否されること。** 表示されるなら`frame-ancestors`が効いていません
+- DevToolsのApplication → Service Workersを確認する。workerが1つactivatedで、`sesame-keyholder-<digest>`という名前のキャッシュに2件入っていること。続いて「Offline」にチェックしてリロードする。**ページが読み込まれること。** 読み込まれないならworkerがインストールされていません。原因はたいてい`/sw.js`のヘッダー規則です
 
 ## 運用
 
@@ -257,7 +310,11 @@ curl -s https://keyholder.example.org/ | grep -qi '<title>Sesame keyholder' && e
 
 **証明書の失効はアプリを停止させます。** iframeの読み込みが失敗し、すべてのセッションが道連れになります。自動更新し、「更新されたはず」と信じるのではなく証明書を監視してください。
 
-**keyholderの更新**は2ファイルの再デプロイです。保存済みの鍵は残ります。ラップ済みsecretはそのoriginのIndexedDBにあり、originは変わっていないからです。デプロイ済みファイルを直接編集せず、このリポジトリから再ビルドしてください。
+**keyholderの更新**は3ファイルの再デプロイです。保存済みの鍵は残ります。ラップ済みsecretはそのoriginのIndexedDBにあり、originは変わっていないからです。デプロイ済みファイルを直接編集せず、このリポジトリから再ビルドしてください。
+
+**`sw.js`はキャッシュ対象のファイルと必ず一緒にデプロイしてください。** キャッシュ名はその2ファイルのダイジェストなので、ビルドが変われば別のworkerになります。ブラウザは新しいスクリプトを取得し、インストールし、前のキャッシュを破棄して引き継ぎます。手でバージョンを上げる必要はなく、古いkeyholderがデプロイ後も生き残ることはありません。逆に**ページだけ更新してworkerを置き換えないと、訪問者はworkerが変わるまで古いキャッシュに固定されます。** 3ファイルの一部だけをコピーしないでください。
+
+Service Workerは、鍵を保持するoriginに常駐するコードです。そのoriginを既に制御している者以外はインストールできないので**新しい侵入口にはなりません**が、**永続性が加わります**。このoriginが侵害された場合に何を意味するかを考えるときに、知っておく価値があります。解除はApplication → Service Workers → Unregister、または`self.registration.unregister()`を呼ぶ`sw.js`を配信することで行えます。
 
 ## 復旧と失効
 
@@ -291,6 +348,7 @@ curl -s https://keyholder.example.org/ | grep -qi '<title>Sesame keyholder' && e
 - [ ] `frame-ancestors`にkeyholderを埋め込むoriginだけが列挙されている
 - [ ] 列挙外のoriginからの埋め込みが失敗することを確認済み
 - [ ] 読み込み後にネットワークリクエストが無いことをDevToolsで確認済み
+- [ ] Service Workerがインストールされ、DevToolsのofflineでもページが読み込まれることを確認済み
 - [ ] 実際に錠前を使う場所から到達できる
 - [ ] `KEYHOLDER_URL`を`src/block-definitions.json`、`app/project.source.json`、README 2本で更新済み
 - [ ] `pnpm run check`が通り、再ビルドした成果物をコミット済み

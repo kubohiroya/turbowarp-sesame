@@ -116,14 +116,44 @@ The same policy in three formats. Use whichever your host takes.
 `_headers`, for Cloudflare Pages and Netlify, at the site root:
 
 ```text
-/*
+/
   Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'
   Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains
   Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff
   Cross-Origin-Opener-Policy: same-origin
+
+/index.html
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'
+  Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  Cross-Origin-Opener-Policy: same-origin
+
+/keyholder.js
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'
+  Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  Cross-Origin-Opener-Policy: same-origin
+
+/sw.js
+  Content-Security-Policy: default-src 'none'; script-src 'self'; connect-src 'self'
+  Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  Cross-Origin-Opener-Policy: same-origin
+  Service-Worker-Allowed: /
 ```
+
+Paths are listed one by one rather than as `/*` because **the service worker
+needs a different policy from everything else**, and hosts differ in how they
+combine two rules that both set the same header. Listing each path avoids
+relying on that behaviour.
 
 What each line is doing:
 
@@ -142,6 +172,10 @@ What each line is doing:
   TurboWarp does not.
 - **`bluetooth=()`** states that the keyholder never touches Bluetooth. That is
   the TurboWarp page's job.
+- **`connect-src 'self'` on `/sw.js` only.** The page itself must reach no
+  network at all, but the service worker has to fetch the two files it caches.
+  Giving it its own policy keeps that exception to the one script that needs
+  it, rather than opening the page up.
 
 Do not set `Cross-Origin-Embedder-Policy`: it is unnecessary here and breaks
 embedding.
@@ -176,6 +210,19 @@ server {
     add_header Cross-Origin-Opener-Policy "same-origin" always;
 
     location / { try_files $uri $uri/ =404; }
+
+    # The service worker needs to fetch the files it caches, so it gets its own
+    # policy. Every header is repeated here on purpose: an add_header in a
+    # location block discards the ones inherited from the server block.
+    location = /sw.js {
+        add_header Content-Security-Policy "default-src 'none'; script-src 'self'; connect-src 'self'" always;
+    add_header Permissions-Policy "camera=(self), bluetooth=(), geolocation=(), microphone=()" always;
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Cross-Origin-Opener-Policy "same-origin" always;
+        add_header Service-Worker-Allowed "/" always;
+    }
 }
 
 server {
@@ -186,9 +233,10 @@ server {
 ```
 
 **An `add_header` inside a `location` block discards every `add_header`
-inherited from the server block.** Leave `location /` as it is; if you ever add
-one there, repeat the whole set. `always` is what sends the headers on error
-responses too.
+inherited from the server block.** That is why the `/sw.js` block above repeats
+all of them; leave `location /` alone, and if you ever add a header there,
+repeat the whole set. `always` is what sends the headers on error responses
+too.
 
 ### Apache
 
@@ -209,6 +257,13 @@ Needs `a2enmod headers`.
     Header always set Referrer-Policy "no-referrer"
     Header always set X-Content-Type-Options "nosniff"
     Header always set Cross-Origin-Opener-Policy "same-origin"
+
+    # The service worker needs to fetch the files it caches, so it gets its
+    # own policy. `Header always set` replaces only the named header.
+    <Files "sw.js">
+        Header always set Content-Security-Policy "default-src 'none'; script-src 'self'; connect-src 'self'"
+        Header always set Service-Worker-Allowed "/"
+    </Files>
 
     <Directory /var/www/sesame-keyholder>
         Require all granted
@@ -244,9 +299,11 @@ that wastes the most time.
 
 **Availability becomes a precondition for opening the door.** A Bluetooth
 session cannot start until the keyholder has loaded. Bluetooth itself never
-touches the network, but the page does. Planned maintenance and reboots become
-outages of your lock control. **Giving the keyholder a service worker matters
-more here than anywhere else**: once cached, it loads with the server down.
+touches the network, but the page does. Planned maintenance and reboots would
+become outages of your lock control — which is what the service worker exists
+to prevent. It ships as `sw.js` and registers itself on first visit; after that
+the page loads from disk and the server being down stops mattering. Deploy it
+alongside the other two files and give it the header rule above.
 
 **Name continuity.** An institutional or employer hostname is not yours. If it
 goes away, so do all the stored keys — and worse, if someone else later takes
@@ -272,7 +329,8 @@ key into it.
 rsync -av --delete docs/keyholder/ user@server:/var/www/sesame-keyholder/
 ```
 
-Put nothing else in that directory. That emptiness is the boundary.
+That copies three files: `index.html`, `keyholder.js`, and the service worker
+`sw.js`. Put nothing else in that directory — that emptiness is the boundary.
 
 The build is deterministic and both files are committed, so anyone can clone
 this repository, run `pnpm run build`, and compare their output with what you
@@ -310,6 +368,9 @@ curl -sI https://keyholder.example.org/ | grep -iE 'content-security-policy|perm
 curl -sI https://keyholder.example.org/ | grep -i content-type            # text/html
 curl -sI https://keyholder.example.org/keyholder.js | grep -i content-type # text/javascript
 
+# The service worker is served, and with the policy that lets it fetch.
+curl -sI https://keyholder.example.org/sw.js | grep -iE 'content-type|content-security-policy'
+
 # Plain HTTP redirects rather than serving anything.
 curl -sI http://keyholder.example.org/ | head -1
 
@@ -331,6 +392,10 @@ Then in a browser:
   violation, which is the signal that something started phoning home.
 - Put `<iframe src="https://keyholder.example.org/">` on any other page. It
   should be refused. If it renders, `frame-ancestors` is not being applied.
+- In DevTools, check Application → Service Workers: one worker, activated, with
+  a cache named `sesame-keyholder-<digest>` holding two entries. Then tick
+  "Offline" and reload. **The page should still load.** If it does not, the
+  worker did not install — usually the `/sw.js` header rule.
 
 ## Operating it
 
@@ -349,10 +414,24 @@ Put the expiry or review date somewhere a person will see it.
 session fails with it. Renew automatically and monitor the certificate rather
 than trusting that it renewed.
 
-**Updating the keyholder** is a redeploy of two files. Stored keys survive: they
-are in IndexedDB on that origin, and the origin has not changed. Rebuild from
-this repository rather than editing deployed files, so the deployed copy stays
-reproducible.
+**Updating the keyholder** is a redeploy of three files. Stored keys survive:
+they are in IndexedDB on that origin, and the origin has not changed. Rebuild
+from this repository rather than editing deployed files, so the deployed copy
+stays reproducible.
+
+**Deploy `sw.js` together with the files it caches.** Its cache name is a digest
+of those exact files, so a new build is a new worker: browsers fetch the new
+script, install it, discard the previous cache, and take over. Nothing needs
+bumping by hand and a stale keyholder cannot outlive a deploy. Deploying the
+page without the worker, though, leaves visitors pinned to the cached old copy
+until the worker changes — so never copy only some of the three.
+
+A service worker is persistent code on the origin that holds your keys. It
+cannot be installed by anyone who does not already control the origin, so it
+adds no new way in; what it adds is persistence, which is worth knowing when
+you think about what a compromise of this origin would mean. Unregistering it
+is a matter of Application → Service Workers → Unregister, or serving a `sw.js`
+that calls `self.registration.unregister()`.
 
 ## Recovery and revocation
 
@@ -394,6 +473,7 @@ removing the device is the certain answer.
 - [ ] `frame-ancestors` lists only the origins that embed the keyholder
 - [ ] Embedding from an unlisted origin confirmed to fail
 - [ ] No network requests after load, confirmed in DevTools
+- [ ] Service worker installed, and the page still loads with DevTools offline
 - [ ] Reachable from wherever the lock is actually used
 - [ ] `KEYHOLDER_URL` updated in `src/block-definitions.json`, `app/project.source.json`, and both READMEs
 - [ ] `pnpm run check` passes and the rebuilt artifacts are committed

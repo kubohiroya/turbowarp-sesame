@@ -45,8 +45,8 @@
   "scripts": {
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit",
-    "build": "vite build && vite build --config vite.keyholder.config.ts && vite build --config vite.app.config.ts && node scripts/build-sb3.mjs",
-    "lint": "eslint src tests vite.config.ts vite.keyholder.config.ts vite.app.config.ts",
+    "build": "vite build && vite build --config vite.keyholder.config.ts && vite build --config vite.keyholder-sw.config.ts && vite build --config vite.app.config.ts && node scripts/build-sb3.mjs",
+    "lint": "eslint src tests vite.config.ts vite.keyholder.config.ts vite.keyholder-sw.config.ts vite.app.config.ts",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "test": "vitest run",

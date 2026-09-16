@@ -702,12 +702,15 @@ function De() {
 		Y("passphrase-row").hidden = Y("use-passkey").checked;
 	});
 }
-async function Oe() {
-	De();
+function Oe() {
+	"serviceWorker" in navigator && navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(() => {});
+}
+async function ke() {
+	De(), Oe();
 	let e = u(), t = Y("use-passkey");
 	t.checked = e, t.disabled = !e, Y("passphrase-row").hidden = e, Y("no-passkeys").hidden = e, Y("scan").hidden = !await _(), Y("no-camera").hidden = !Y("scan").hidden, await Q(), X("Ready.");
 }
-Oe().catch((e) => {
+ke().catch((e) => {
 	X(e instanceof Error ? e.message : String(e), "error");
 });
 //#endregion
