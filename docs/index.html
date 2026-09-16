@@ -32,9 +32,33 @@
       mode for the Candy House Sesame Web API.
     </p>
 
-    <h2>Setup</h2>
+    <h2>Bluetooth mode</h2>
     <ol>
-      <li>Start <code>@kubohiroya/capability-proxy</code> on localhost.</li>
+      <li>
+        Load <code>dist/turbowarp-sesame.js</code> with
+        <strong>Run extension without sandbox</strong> enabled, in Chrome or
+        Edge on desktop or Android.
+      </li>
+      <li>Configure the keyholder URL and a device alias.</li>
+      <li>
+        Pair by scanning an <strong>owner or manager</strong> sharing QR code
+        from the sesame app. Guest codes withhold half of the secret and cannot
+        work over Bluetooth.
+      </li>
+      <li>
+        Run the connect block straight after a click: the browser's device
+        chooser needs a recent user gesture.
+      </li>
+    </ol>
+    <p>
+      The device secret never reaches TurboWarp. It stays in the keyholder page
+      on its own origin, which seals every frame before the extension writes it
+      to the lock.
+    </p>
+
+    <h2>Relay setup</h2>
+    <ol>
+      <li>Start <code>@kubohiroya/keybroker</code> on localhost.</li>
       <li>
         Load <code>dist/turbowarp-sesame.js</code> with
         <strong>Run extension without sandbox</strong> enabled. Browsers can

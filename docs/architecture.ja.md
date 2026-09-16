@@ -8,7 +8,9 @@ Direct modeはTurboWarpのsandbox内で動作します。Relay modeはブラウ�
 
 ```text
 Direct: TurboWarp -> SesameClient -> Candy House API
-Relay:  TurboWarp -> RelayClient -> 127.0.0.1 Capability Proxy -> Candy House API
+Relay:  TurboWarp -> RelayClient -> 127.0.0.1 keybroker -> Candy House API
+BLE:    TurboWarp -> SesameBleTransport -> GATT -> Sesame
+                 \-> keyholder iframe (own origin) holds the key and seals frames
 ```
 
 Direct modeでは認証情報を機能拡張instance上だけに保持します。Relay modeではAPIキー、UUID、secretをTurboWarpへ渡さず、endpoint、デバイス別名、ペアリング後のtokenだけを保持します。tokenはstorageへ保存せず、機能拡張の再読込で失効します。`RelayClient`はHTTPのloopback originだけを許可し、外部hostへtokenを送信しません。
@@ -47,3 +49,11 @@ v1契約は次の情報を含みます。
 ## 差分の検出
 
 `dist/`はリリース成果物としてコミットされます。`pnpm run check:dist`は両方のファイルを再ビルドし、`dist/`配下に変更、削除、未追跡ファイルがある場合に失敗します。これにより、ローカル検証とCIの両方でmanifestとバンドルの差分を検出できます。
+
+## 運用
+
+- [keyholderのホスティング](keyholder-hosting.ja.md)
+
+## 決定記録
+
+- [ADR 0001: BLE transportとブラウザ側の鍵保管](adr/0001-ble-transport-and-key-custody.ja.md) — Proposed

@@ -14,11 +14,14 @@ provider credentials out of TurboWarp projects.
 - Retrieves recent Sesame history as JSON.
 - Can request lock, unlock, and toggle operations in a build where the safety flag is enabled.
 - Reports configuration and API failures through a block instead of stopping the project.
-- Pairs with `@kubohiroya/capability-proxy` using a short-lived one-time code.
+- Pairs with `@kubohiroya/keybroker` using a short-lived one-time code.
+- Controls the lock directly over Bluetooth LE, with no cloud and no WiFi Module 2.
+- Runs a hat block when the lock reports that it moved, which only Bluetooth can report.
 
 ## Requirements and safety
 
-- Recommended: a localhost `@kubohiroya/capability-proxy`, a device alias, and its one-time code.
+- Recommended for Bluetooth: Chrome or Edge on desktop or Android, and an owner or manager sharing QR code.
+- Recommended for the cloud: a localhost `@kubohiroya/keybroker`, a device alias, and its one-time code.
 - Direct mode: a Candy House API key, Sesame UUID, and 32-character hexadecimal secret key.
 - A Sesame device reachable through the Candy House cloud, such as through WiFi Module 2.
 - A browser with `fetch`, `TextEncoder`, and Web Crypto AES-CBC support.
@@ -54,7 +57,7 @@ node_modules/@kubohiroya/turbowarp-sesame/dist/turbowarp-sesame.js
 
 ## Relay mode (recommended)
 
-1. Start [`@kubohiroya/capability-proxy`](https://github.com/kubohiroya/capability-proxy) on localhost.
+1. Start [`@kubohiroya/keybroker`](https://github.com/kubohiroya/keybroker) on localhost.
 2. Load the custom extension with **Run extension without sandbox** enabled. Chrome and other browsers can deny localhost access from TurboWarp's sandbox iframe.
 3. Configure its endpoint and the device alias defined in the Relay configuration.
 4. Enter the eight-digit code printed by the Relay into the pairing block.
@@ -69,6 +72,72 @@ clear Sesame connection
 
 The endpoint and alias are not secrets. The pairing code works once within five minutes, and the
 resulting token is never written to a block or `.sb3` file.
+
+## Standalone app (`turbowarp-sesame-app.sb3`)
+
+One file, no server, no extension to load by hand.
+
+1. Download
+   [`dist/turbowarp-sesame-app.sb3`](dist/turbowarp-sesame-app.sb3?raw=1).
+2. Open it at [turbowarp.org](https://turbowarp.org). The extension travels
+   inside the file as a `data:` URL, so nothing is fetched.
+3. When TurboWarp asks whether to load the custom extension, **tick "run
+   without sandbox"** and allow it. Web Bluetooth is unavailable inside the
+   sandbox, and TurboWarp remembers the choice.
+4. Open the keyholder page and pair an owner or manager key.
+5. Back in the project: SPACE connects, L locks, U unlocks.
+
+> [!IMPORTANT]
+> This build has lock control **enabled**, unlike
+> `dist/turbowarp-sesame.js`, which keeps it off. That is the only difference
+> between the two: the extension ID and every opcode are identical, so a
+> project works with either.
+>
+> The file still cannot open anything on its own. It holds no device secret,
+> no API key, and no token. Control requires pairing a sharing QR code in the
+> keyholder, on its own origin, behind a passkey or passphrase — and being
+> within Bluetooth range of the lock.
+
+`scripts/build-sb3.mjs` fails the build if any credential appears in the file,
+and `tests/app-sb3.test.ts` checks the same properties on the built artifact.
+
+Use the web version rather than TurboWarp Desktop: Electron needs its own
+Bluetooth device-chooser handling, which the desktop app does not provide.
+
+## Bluetooth mode
+
+Talks to the lock directly. No Candy House cloud, no WiFi Module 2, and genuine
+mechanical state instead of a cloud acknowledgement.
+
+```text
+configure Bluetooth keyholder [https://.../keyholder/] device alias [front-door]
+pair Sesame by scanning its sharing QR code
+connect to Sesame over Bluetooth
+when the Sesame state changes
+say (Sesame status [CHSesame2Status])
+```
+
+The device secret never reaches TurboWarp. It lives in the keyholder page on its
+own origin, which seals every frame before this extension writes it to the lock.
+The page is in [`docs/keyholder/`](docs/keyholder/) and contacts no server;
+pairing and unlocking happen entirely in the browser. See
+[ADR 0001](docs/adr/0001-ble-transport-and-key-custody.md).
+
+Notes:
+
+- Requires **Run extension without sandbox**, and Chrome or Edge on desktop or
+  Android. Safari, Firefox, and iOS have no Web Bluetooth; use Relay mode there.
+- Run `connect to Sesame over Bluetooth` straight after a click. The browser's
+  device chooser needs a recent user gesture.
+- Share an **owner or manager** key. A guest key has half of its secret withheld
+  by the server and cannot open a Bluetooth session at all.
+- History is unavailable over Bluetooth, which has no paginated history.
+- Keys are kept in one browser profile on the keyholder's origin. Clearing site
+  data erases them, and they do not sync between devices.
+- Host the keyholder on a domain of its own where you can. On a shared host such
+  as `*.github.io`, every other page on that host shares the origin, and no
+  response headers can be set so any site may embed it. See
+  [Hosting the keyholder](docs/keyholder-hosting.md).
 
 ## Direct mode
 
@@ -96,7 +165,7 @@ Selects Direct mode and keeps the Candy House credentials in memory until they a
 
 ### `configure local Relay [ENDPOINT] device alias [DEVICE_ALIAS]`
 
-Selects Relay mode for a localhost Capability Proxy without storing Candy House credentials in the project.
+Selects Relay mode for a localhost keybroker without storing Candy House credentials in the project.
 
 | Property       | Value                                    |
 | -------------- | ---------------------------------------- |
@@ -114,6 +183,53 @@ Exchanges an eight-digit one-time code for a Relay token held only in extension 
 | Type     | Command                     |
 | Opcode   | `pairRelay`                 |
 | `CODE`   | String, default: `00000000` |
+
+### `configure Bluetooth keyholder [KEYHOLDER_URL] device alias [DEVICE_ALIAS]`
+
+Selects Bluetooth mode. The keyholder page holds the device secret on its own origin, so no credential is stored in the project.
+
+| Property        | Value                                                                       |
+| --------------- | --------------------------------------------------------------------------- |
+| Type            | Command                                                                     |
+| Opcode          | `configureBluetooth`                                                        |
+| `KEYHOLDER_URL` | String, default: `https://kubohiroya.github.io/turbowarp-sesame/keyholder/` |
+| `DEVICE_ALIAS`  | String, default: `front-door`                                               |
+
+### `pair Sesame by scanning its sharing QR code`
+
+Opens the keyholder so it can scan an owner or manager sharing QR code from the sesame app. Guest codes cannot work over Bluetooth.
+
+| Property | Value           |
+| -------- | --------------- |
+| Type     | Command         |
+| Opcode   | `pairBluetooth` |
+
+### `connect to Sesame over Bluetooth`
+
+Opens the browser's device chooser and logs in. Run this straight after a click, because the chooser needs a recent user gesture.
+
+| Property | Value              |
+| -------- | ------------------ |
+| Type     | Command            |
+| Opcode   | `connectBluetooth` |
+
+### `Sesame Bluetooth connected?`
+
+Reports whether a Bluetooth session is logged in and usable.
+
+| Property | Value                |
+| -------- | -------------------- |
+| Type     | Boolean              |
+| Opcode   | `bluetoothConnected` |
+
+### `when the Sesame state changes`
+
+Runs when the lock reports that it moved. Only Bluetooth reports this; the cloud modes cannot.
+
+| Property | Value              |
+| -------- | ------------------ |
+| Type     | Hat                |
+| Opcode   | `whenStateChanges` |
 
 ### `clear Sesame connection`
 

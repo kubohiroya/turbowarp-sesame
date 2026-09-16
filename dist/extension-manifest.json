@@ -3,6 +3,11 @@
   "id": "kubohiroyasesame",
   "blocks": [
     {
+      "opcode": "bluetoothConnected",
+      "blockType": "BOOLEAN",
+      "arguments": []
+    },
+    {
       "opcode": "clearCredentials",
       "blockType": "COMMAND",
       "arguments": []
@@ -31,6 +36,20 @@
       ]
     },
     {
+      "opcode": "configureBluetooth",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "DEVICE_ALIAS",
+          "type": "STRING"
+        },
+        {
+          "id": "KEYHOLDER_URL",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
       "opcode": "configureRelay",
       "blockType": "COMMAND",
       "arguments": [
@@ -43,6 +62,11 @@
           "type": "STRING"
         }
       ]
+    },
+    {
+      "opcode": "connectBluetooth",
+      "blockType": "COMMAND",
+      "arguments": []
     },
     {
       "opcode": "connectionMode",
@@ -85,6 +109,11 @@
       "arguments": []
     },
     {
+      "opcode": "pairBluetooth",
+      "blockType": "COMMAND",
+      "arguments": []
+    },
+    {
       "opcode": "pairRelay",
       "blockType": "COMMAND",
       "arguments": [
@@ -113,6 +142,11 @@
           "type": "STRING"
         }
       ]
+    },
+    {
+      "opcode": "whenStateChanges",
+      "blockType": "HAT",
+      "arguments": []
     }
   ],
   "menus": [

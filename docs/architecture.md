@@ -12,7 +12,9 @@ configuration inside the sandbox before contacting localhost. Both modes impleme
 
 ```text
 Direct: TurboWarp -> SesameClient -> Candy House API
-Relay:  TurboWarp -> RelayClient -> 127.0.0.1 Capability Proxy -> Candy House API
+Relay:  TurboWarp -> RelayClient -> 127.0.0.1 keybroker -> Candy House API
+BLE:    TurboWarp -> SesameBleTransport -> GATT -> Sesame
+                 \-> keyholder iframe (own origin) holds the key and seals frames
 ```
 
 Direct credentials live only on the extension instance. Relay mode never receives the provider API
@@ -63,3 +65,11 @@ changes from documentation or localization changes.
 `dist/` is committed as a release artifact. `pnpm run check:dist` rebuilds both files and fails when
 Git reports any modified, deleted, or untracked file below `dist/`. This catches manifest and bundle
 drift in local checks and CI.
+
+## Operations
+
+- [Hosting the keyholder](keyholder-hosting.md)
+
+## Decision records
+
+- [ADR 0001: BLE transport and browser-side key custody](adr/0001-ble-transport-and-key-custody.md) — Proposed

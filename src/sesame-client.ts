@@ -1,4 +1,5 @@
 import { aesCmac, sesameTimestampMessage } from "./aes-cmac.js";
+import type { SesameTransport, TransportCapability } from "./transport.js";
 
 const API_BASE_URL = "https://app.candyhouse.co/api/sesame2";
 const UUID_PATTERN =
@@ -18,13 +19,21 @@ export type FetchLike = (
   init?: RequestInit,
 ) => Promise<Response>;
 
-export class SesameClient {
+const CLOUD_CAPABILITIES: ReadonlySet<TransportCapability> = new Set([
+  "history",
+]);
+
+export class SesameClient implements SesameTransport {
   public constructor(
     private readonly credentials: SesameCredentials,
     private readonly fetcher: FetchLike = fetch,
     private readonly now: () => number = Date.now,
   ) {
     validateCredentials(credentials);
+  }
+
+  public capabilities(): ReadonlySet<TransportCapability> {
+    return CLOUD_CAPABILITIES;
   }
 
   public async getStatus(): Promise<Record<string, unknown>> {

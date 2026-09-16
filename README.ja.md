@@ -12,11 +12,14 @@ Candy House Sesameの状態確認と、明示的に有効化したbuildでの遠
 - Sesame履歴のJSON形式での取得
 - 安全フラグを有効にしたbuildでの施錠、解錠、トグル要求
 - 設定／APIエラーをプロジェクトを停止させずブロックから確認
-- `@kubohiroya/capability-proxy`とのワンタイムコードによるローカルペアリング
+- `@kubohiroya/keybroker`とのワンタイムコードによるローカルペアリング
+- Bluetooth LEによる直接制御。クラウドもWiFi Module 2も不要
+- 鍵が動いたことを機器が報告したときに動くハットブロック。これはBluetoothでしか得られません
 
 ## 動作条件と安全上の注意
 
-- 推奨: localhostで起動した`@kubohiroya/capability-proxy`、デバイス別名、起動時のワンタイムコード
+- Bluetooth modeの推奨環境: desktopまたはAndroidのChromeかEdge、オーナー鍵またはマネージャー鍵の共有QRコード
+- クラウド経由の推奨環境: localhostで起動した`@kubohiroya/keybroker`、デバイス別名、起動時のワンタイムコード
 - Direct mode: Candy HouseのAPIキー、Sesame UUID、32文字の16進数秘密鍵
 - WiFi Module 2などを通してCandy Houseクラウドから到達できるSesame
 - `fetch`、`TextEncoder`、Web Crypto AES-CBCに対応するブラウザ
@@ -36,7 +39,7 @@ Candy House Sesameの状態確認と、明示的に有効化したbuildでの遠
 
 ## Relay mode（推奨）
 
-1. [`@kubohiroya/capability-proxy`](https://github.com/kubohiroya/capability-proxy)をlocalhostで起動します。
+1. [`@kubohiroya/keybroker`](https://github.com/kubohiroya/keybroker)をlocalhostで起動します。
 2. カスタム機能拡張を「サンドボックスなしで実行」を有効にして読み込みます。ChromeなどはTurboWarpのsandbox iframeからlocalhostへの通信を許可しないためです。
 3. `configure local Relay ...`でendpointとRelay設定内のデバイス別名を指定します。
 4. Relayの標準出力に表示された8桁コードを`pair local Relay ...`へ入力します。
@@ -50,6 +53,48 @@ clear Sesame connection
 ```
 
 endpointとデバイス別名は秘密ではありません。8桁コードは5分以内に一度だけ利用でき、交換後に受け取るRelay tokenはブロックや`.sb3`へ保存されません。
+
+## スタンドアロンアプリ（`turbowarp-sesame-app.sb3`）
+
+ファイル1個。サーバー不要、機能拡張の手動読み込みも不要です。
+
+1. [`dist/turbowarp-sesame-app.sb3`](dist/turbowarp-sesame-app.sb3?raw=1)をダウンロードします。
+2. [turbowarp.org](https://turbowarp.org)で開きます。機能拡張は`data:` URLとしてファイルの中を一緒に運ばれるため、何も取得しません。
+3. カスタム機能拡張を読み込むか尋ねられたら、**「サンドボックスなしで実行」にチェックして**許可します。sandbox内ではWeb Bluetoothが使えないためです。この選択はTurboWarpが記憶します。
+4. keyholderページを開き、オーナー鍵かマネージャー鍵をペアリングします。
+5. プロジェクトに戻り、SPACEで接続、Lで施錠、Uで解錠します。
+
+> [!IMPORTANT]
+> このbuildは遠隔操作を**有効**にしています。`dist/turbowarp-sesame.js`は無効のままです。両者の違いはこれだけで、機能拡張IDとすべてのopcodeは同一なので、プロジェクトはどちらでも動きます。
+>
+> それでもこのファイル単体では何も開けません。device secretもAPIキーもtokenも含みません。操作するには、keyholder（独自のorigin）でパスキーまたはパスフレーズの背後に共有QRコードをペアリングし、かつ鍵のBluetooth圏内にいる必要があります。
+
+`scripts/build-sb3.mjs`はファイル内に資格情報が現れるとbuildを失敗させ、`tests/app-sb3.test.ts`が生成物に対して同じ性質を検査します。
+
+TurboWarp Desktopではなくウェブ版を使ってください。ElectronはBluetoothのデバイス選択を独自に実装する必要があり、desktop版はそれを提供していません。
+
+## Bluetooth mode
+
+機器と直接通信します。Candy Houseのクラウドも WiFi Module 2 も不要で、クラウドの受理応答ではなく実際の機械状態が得られます。
+
+```text
+configure Bluetooth keyholder [https://.../keyholder/] device alias [front-door]
+pair Sesame by scanning its sharing QR code
+connect to Sesame over Bluetooth
+when the Sesame state changes
+say (Sesame status [CHSesame2Status])
+```
+
+device secretはTurboWarpへ渡りません。keyholderページが自身のoriginで保持し、この機能拡張が機器へ書き込む前にすべてのフレームを封じます。ページは[`docs/keyholder/`](docs/keyholder/)にあり、サーバーへ一切接続しません。ペアリングも鍵の解錠もブラウザ内だけで完結します。[ADR 0001](docs/adr/0001-ble-transport-and-key-custody.ja.md)を参照してください。
+
+注意:
+
+- 「サンドボックスなしで実行」と、desktopまたはAndroidのChromeかEdgeが必要です。Safari、Firefox、iOSにはWeb Bluetoothがないため、Relay modeを使ってください。
+- `connect to Sesame over Bluetooth`はクリック直後に実行してください。ブラウザのデバイス選択画面は直近のユーザー操作を要求します。
+- **オーナー鍵かマネージャー鍵**をシェアしてください。ゲスト鍵はsecretの半分をサーバーが保持しているため、Bluetoothセッションを確立できません。
+- Bluetoothにはページング付きの履歴がないため、履歴は取得できません。
+- 鍵はkeyholderのoriginの、単一のブラウザプロファイルにだけ保存されます。閲覧データの消去で失われ、デバイス間で同期されません。
+- 可能であればkeyholderは専用ドメインでホストしてください。`*.github.io`のような共有ホストでは、そのホスト上の他のあらゆるページがoriginを共有し、レスポンスヘッダーを設定できないためどのサイトからでも埋め込まれます。[keyholderのホスティング](docs/keyholder-hosting.ja.md)を参照してください。
 
 ## Direct mode
 

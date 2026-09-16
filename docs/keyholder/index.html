@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Sesame keyholder</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --line: color-mix(in srgb, currentColor 20%, transparent);
+      }
+      body {
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+        max-width: 42rem;
+        font:
+          16px/1.6 system-ui,
+          sans-serif;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      h2 {
+        font-size: 1.05rem;
+        margin-top: 2rem;
+      }
+      section {
+        border: 1px solid var(--line);
+        border-radius: 0.6rem;
+        padding: 1rem;
+        margin-top: 1rem;
+      }
+      label {
+        display: block;
+        margin: 0.75rem 0 0.25rem;
+        font-size: 0.9rem;
+      }
+      input[type="text"],
+      input[type="password"],
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.5rem;
+        font: inherit;
+        border: 1px solid var(--line);
+        border-radius: 0.35rem;
+        background: transparent;
+        color: inherit;
+      }
+      textarea {
+        min-height: 4.5rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.85rem;
+      }
+      button {
+        font: inherit;
+        padding: 0.45rem 0.9rem;
+        margin-top: 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 0.35rem;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+      }
+      #status {
+        margin-top: 1rem;
+        padding: 0.6rem 0.8rem;
+        border-radius: 0.35rem;
+        background: color-mix(in srgb, currentColor 8%, transparent);
+        font-size: 0.9rem;
+      }
+      #status[data-kind="error"] {
+        background: color-mix(in srgb, #d33 22%, transparent);
+      }
+      #preview {
+        width: 100%;
+        max-width: 22rem;
+        margin-top: 0.75rem;
+        border-radius: 0.5rem;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+      li {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        align-items: baseline;
+        padding: 0.6rem 0;
+        border-top: 1px solid var(--line);
+      }
+      li span {
+        font-family: ui-monospace, monospace;
+        font-size: 0.8rem;
+        opacity: 0.75;
+      }
+      li button {
+        margin: 0 0 0 auto;
+      }
+      .note {
+        font-size: 0.85rem;
+        opacity: 0.8;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Sesame keyholder</h1>
+    <p class="note">
+      This page holds your Sesame's device secret, on its own origin. It seals
+      every Bluetooth frame before TurboWarp writes it to the lock, so the
+      secret never reaches a Scratch project or the page that runs it. It
+      contacts no server: pairing and unlocking happen entirely in this browser.
+    </p>
+
+    <div id="status" data-kind="info">Loading…</div>
+
+    <p id="embedded" class="note" hidden>
+      A TurboWarp project is connected to this keyholder.
+    </p>
+
+    <section>
+      <h2>Pair a Sesame</h2>
+      <p class="note">
+        In the sesame app, share an <strong>owner</strong> or
+        <strong>manager</strong> key and show its QR code. A guest key will not
+        work: the server keeps half of its secret, so it cannot open a Bluetooth
+        session.
+      </p>
+
+      <label for="alias">Device alias (how your project refers to it)</label>
+      <input id="alias" type="text" placeholder="front-door" />
+
+      <label>
+        <input id="use-passkey" type="checkbox" />
+        Protect with a passkey (Touch ID, Windows Hello)
+      </label>
+      <p id="no-passkeys" class="note" hidden>
+        This browser has no passkeys, so a passphrase is used instead.
+      </p>
+
+      <div id="passphrase-row" hidden>
+        <label for="passphrase">Passphrase</label>
+        <input id="passphrase" type="password" autocomplete="off" />
+      </div>
+
+      <button id="scan" type="button">Scan QR code with camera</button>
+      <p id="no-camera" class="note" hidden>
+        This browser cannot decode a QR code from the camera. Read the code with
+        any QR reader and paste its text below.
+      </p>
+      <video id="preview" hidden muted playsinline></video>
+
+      <label for="paste">…or paste the code's text</label>
+      <textarea
+        id="paste"
+        spellcheck="false"
+        placeholder="ssm://UI?t=sk&amp;sk=…"
+      ></textarea>
+      <button id="use-pasted" type="button">Pair from pasted text</button>
+    </section>
+
+    <section>
+      <h2>Paired Sesames</h2>
+      <p id="empty" class="note">Nothing is paired yet.</p>
+      <ul id="devices"></ul>
+      <p class="note">
+        Keys are stored only in this browser profile, on this origin. Clearing
+        site data erases them, and they do not sync to your other devices.
+      </p>
+    </section>
+
+    <script type="module" src="./keyholder.js"></script>
+  </body>
+</html>

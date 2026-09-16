@@ -21,7 +21,8 @@
   },
   "migrationChecklist": [
     "Keep the extension ID and opcodes stable for saved SB3 projects.",
-    "Keep remote lock commands disabled in default builds.",
+    "Keep remote lock commands disabled in default builds; only vite.app.config.ts enables them, for the standalone SB3.",
+    "Keep credentials out of dist/turbowarp-sesame-app.sb3; scripts/build-sb3.mjs fails the build if any appear.",
     "Keep LICENSE as the full Mozilla Public License 2.0 text unless policy records an exception.",
     "Keep README.md as the canonical English entrypoint and README.ja.md for Japanese content.",
     "Run pnpm run check before publishing generated artifacts."
