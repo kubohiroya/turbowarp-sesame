@@ -88,6 +88,13 @@
   			}
   		},
   		{
+  			"opcode": "openKeyholder",
+  			"blockType": "COMMAND",
+  			"text": "open the Sesame keyholder",
+  			"description": "Opens the keyholder window and waits for it. Run this from its own click: opening a window and opening the Bluetooth chooser each need a fresh user gesture.",
+  			"arguments": {}
+  		},
+  		{
   			"opcode": "pairBluetooth",
   			"blockType": "COMMAND",
   			"text": "pair Sesame by scanning its sharing QR code",
@@ -765,6 +772,9 @@
   //#region src/ble/remote-keyholder.ts
   /** Long enough for a biometric prompt, short enough to not hang a project. */
   var DEFAULT_TIMEOUT_MS = 12e4;
+  /** Reusing one window name keeps a second connect from opening a second one. */
+  var WINDOW_NAME = "sesame-keyholder";
+  var OFFER_INTERVAL_MS = 400;
   /**
   * Validates a keyholder URL.
   *
@@ -818,7 +828,21 @@
   			loginProof
   		};
   	}
-  	/** Releases the iframe and fails anything still outstanding. */
+  	/** True once the keyholder window has answered. */
+  	isOpen() {
+  		return this.port !== void 0 && this.window?.closed !== true;
+  	}
+  	/**
+  	* Opens the keyholder window and waits for it.
+  	*
+  	* Separate from the calls that use it because opening a window consumes the
+  	* page's transient activation, and so does the Bluetooth device chooser. One
+  	* click cannot pay for both.
+  	*/
+  	async ready() {
+  		await this.connect();
+  	}
+  	/** Closes the window and fails anything still outstanding. */
   	dispose() {
   		for (const [, request] of this.pending) {
   			clearTimeout(request.timer);
@@ -828,8 +852,8 @@
   		this.port?.close();
   		this.port = void 0;
   		this.connecting = void 0;
-  		this.frame?.remove();
-  		this.frame = void 0;
+  		this.window?.close();
+  		this.window = void 0;
   	}
   	/** @internal Used by {@link RemoteSession}. */
   	async call(method, params) {
@@ -862,38 +886,42 @@
   		return this.connecting;
   	}
   	open() {
-  		if (typeof document === "undefined") throw new Error("A keyholder needs a browser document.");
+  		const child = (this.options.open ?? defaultOpener())(this.url.toString(), WINDOW_NAME);
+  		if (child === null) throw new Error("The browser blocked the keyholder window. Allow pop-ups for this site, then try again.");
+  		this.window = child;
   		return new Promise((resolve, reject) => {
-  			const frame = document.createElement("iframe");
-  			frame.src = this.url.toString();
-  			frame.setAttribute("aria-hidden", "true");
-  			frame.setAttribute("title", "Sesame keyholder");
-  			frame.style.cssText = "position:absolute;width:0;height:0;border:0;visibility:hidden";
-  			this.frame = frame;
   			const timer = setTimeout(() => {
-  				reject(/* @__PURE__ */ new Error("The keyholder did not load."));
+  				stop();
+  				reject(/* @__PURE__ */ new Error("The keyholder window did not answer."));
   			}, this.timeoutMs);
-  			frame.addEventListener("load", () => {
+  			const offer = () => {
   				const channel = new MessageChannel();
   				channel.port1.onmessage = (event) => {
-  					if (event.data?.ready === true) {
-  						clearTimeout(timer);
-  						channel.port1.onmessage = (message) => {
-  							this.receive(message);
-  						};
-  						this.port = channel.port1;
-  						resolve(channel.port1);
-  						return;
-  					}
-  					this.receive(event);
+  					if (event.data?.ready !== true) return;
+  					stop();
+  					channel.port1.onmessage = (message) => {
+  						this.receive(message);
+  					};
+  					this.port = channel.port1;
+  					resolve(channel.port1);
   				};
-  				frame.contentWindow?.postMessage({ sesameKeyholder: 1 }, this.url.origin, [channel.port2]);
-  			});
-  			frame.addEventListener("error", () => {
+  				try {
+  					child.postMessage({ sesameKeyholder: 1 }, this.url.origin, [channel.port2]);
+  				} catch {}
+  			};
+  			const announced = (event) => {
+  				if (event.origin !== this.url.origin || event.source !== child) return;
+  				if (event.data?.sesameKeyholder === "ready") offer();
+  			};
+  			const host = globalThis;
+  			host.addEventListener?.("message", announced);
+  			const retry = setInterval(offer, OFFER_INTERVAL_MS);
+  			const stop = () => {
   				clearTimeout(timer);
-  				reject(/* @__PURE__ */ new Error("The keyholder failed to load."));
-  			});
-  			(this.options.container ?? document.body).append(frame);
+  				clearInterval(retry);
+  				host.removeEventListener?.("message", announced);
+  			};
+  			offer();
   		});
   	}
   	receive(event) {
@@ -931,6 +959,16 @@
   		await this.keyholder.call("closeSession", { sessionId: this.sessionId });
   	}
   };
+  /**
+  * How the window is opened when the caller has not said.
+  *
+  * Resolved when it is needed rather than at construction, so a test can supply
+  * its own opener without a browser being present at all.
+  */
+  function defaultOpener() {
+  	if (typeof window === "undefined") throw new Error("A keyholder needs a browser window.");
+  	return (url, name) => window.open(url, name, "width=460,height=680");
+  }
   function asRecord(value, what) {
   	if (typeof value !== "object" || value === null || Array.isArray(value)) throw new Error(`The keyholder returned a malformed ${what} result.`);
   	return value;
@@ -1314,6 +1352,12 @@
   				deviceAlias
   			};
   		});
+  	}
+  	async openKeyholder() {
+  		await this.captureAsync(async () => {
+  			const connection = this.requireBluetooth();
+  			await this.keyholder(connection).ready();
+  		}, void 0);
   	}
   	async pairBluetooth() {
   		await this.captureAsync(async () => {

@@ -72,6 +72,14 @@ under **Paired Sesames**.
 that Bluetooth needs. Share an owner or manager key instead.`** — the app shared
 a guest key. Share a manager key.
 
+**If you see `No Sesame is paired as "front-door"`** at step 5 — the keyholder
+you paired in and the keyholder the project is talking to are not the same
+store. This was a real defect: the keyholder used to be embedded in TurboWarp's
+page, and Chrome gives a cross-site frame its own partitioned storage, so it
+could never see what you paired. It is now opened as a window instead. If you
+still see it, the window is showing a different alias than the block — the
+keyholder lists what it holds.
+
 **If you see `This is not a sesame sharing QR code.`** — the app displayed a
 different kind of code. Read the QR with any QR reader and check whether the
 text begins with `ssm://UI?t=sk`.
@@ -153,11 +161,19 @@ Sesame blocks appear in the palette.
 
 ## 5. Connect
 
-Click the green flag. **Expect:** `Press SPACE to connect over Bluetooth.`
+Click the green flag. **Expect:** `Press SPACE to open the keyholder, then C
+to connect.`
 
-Press **SPACE**.
+Press **SPACE**. **Expect:** the keyholder opens in a window of its own, and
+the project says `Keyholder open. Now press C to connect.` Allow pop-ups if the
+browser blocks it. Leave the window open: it holds the key for the session.
 
-**Expect:** the browser's Bluetooth device chooser opens, listing your Sesame.
+Press **C**. **Expect:** the browser's Bluetooth device chooser opens, listing
+your Sesame.
+
+Two keys rather than one because opening a window and opening the device
+chooser each consume the page's user gesture, and one press cannot pay for
+both.
 
 **If nothing happens**, drag a `last Sesame error` block into the palette area
 and click it. The message says which stage failed:

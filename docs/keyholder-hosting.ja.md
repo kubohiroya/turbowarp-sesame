@@ -83,7 +83,7 @@ Cloudflare Pages / Netlify 向けの`_headers`（サイトのルートに配置�
 
 ```text
 /
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
   Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains
   Referrer-Policy: no-referrer
@@ -91,7 +91,7 @@ Cloudflare Pages / Netlify 向けの`_headers`（サイトのルートに配置�
   Cross-Origin-Opener-Policy: same-origin
 
 /index.html
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
   Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains
   Referrer-Policy: no-referrer
@@ -99,7 +99,7 @@ Cloudflare Pages / Netlify 向けの`_headers`（サイトのルートに配置�
   Cross-Origin-Opener-Policy: same-origin
 
 /keyholder.js
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
   Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains
   Referrer-Policy: no-referrer
@@ -121,7 +121,7 @@ Cloudflare Pages / Netlify 向けの`_headers`（サイトのルートに配置�
 各行の意図:
 
 - **`default-src 'none'`**（`connect-src`を書かない）により、**このページはネットワークリクエストを一切行えません。** keyholderは設計上サーバーへ接続しませんが、この設定はその主張をブラウザが強制する事実に変えます
-- **`frame-ancestors`**はkeyholderの埋め込みを許すページを列挙します。自前でホストするTurboWarpやパッケージしたアプリがあれば加え、それ以外は書かないでください
+- **`frame-ancestors 'none'`** — keyholderはどこにも埋め込まれません。独立したウィンドウとして開かれるためです。Chromeはクロスサイトのframeに対してストレージを分割するので、埋め込まれた複製は、そこでペアリングした鍵ではなく空のストアを読むことになります。埋め込みを一切拒否するのは正しく、かつ設定できる中で最も強い状態です
 - **`style-src 'unsafe-inline'`**が必要なのは`index.html`が`<style>`ブロックを持つからだけです。CSSをファイルへ切り出して落とすのは、やる価値のある引き締めです
 - **`camera=(self)`**はペアリングが行われる最上位ページでカメラを許可します。埋め込み時に誤って有効化することはありません。クロスオリジンframeでは親が`allow="camera"`を付与する必要があり、TurboWarpはそれをしないからです
 - **`bluetooth=()`**は、keyholderがBluetoothに一切触れないことを宣言します。それはTurboWarpページの仕事です
@@ -148,7 +148,7 @@ server {
     index index.html;
     autoindex off;
 
-    add_header Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'" always;
+    add_header Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'" always;
     add_header Permissions-Policy "camera=(self), bluetooth=(), geolocation=(), microphone=()" always;
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
     add_header Referrer-Policy "no-referrer" always;
@@ -193,7 +193,7 @@ server {
     SSLCertificateFile    /etc/letsencrypt/live/keyholder.example.org/fullchain.pem
     SSLCertificateKeyFile /etc/letsencrypt/live/keyholder.example.org/privkey.pem
 
-    Header always set Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'"
+    Header always set Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
     Header always set Permissions-Policy "camera=(self), bluetooth=(), geolocation=(), microphone=()"
     Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
     Header always set Referrer-Policy "no-referrer"

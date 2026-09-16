@@ -109,6 +109,11 @@
       "arguments": []
     },
     {
+      "opcode": "openKeyholder",
+      "blockType": "COMMAND",
+      "arguments": []
+    },
+    {
       "opcode": "pairBluetooth",
       "blockType": "COMMAND",
       "arguments": []

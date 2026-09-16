@@ -199,6 +199,15 @@ Selects Bluetooth mode. The keyholder page holds the device secret on its own or
 | `KEYHOLDER_URL` | String, default: `https://kubohiroya.github.io/turbowarp-sesame/keyholder/` |
 | `DEVICE_ALIAS`  | String, default: `front-door`                                               |
 
+### `open the Sesame keyholder`
+
+Opens the keyholder window and waits for it. Run this from its own click: opening a window and opening the Bluetooth chooser each need a fresh user gesture.
+
+| Property | Value           |
+| -------- | --------------- |
+| Type     | Command         |
+| Opcode   | `openKeyholder` |
+
 ### `pair Sesame by scanning its sharing QR code`
 
 Opens the keyholder so it can scan an owner or manager sharing QR code from the sesame app. Guest codes cannot work over Bluetooth.

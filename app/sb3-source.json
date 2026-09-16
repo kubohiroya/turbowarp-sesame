@@ -3,5 +3,5 @@
   "project": "project.source.json",
   "embeddedExtensions": "embedded-extensions.json",
   "assetsDirectory": "assets",
-  "archiveEntries": ["project.json", "32c876ffa0d76f8792255fe7d94292d2.svg"]
+  "archiveEntries": ["project.json", "d4c5263badd52a7cbb853547570cf906.svg"]
 }

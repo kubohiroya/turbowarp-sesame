@@ -117,7 +117,7 @@ The same policy in three formats. Use whichever your host takes.
 
 ```text
 /
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
   Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains
   Referrer-Policy: no-referrer
@@ -125,7 +125,7 @@ The same policy in three formats. Use whichever your host takes.
   Cross-Origin-Opener-Policy: same-origin
 
 /index.html
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
   Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains
   Referrer-Policy: no-referrer
@@ -133,7 +133,7 @@ The same policy in three formats. Use whichever your host takes.
   Cross-Origin-Opener-Policy: same-origin
 
 /keyholder.js
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
   Permissions-Policy: camera=(self), bluetooth=(), geolocation=(), microphone=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains
   Referrer-Policy: no-referrer
@@ -160,9 +160,11 @@ What each line is doing:
 - **`default-src 'none'`** with no `connect-src` means the page cannot make a
   network request at all. The keyholder contacts no server by design; this
   turns that design claim into something a browser enforces.
-- **`frame-ancestors`** lists every page allowed to embed the keyholder. Add
-  the origin of any self-hosted TurboWarp or packaged app you use, and nothing
-  else.
+- **`frame-ancestors 'none'`** because nothing embeds the keyholder. It is
+  opened as a window of its own — Chrome partitions storage for a cross-site
+  frame, so an embedded copy would read an empty store rather than the keys
+  paired in it. Refusing to be framed at all is both correct and the strongest
+  setting available.
 - **`style-src 'unsafe-inline'`** is needed only because `index.html` carries a
   `<style>` block. Moving that CSS to a file and dropping `'unsafe-inline'` is
   a worthwhile tightening.
@@ -202,7 +204,7 @@ server {
     index index.html;
     autoindex off;
 
-    add_header Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'" always;
+    add_header Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'" always;
     add_header Permissions-Policy "camera=(self), bluetooth=(), geolocation=(), microphone=()" always;
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
     add_header Referrer-Policy "no-referrer" always;
@@ -251,7 +253,7 @@ Needs `a2enmod headers`.
     SSLCertificateFile    /etc/letsencrypt/live/keyholder.example.org/fullchain.pem
     SSLCertificateKeyFile /etc/letsencrypt/live/keyholder.example.org/privkey.pem
 
-    Header always set Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors https://turbowarp.org; base-uri 'none'; form-action 'none'"
+    Header always set Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
     Header always set Permissions-Policy "camera=(self), bluetooth=(), geolocation=(), microphone=()"
     Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
     Header always set Referrer-Policy "no-referrer"

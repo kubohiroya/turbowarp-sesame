@@ -692,7 +692,7 @@ var q = new Ae(new Oe()), J = (e) => {
 window.addEventListener("message", (e) => {
 	let t = e.data, n = e.ports[0];
 	t?.sesameKeyholder === 1 && n !== void 0 && (Ne.listen(n), J("embedded").hidden = !1);
-});
+}), window.opener !== null && window.opener.postMessage({ sesameKeyholder: "ready" }, "*"), window.top !== window.self && Y("This keyholder is embedded in another page, where the browser gives it separate storage. Keys paired here are not visible to it.", "error");
 async function X() {
 	let e = J("passphrase").value;
 	if (e.length === 0) throw J("passphrase-row").hidden = !1, Error("Enter the passphrase above, then try again.");
