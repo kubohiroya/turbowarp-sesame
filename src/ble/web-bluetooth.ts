@@ -44,9 +44,59 @@ interface BluetoothDeviceLike {
 
 interface BluetoothLike {
   requestDevice(options: {
-    filters?: Array<{ services?: Array<string | number> }>;
+    filters?: Array<{ services?: Array<string | number>; name?: string }>;
     optionalServices?: Array<string | number>;
   }): Promise<BluetoothDeviceLike>;
+}
+
+/**
+ * Recovers a device UUID from the name a Sesame advertises.
+ *
+ * Observed on real hardware: the advertised local name is the base64 of the
+ * device's 16-byte UUID, so the browser's chooser lists entries like
+ * `Dp7YKHj4nqnf1Ds8DgHfNA` rather than anything a person would recognise.
+ * Decoding it turns that into the UUID the sesame app shows, which is the only
+ * way to tell one lock from another in that list.
+ *
+ * Returns undefined for a name that is not a UUID in disguise, including the
+ * plain names other Candy House products use — a WiFi Module 2 advertises
+ * `WM2`.
+ */
+export function deviceUuidFromName(
+  name: string | undefined,
+): string | undefined {
+  if (name === undefined) return undefined;
+  const padded = name.padEnd(name.length + ((4 - (name.length % 4)) % 4), "=");
+  let binary: string;
+  try {
+    binary = atob(padded.replace(/-/gu, "+").replace(/_/gu, "/"));
+  } catch {
+    return undefined;
+  }
+  if (binary.length !== 16) return undefined;
+  const hex = Array.from(binary, (character) =>
+    character.charCodeAt(0).toString(16).padStart(2, "0"),
+  )
+    .join("")
+    .toUpperCase();
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    hex.slice(12, 16),
+    hex.slice(16, 20),
+    hex.slice(20, 32),
+  ].join("-");
+}
+
+/** The name a device with this UUID advertises, for filtering the chooser. */
+export function nameForDeviceUuid(uuid: string): string {
+  const hex = uuid.replace(/-/gu, "");
+  const bytes = hex.match(/.{2}/gu) ?? [];
+  return btoa(
+    bytes
+      .map((pair) => String.fromCharCode(Number.parseInt(pair, 16)))
+      .join(""),
+  ).replace(/=+$/u, "");
 }
 
 /** True when this browser exposes Web Bluetooth at all. */
@@ -61,15 +111,24 @@ export function isWebBluetoothAvailable(): boolean {
  * activation, which a block evaluated in the VM's step loop only has for a few
  * seconds after a click.
  */
-export async function requestSesameChannel(): Promise<GattChannel> {
+export async function requestSesameChannel(
+  uuid?: string,
+): Promise<GattChannel> {
   const api = bluetooth();
   if (api === undefined) {
     throw new Error(
       "This browser has no Web Bluetooth. Chrome or Edge on desktop or Android is required; use Relay mode otherwise.",
     );
   }
+  // Filtering on the service alone lists every Candy House product in range,
+  // under names that are base64 rather than anything readable. When the paired
+  // key names its lock, the chooser is narrowed to that one device.
+  const byName =
+    uuid === undefined
+      ? []
+      : [{ name: nameForDeviceUuid(uuid), services: [SERVICE_UUID] }];
   const device = await api.requestDevice({
-    filters: [{ services: [SERVICE_UUID] }],
+    filters: [...byName, { services: [SERVICE_UUID] }],
     optionalServices: [SERVICE_UUID],
   });
   const server = device.gatt;

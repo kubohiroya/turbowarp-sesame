@@ -63,6 +63,12 @@ export class SesameExtension implements TurboWarpExtension {
         deviceAlias: string;
         keyholder?: RemoteKeyholder;
         transport?: BleTransport;
+        /**
+         * Learned when pairing runs in this session. A Sesame advertises the
+         * base64 of its UUID, so knowing it narrows the browser's chooser from
+         * every Candy House product in range to the one lock.
+         */
+        deviceUuid?: string;
       }
     | undefined;
   private lastErrorMessage = "";
@@ -158,7 +164,11 @@ export class SesameExtension implements TurboWarpExtension {
       const connection = this.requireBluetooth();
       const keyholder = this.keyholder(connection);
       const paired = await keyholder.pair();
-      this.connection = { ...connection, deviceAlias: paired.deviceName };
+      this.connection = {
+        ...connection,
+        deviceAlias: paired.deviceName,
+        ...(paired.uuid === undefined ? {} : { deviceUuid: paired.uuid }),
+      };
     }, undefined);
   }
 
@@ -168,7 +178,7 @@ export class SesameExtension implements TurboWarpExtension {
       if (connection.transport?.isLoggedIn() === true) return;
       // Opened before anything awaits, so the chooser still sees the gesture
       // that started this block.
-      const channel = await requestSesameChannel();
+      const channel = await requestSesameChannel(connection.deviceUuid);
       const transport = new SesameBleTransport({
         channel,
         keyholder: this.keyholder(connection),
