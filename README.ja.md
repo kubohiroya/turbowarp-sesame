@@ -12,11 +12,11 @@ Candy House Sesameの状態確認と、明示的に有効化したbuildでの遠
 - Sesame履歴のJSON形式での取得
 - 安全フラグを有効にしたbuildでの施錠、解錠、トグル要求
 - 設定／APIエラーをプロジェクトを停止させずブロックから確認
-- `@kubohiroya/capability-proxy`とのワンタイムコードによるローカルペアリング
+- `@kubohiroya/keybroker`とのワンタイムコードによるローカルペアリング
 
 ## 動作条件と安全上の注意
 
-- 推奨: localhostで起動した`@kubohiroya/capability-proxy`、デバイス別名、起動時のワンタイムコード
+- 推奨: localhostで起動した`@kubohiroya/keybroker`、デバイス別名、起動時のワンタイムコード
 - Direct mode: Candy HouseのAPIキー、Sesame UUID、32文字の16進数秘密鍵
 - WiFi Module 2などを通してCandy Houseクラウドから到達できるSesame
 - `fetch`、`TextEncoder`、Web Crypto AES-CBCに対応するブラウザ
@@ -36,7 +36,7 @@ Candy House Sesameの状態確認と、明示的に有効化したbuildでの遠
 
 ## Relay mode（推奨）
 
-1. [`@kubohiroya/capability-proxy`](https://github.com/kubohiroya/capability-proxy)をlocalhostで起動します。
+1. [`@kubohiroya/keybroker`](https://github.com/kubohiroya/keybroker)をlocalhostで起動します。
 2. カスタム機能拡張を「サンドボックスなしで実行」を有効にして読み込みます。ChromeなどはTurboWarpのsandbox iframeからlocalhostへの通信を許可しないためです。
 3. `configure local Relay ...`でendpointとRelay設定内のデバイス別名を指定します。
 4. Relayの標準出力に表示された8桁コードを`pair local Relay ...`へ入力します。

@@ -14,11 +14,11 @@ provider credentials out of TurboWarp projects.
 - Retrieves recent Sesame history as JSON.
 - Can request lock, unlock, and toggle operations in a build where the safety flag is enabled.
 - Reports configuration and API failures through a block instead of stopping the project.
-- Pairs with `@kubohiroya/capability-proxy` using a short-lived one-time code.
+- Pairs with `@kubohiroya/keybroker` using a short-lived one-time code.
 
 ## Requirements and safety
 
-- Recommended: a localhost `@kubohiroya/capability-proxy`, a device alias, and its one-time code.
+- Recommended: a localhost `@kubohiroya/keybroker`, a device alias, and its one-time code.
 - Direct mode: a Candy House API key, Sesame UUID, and 32-character hexadecimal secret key.
 - A Sesame device reachable through the Candy House cloud, such as through WiFi Module 2.
 - A browser with `fetch`, `TextEncoder`, and Web Crypto AES-CBC support.
@@ -54,7 +54,7 @@ node_modules/@kubohiroya/turbowarp-sesame/dist/turbowarp-sesame.js
 
 ## Relay mode (recommended)
 
-1. Start [`@kubohiroya/capability-proxy`](https://github.com/kubohiroya/capability-proxy) on localhost.
+1. Start [`@kubohiroya/keybroker`](https://github.com/kubohiroya/keybroker) on localhost.
 2. Load the custom extension with **Run extension without sandbox** enabled. Chrome and other browsers can deny localhost access from TurboWarp's sandbox iframe.
 3. Configure its endpoint and the device alias defined in the Relay configuration.
 4. Enter the eight-digit code printed by the Relay into the pairing block.
