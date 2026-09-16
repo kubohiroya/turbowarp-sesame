@@ -12,7 +12,7 @@
 
 import { aesCmacWithKey } from "../aes-cmac.js";
 import { importCcmKey, open, seal, type CcmKey } from "./aes-ccm.js";
-import type { KeyholderSession } from "./ports.js";
+import type { KeyholderSession, SessionStart } from "./ports.js";
 import { ccmNonce } from "./protocol.js";
 import { encodeSegments, type ParsingType } from "./segment.js";
 
@@ -24,16 +24,6 @@ const TAG_LENGTH = 4;
 
 /** Bytes of the session token the login request carries. */
 const LOGIN_PROOF_LENGTH = 4;
-
-export interface SessionStart {
-  session: KeyholderSession;
-  /**
-   * Payload of the login request, which is the leading four bytes of the
-   * session token. The device compares only these, so the rest of the token
-   * never leaves the keyholder.
-   */
-  loginProof: Uint8Array;
-}
 
 /**
  * Derives a session from the four-byte random code the device publishes on

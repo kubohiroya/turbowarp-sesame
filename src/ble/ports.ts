@@ -31,6 +31,20 @@ export interface GattChannel {
   close(): Promise<void>;
 }
 
+export interface SessionStart {
+  session: KeyholderSession;
+
+  /**
+   * Payload of the login request: the leading four bytes of the session token.
+   *
+   * The device compares only these four, so the rest of the token never leaves
+   * the keyholder. They are a truncated MAC over a random code the device
+   * broadcast in the clear, so they reveal nothing about the device secret and
+   * are useless once that session ends.
+   */
+  loginProof: Uint8Array;
+}
+
 export interface KeyholderSession {
   /**
    * Seals a request so it can be written to the device. The keyholder applies
@@ -76,14 +90,12 @@ export interface KeyholderPort {
    * publishes on connect, and returns the session that seals and opens
    * messages with it.
    *
-   * The session key is `AES_CMAC(device_secret, randomCode)`. The login request
-   * the caller must send first carries its leading four bytes, which
-   * {@link KeyholderSession.seal} produces without revealing the rest.
+   * The session key is `AES_CMAC(device_secret, randomCode)`.
    */
   startSession(
     deviceName: string,
     randomCode: Uint8Array,
-  ): Promise<KeyholderSession>;
+  ): Promise<SessionStart>;
 }
 
 /** What pairing reveals to the caller. Deliberately excludes the secret. */
