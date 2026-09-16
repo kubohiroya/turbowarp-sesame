@@ -20,6 +20,15 @@ import type { KeyLevelName } from "./share-qr.js";
  * segmented by the keyholder, and whatever is read is passed back unexamined.
  */
 export interface GattChannel {
+  /**
+   * How to refer to this device when something goes wrong.
+   *
+   * A Sesame advertises the base64 of its UUID rather than a readable name, so
+   * naming the device in an error is what lets someone tell they picked the
+   * wrong entry out of the browser's chooser.
+   */
+  readonly deviceLabel?: string | undefined;
+
   /** Writes one packet to the Tx characteristic, without response. */
   write(packet: Uint8Array): Promise<void>;
 

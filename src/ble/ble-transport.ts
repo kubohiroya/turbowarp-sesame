@@ -175,7 +175,7 @@ export class SesameBleTransport implements BleTransport {
           message.type === OpCode.publish &&
           message.itemCode === ItemCode.initial,
         this.timeouts.randomCode,
-        "The Sesame did not start a session. Move closer and try again.",
+        `${this.deviceDescription()} did not start a session. It may be the wrong device from the chooser, out of range, or already connected to a phone.`,
       );
       const randomCode = initial.payload.slice(0, 4);
       if (randomCode.length !== 4) {
@@ -285,6 +285,12 @@ export class SesameBleTransport implements BleTransport {
       );
     }
     return this.lastStatus.isInLockRange ? "unlock" : "lock";
+  }
+
+  /** Names the device an error is about, when the channel knows how. */
+  private deviceDescription(): string {
+    const label = this.options.channel.deviceLabel;
+    return label === undefined ? "The Sesame" : `The Sesame ${label}`;
   }
 
   private requireReady(): void {

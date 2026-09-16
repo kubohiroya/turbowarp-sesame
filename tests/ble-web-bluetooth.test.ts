@@ -10,7 +10,7 @@ import {
 } from "../src/ble/protocol.js";
 
 /** A Web Bluetooth stack reduced to what the channel touches. */
-const fakeBluetooth = () => {
+const fakeBluetooth = (deviceName = "front door") => {
   const written: Uint8Array[] = [];
   const listeners = new Map<string, (event: Event) => void>();
   let notifying = false;
@@ -65,7 +65,7 @@ const fakeBluetooth = () => {
   const bluetooth = {
     requestDevice: (options: unknown) => {
       requested.push(options);
-      return Promise.resolve({ name: "front door", gatt: server });
+      return Promise.resolve({ name: deviceName, gatt: server });
     },
   };
 
@@ -186,5 +186,91 @@ describe("the channel", () => {
       bluetooth: { requestDevice: () => Promise.resolve({ name: "x" }) },
     });
     await expect(requestSesameChannel()).rejects.toThrow(/no GATT server/u);
+  });
+});
+
+describe("notifications that arrive before anyone is listening", () => {
+  /**
+   * A Sesame publishes its session random code as soon as notifications are
+   * enabled, which is before the transport has subscribed. That publish
+   * happens once per connection: dropping it means the session can never
+   * start, which on real hardware looked like the lock ignoring us.
+   */
+  const open = async () => {
+    const stack = fakeBluetooth();
+    vi.stubGlobal("navigator", { bluetooth: stack.bluetooth });
+    return { stack, channel: await requestSesameChannel() };
+  };
+
+  it("keeps a packet that arrives before the first subscriber", async () => {
+    const { stack, channel } = await open();
+    stack.notify(Uint8Array.from([0x03, 0x08, 0x0e, 0xde, 0xad, 0xbe, 0xef]));
+
+    const seen: number[][] = [];
+    channel.subscribe((packet) => seen.push(Array.from(packet)));
+    expect(seen).toEqual([[0x03, 0x08, 0x0e, 0xde, 0xad, 0xbe, 0xef]]);
+  });
+
+  it("keeps them in order", async () => {
+    const { stack, channel } = await open();
+    stack.notify(Uint8Array.from([1]));
+    stack.notify(Uint8Array.from([2]));
+    stack.notify(Uint8Array.from([3]));
+
+    const seen: number[][] = [];
+    channel.subscribe((packet) => seen.push(Array.from(packet)));
+    expect(seen).toEqual([[1], [2], [3]]);
+  });
+
+  it("hands them over only once", async () => {
+    const { stack, channel } = await open();
+    stack.notify(Uint8Array.from([1]));
+    channel.subscribe(() => undefined);
+
+    const later: number[][] = [];
+    channel.subscribe((packet) => later.push(Array.from(packet)));
+    expect(later).toEqual([]);
+  });
+
+  it("does not grow without bound when nobody ever listens", async () => {
+    const { stack, channel } = await open();
+    for (let index = 0; index < 200; index += 1) {
+      stack.notify(Uint8Array.from([index & 0xff]));
+    }
+    const seen: number[][] = [];
+    channel.subscribe((packet) => seen.push(Array.from(packet)));
+    expect(seen.length).toBeLessThanOrEqual(32);
+  });
+
+  it("delivers straight to a subscriber once there is one", async () => {
+    const { stack, channel } = await open();
+    const seen: number[][] = [];
+    channel.subscribe((packet) => seen.push(Array.from(packet)));
+    stack.notify(Uint8Array.from([9]));
+    expect(seen).toEqual([[9]]);
+  });
+
+  it("drops the buffer on close", async () => {
+    const { stack, channel } = await open();
+    stack.notify(Uint8Array.from([1]));
+    await channel.close();
+    const seen: number[][] = [];
+    channel.subscribe((packet) => seen.push(Array.from(packet)));
+    expect(seen).toEqual([]);
+  });
+});
+
+describe("naming the device in errors", () => {
+  it("labels the channel with the decoded UUID", async () => {
+    const stack = fakeBluetooth("Dp7YKHj4nqnf1Ds8DgHfNA");
+    vi.stubGlobal("navigator", { bluetooth: stack.bluetooth });
+    const channel = await requestSesameChannel();
+    expect(channel.deviceLabel).toBe("0E9ED828-78F8-9EA9-DFD4-3B3C0E01DF34");
+  });
+
+  it("falls back to the advertised name when it is not a UUID", async () => {
+    const stack = fakeBluetooth("WM2");
+    vi.stubGlobal("navigator", { bluetooth: stack.bluetooth });
+    expect((await requestSesameChannel()).deviceLabel).toBe("WM2");
   });
 });

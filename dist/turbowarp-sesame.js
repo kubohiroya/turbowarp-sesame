@@ -608,7 +608,7 @@
   			this.unsubscribe = this.options.channel.subscribe((packet) => {
   				this.receive(packet);
   			});
-  			const randomCode = (await this.expect((message) => message.type === OpCode.publish && message.itemCode === ItemCode.initial, this.timeouts.randomCode, "The Sesame did not start a session. Move closer and try again.")).payload.slice(0, 4);
+  			const randomCode = (await this.expect((message) => message.type === OpCode.publish && message.itemCode === ItemCode.initial, this.timeouts.randomCode, `${this.deviceDescription()} did not start a session. It may be the wrong device from the chooser, out of range, or already connected to a phone.`)).payload.slice(0, 4);
   			if (randomCode.length !== 4) throw new Error("The Sesame sent a malformed session start.");
   			const { session, loginProof } = await this.options.keyholder.startSession(this.options.deviceName, randomCode);
   			this.session = session;
@@ -667,6 +667,11 @@
   		if (this.lastStatus === void 0) await this.getStatus();
   		if (this.lastStatus === void 0) throw new Error("Cannot toggle without knowing whether the Sesame is locked.");
   		return this.lastStatus.isInLockRange ? "unlock" : "lock";
+  	}
+  	/** Names the device an error is about, when the channel knows how. */
+  	deviceDescription() {
+  		const label = this.options.channel.deviceLabel;
+  		return label === void 0 ? "The Sesame" : `The Sesame ${label}`;
   	}
   	requireReady() {
   		if (this.state !== "ready") throw new Error("Connect to the Sesame first.");
@@ -984,11 +989,45 @@
   }
   //#endregion
   //#region src/ble/web-bluetooth.ts
+  /**
+  * Recovers a device UUID from the name a Sesame advertises.
+  *
+  * Observed on real hardware: the advertised local name is the base64 of the
+  * device's 16-byte UUID, so the browser's chooser lists entries like
+  * `Dp7YKHj4nqnf1Ds8DgHfNA` rather than anything a person would recognise.
+  * Decoding it turns that into the UUID the sesame app shows, which is the only
+  * way to tell one lock from another in that list.
+  *
+  * Returns undefined for a name that is not a UUID in disguise, including the
+  * plain names other Candy House products use — a WiFi Module 2 advertises
+  * `WM2`.
+  */
+  function deviceUuidFromName(name) {
+  	if (name === void 0) return void 0;
+  	const padded = name.padEnd(name.length + (4 - name.length % 4) % 4, "=");
+  	let binary;
+  	try {
+  		binary = atob(padded.replace(/-/gu, "+").replace(/_/gu, "/"));
+  	} catch {
+  		return;
+  	}
+  	if (binary.length !== 16) return void 0;
+  	const hex = Array.from(binary, (character) => character.charCodeAt(0).toString(16).padStart(2, "0")).join("").toUpperCase();
+  	return [
+  		hex.slice(0, 8),
+  		hex.slice(8, 12),
+  		hex.slice(12, 16),
+  		hex.slice(16, 20),
+  		hex.slice(20, 32)
+  	].join("-");
+  }
   /** The name a device with this UUID advertises, for filtering the chooser. */
   function nameForDeviceUuid(uuid) {
   	const bytes = uuid.replace(/-/gu, "").match(/.{2}/gu) ?? [];
   	return btoa(bytes.map((pair) => String.fromCharCode(Number.parseInt(pair, 16))).join("")).replace(/=+$/u, "");
   }
+  /** Enough for a session start; a channel with no listener is not a queue. */
+  var MAX_EARLY_PACKETS = 32;
   /** True when this browser exposes Web Bluetooth at all. */
   function isWebBluetoothAvailable() {
   	return bluetooth() !== void 0;
@@ -1016,8 +1055,9 @@
   	const connected = await server.connect();
   	const service = await connected.getPrimaryService(SERVICE_UUID);
   	const [tx, rx] = await Promise.all([service.getCharacteristic(TX_CHARACTERISTIC_UUID), service.getCharacteristic(RX_CHARACTERISTIC_UUID)]);
+  	const channel = new WebBluetoothChannel(connected, tx, rx, device.name);
   	await rx.startNotifications();
-  	return new WebBluetoothChannel(connected, tx, rx, device.name);
+  	return channel;
   }
   var WebBluetoothChannel = class {
   	constructor(server, tx, rx, deviceName) {
@@ -1026,13 +1066,20 @@
   		this.rx = rx;
   		this.deviceName = deviceName;
   		this.listeners = /* @__PURE__ */ new Set();
+  		this.early = [];
   		this.closed = false;
   		this.onValue = (event) => {
   			const value = event.target?.value;
   			if (value === void 0) return;
   			const packet = new Uint8Array(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength));
+  			if (this.listeners.size === 0) {
+  				if (this.early.length < MAX_EARLY_PACKETS) this.early.push(packet);
+  				return;
+  			}
   			for (const listener of [...this.listeners]) listener(packet);
   		};
+  		const uuid = deviceUuidFromName(deviceName);
+  		this.deviceLabel = uuid ?? deviceName;
   		this.rx.addEventListener("characteristicvaluechanged", this.onValue);
   	}
   	async write(packet) {
@@ -1041,6 +1088,9 @@
   	}
   	subscribe(listener) {
   		this.listeners.add(listener);
+  		const buffered = this.early;
+  		this.early = [];
+  		for (const packet of buffered) listener(packet);
   		return () => {
   			this.listeners.delete(listener);
   		};
@@ -1048,6 +1098,7 @@
   	async close() {
   		if (this.closed) return;
   		this.closed = true;
+  		this.early = [];
   		this.rx.removeEventListener("characteristicvaluechanged", this.onValue);
   		this.listeners.clear();
   		try {

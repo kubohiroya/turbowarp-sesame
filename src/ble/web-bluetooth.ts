@@ -99,6 +99,9 @@ export function nameForDeviceUuid(uuid: string): string {
   ).replace(/=+$/u, "");
 }
 
+/** Enough for a session start; a channel with no listener is not a queue. */
+const MAX_EARLY_PACKETS = 32;
+
 /** True when this browser exposes Web Bluetooth at all. */
 export function isWebBluetoothAvailable(): boolean {
   return bluetooth() !== undefined;
@@ -141,12 +144,27 @@ export async function requestSesameChannel(
     service.getCharacteristic(TX_CHARACTERISTIC_UUID),
     service.getCharacteristic(RX_CHARACTERISTIC_UUID),
   ]);
+  // Buffering starts here: the constructor attaches the listener, and any
+  // publish that beats the transport's subscribe is kept rather than dropped.
+  const channel = new WebBluetoothChannel(connected, tx, rx, device.name);
   await rx.startNotifications();
-  return new WebBluetoothChannel(connected, tx, rx, device.name);
+  return channel;
 }
 
 class WebBluetoothChannel implements GattChannel {
+  public readonly deviceLabel: string | undefined;
   private readonly listeners = new Set<(packet: Uint8Array) => void>();
+  /**
+   * Notifications that arrived before anyone subscribed.
+   *
+   * A Sesame publishes its session random code as soon as notifications are
+   * enabled, which happens here while the caller is still constructing the
+   * transport that will listen. Without this buffer that publish is delivered
+   * to nobody and lost — and it is sent once per connection, so the session
+   * could never start. That is what made a real lock look like it was
+   * ignoring us.
+   */
+  private early: Uint8Array[] = [];
   private closed = false;
 
   public constructor(
@@ -155,6 +173,8 @@ class WebBluetoothChannel implements GattChannel {
     private readonly rx: BluetoothCharacteristic,
     public readonly deviceName: string | undefined,
   ) {
+    const uuid = deviceUuidFromName(deviceName);
+    this.deviceLabel = uuid ?? deviceName;
     this.rx.addEventListener("characteristicvaluechanged", this.onValue);
   }
 
@@ -166,6 +186,10 @@ class WebBluetoothChannel implements GattChannel {
 
   public subscribe(listener: (packet: Uint8Array) => void): () => void {
     this.listeners.add(listener);
+    // Hand over anything that arrived before there was anyone to hand it to.
+    const buffered = this.early;
+    this.early = [];
+    for (const packet of buffered) listener(packet);
     return () => {
       this.listeners.delete(listener);
     };
@@ -174,6 +198,7 @@ class WebBluetoothChannel implements GattChannel {
   public async close(): Promise<void> {
     if (this.closed) return;
     this.closed = true;
+    this.early = [];
     this.rx.removeEventListener("characteristicvaluechanged", this.onValue);
     this.listeners.clear();
     try {
@@ -191,6 +216,11 @@ class WebBluetoothChannel implements GattChannel {
     const packet = new Uint8Array(
       value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength),
     );
+    if (this.listeners.size === 0) {
+      // Bounded, so a channel nobody ever listens to cannot grow without end.
+      if (this.early.length < MAX_EARLY_PACKETS) this.early.push(packet);
+      return;
+    }
     for (const listener of [...this.listeners]) listener(packet);
   };
 }

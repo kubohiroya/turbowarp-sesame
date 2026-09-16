@@ -221,12 +221,12 @@ Choose the device.
 **If you get an error instead**, it came from `last Sesame error` and names the
 stage:
 
-| Message                                                          | Meaning                                      |
-| ---------------------------------------------------------------- | -------------------------------------------- |
-| `The Sesame did not start a session. Move closer and try again.` | Connected, but no random code arrived        |
-| `The Sesame refused to log in to the Sesame (result 9).`         | The paired secret is not this lock's         |
-| `The key could not be unlocked…`                                 | Wrong passkey or passphrase in the keyholder |
-| `The keyholder did not load.`                                    | The iframe could not be fetched              |
+| Message                                                  | Meaning                                                                                                         |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `The Sesame <UUID> did not start a session…`             | Connected, but no session start arrived. The UUID names the entry you picked, so compare it with the sesame app |
+| `The Sesame refused to log in to the Sesame (result 9).` | The paired secret is not this lock's                                                                            |
+| `The key could not be unlocked…`                         | Wrong passkey or passphrase in the keyholder                                                                    |
+| `The keyholder did not load.`                            | The iframe could not be fetched                                                                                 |
 
 ## 6. Read the state
 

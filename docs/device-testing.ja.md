@@ -145,12 +145,12 @@ Dp7YKHj4nqnf1Ds8DgHfNA  →  0E9ED828-78F8-9EA9-DFD4-3B3C0E01DF34
 
 **代わりにエラーが出た場合**、それは `last Sesame error` の内容で、どの段階かを示します。
 
-| メッセージ                                                       | 意味                                           |
-| ---------------------------------------------------------------- | ---------------------------------------------- |
-| `The Sesame did not start a session. Move closer and try again.` | 接続はしたがrandom codeが届かない              |
-| `The Sesame refused to log in to the Sesame (result 9).`         | ペアリング済みのsecretがこの錠前のものではない |
-| `The key could not be unlocked…`                                 | keyholderのパスキーかパスフレーズが違う        |
-| `The keyholder did not load.`                                    | iframeを取得できなかった                       |
+| メッセージ                                               | 意味                                                                                                 |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `The Sesame <UUID> did not start a session…`             | 接続はしたがセッション開始が届かない。UUIDは選んだ項目を指すので、セサミアプリの表示と比べてください |
+| `The Sesame refused to log in to the Sesame (result 9).` | ペアリング済みのsecretがこの錠前のものではない                                                       |
+| `The key could not be unlocked…`                         | keyholderのパスキーかパスフレーズが違う                                                              |
+| `The keyholder did not load.`                            | iframeを取得できなかった                                                                             |
 
 ## 6. 状態を読む
 
