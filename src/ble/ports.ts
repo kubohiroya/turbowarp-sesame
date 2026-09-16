@@ -10,6 +10,7 @@
  */
 
 import type { ParsingType } from "./segment.js";
+import type { KeyLevelName } from "./share-qr.js";
 
 /**
  * A connected Sesame device, reduced to the operations the protocol needs.
@@ -57,6 +58,20 @@ export interface KeyholderPort {
   isPaired(deviceName: string): Promise<boolean>;
 
   /**
+   * Pairs a device by scanning the share QR code the sesame app displays.
+   *
+   * Opens a top-level window on the keyholder origin, because the camera is
+   * gated by a Permissions Policy that defaults to `self` and TurboWarp grants
+   * no `allow="camera"` to a frame. Scanning there also keeps the secret out of
+   * the TurboWarp page: the QR carries it in cleartext, so whoever decodes it
+   * holds it.
+   *
+   * Resolves with what may safely be shown, never with the secret. Must be
+   * called from a user gesture, since opening the window depends on one.
+   */
+  pair(): Promise<PairedDevice>;
+
+  /**
    * Derives the session key from the four-byte random code the device
    * publishes on connect, and returns the session that seals and opens
    * messages with it.
@@ -69,4 +84,21 @@ export interface KeyholderPort {
     deviceName: string,
     randomCode: Uint8Array,
   ): Promise<KeyholderSession>;
+}
+
+/** What pairing reveals to the caller. Deliberately excludes the secret. */
+export interface PairedDevice {
+  /** Name to pass to {@link KeyholderPort.startSession}. */
+  deviceName: string;
+
+  /** Device UUID from the QR code, for showing which lock was paired. */
+  uuid: string;
+
+  /**
+   * Key level the QR code claimed, when it claimed one.
+   *
+   * Advisory. It is unauthenticated and the Bluetooth protocol does not act on
+   * it, so show it and do not enforce with it.
+   */
+  level?: KeyLevelName;
 }

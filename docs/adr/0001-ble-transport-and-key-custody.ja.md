@@ -72,6 +72,35 @@ keyholderはsecretをそのまま使える形ではなく、ラップして保�
 
 「クライアントへprovider資格情報を渡さずに名前付きcapabilityを公開するlocalhost優先のrelay」は、標準的な用語ではcredential brokerです。旧名は何を仲介するのかについて情報を持ちませんでした。改名後もクラウドWeb API経路としての役割は維持します。遠隔操作、Web Bluetooth非対応ブラウザ、Bluetooth圏外からの制御には引き続き必要だからです。
 
+### 6. ペアリングはアプリの共有QRコードを、keyholderの最上位ウィンドウで読み取る
+
+セサミアプリは`ssm://UI`のURLを収めたQRコードとして鍵を共有します。その`sk`形式はサーバーを必要とせず自己完結しています。
+
+```text
+ssm://UI?t=sk&sk=<base64>&l=<鍵レベル>&n=<デバイス名>
+```
+
+base64の値はパックされたレコードへデコードされます。その構造は先頭バイトの機種によって変わります。SESAME 5以降は4バイトの公開鍵を、それ以前の機種は64バイトの公開鍵を持つためです。
+
+```text
+機種 >= 5   [0] 機種 | [1..16] secret | [17..20] 公開鍵 | [21..22] key index | [23..38] UUID
+機種 <  5   [0] 機種 | [1..16] secret | [17..80] 公開鍵 | [81..82] key index | [83..98] UUID
+```
+
+この16バイトのsecretが決定2の`device_secret`であり、UUIDはWeb APIが使うデバイスUUIDと同じものです。したがってスキャンは手動の資格情報入力を丸ごと置き換えます。16進数を書き写す必要も、UUIDを貼り付ける必要もなく、機種に応じた正しい公開鍵も同時に得られます。
+
+**スキャンはkeyholder originの最上位ウィンドウで行い、iframeでもTurboWarpのページでも行いません。** QRはsecretを平文で運ぶため、それをデコードしたページはsecretを保持することになります。TurboWarpのページにデコードさせれば決定3が無効になります。iframeでも実行できません。`camera` Permissions Policyの既定allowlistは`bluetooth`と同じく`self`であり、TurboWarpは`allow="camera"`を付与しないためです。keyholder originの最上位browsing contextはそれ自身が`self`なので、そこではカメラが使えます。ペアリングはそのウィンドウを開き、スキャンし、secretを非抽出可能な`CryptoKey`としてimportし、ラップして閉じます。機能拡張が知るのはデバイス名とペアリングが成功したことだけです。以降のセッションはカメラを必要としないiframeを通ります。
+
+デコードはプラットフォームが提供する`BarcodeDetector`を使い（macOS、Android、ChromeOS）、それ以外ではバンドルしたデコーダを使います。WindowsとLinuxのChromeにはプラットフォーム側のバーコード対応がないためです。いずれの場合も映像フレームはkeyholderの外へ出ません。
+
+### 7. QRコードの鍵レベルは参考情報であり、ポリシーは別に保存する
+
+アプリはオーナー、マネージャー、ゲストの3種類のQRコードを提供します。レベルはペイロードの内側ではなく、`l`クエリパラメータ（`0`、`1`、`2`）として並んで運ばれます。暗号化も認証もされておらず、Bluetoothプロトコルにはレベルという概念自体がありません。item code `82`と`83`は有効なセッションを持つ相手からであれば受理されます。公開されているSDKにおいてレベル間で実際に異なるのは、ペイロードが運ぶsecret**そのもの**です。ゲスト鍵の共有時には別のゲスト用secretがレコードへ差し替えられます。
+
+したがってkeyholderは`l`を「どの種類の鍵を読み取ったか」の表示のために記録し、権限として扱ってはなりません。このプロジェクトが強制する制限（解錠前の確認、施錠専用モード、レート制限）は、鍵と並べてkeyholderが保存するポリシーに属し、レベルによらずすべての鍵へ適用します。
+
+アプリは有効期限の短い暗号化された共有コードを提示することもあります。公開されているSDKは`sk`のほかに2つのQR種別（`friend`と`matter`）と`invite`パラメータを定義していますが、期限付きコードの符号化は定義していないため、このプロジェクトはその読み取りを試みません。期限切れが起きるコードには、それがまだ有効かを判断するサーバーが必然的に存在します。それはBluetooth経路が取り除こうとしている依存そのものです。期限付きコードしか得られない場合の答えは、代わりに`sk`コードを書き出すか、brokerを使うことです。
+
 ## 結果
 
 ### 得るもの
@@ -81,6 +110,7 @@ keyholderはsecretをそのまま使える形ではなく、ラップして保�
 - クラウドの受理応答に代えて`mech_status` pushによる実際の機械状態。受理応答は鍵が物理的に動いたことを証明しない。
 - 攻撃者が同時に満たさねばならない条件としての物理的なBluetooth近接性。
 - クラウド往復より低いレイテンシ。
+- アプリの共有QRコードのスキャンによるペアリング。16進数のsecretとデバイスUUIDを手で書き写す作業を置き換え、書き写し間違いが起こり得なくなる。
 
 ### 手放すもの、新たに必要になるもの
 
@@ -90,6 +120,8 @@ keyholderはsecretをそのまま使える形ではなく、ラップして保�
 - **`requestDevice()`はtransient user activationを要求する。** 最初のコマンド時に暗黙に接続するのではなく、クリック直後に実行する明示的な接続ブロックが必要です。
 - **鍵は単一のブラウザプロファイルに閉じる。** 閲覧データの消去で失われ、プライベートウィンドウでは保持されず、デバイス間で同期されません。再ペアリングの導線が必要であり、keyholderは不透明に失敗せず明確に劣化しなければなりません。
 - **同一originからの使用は原理的に残る。** iframeのoriginとPRFによる制御は窓を狭めますが、閉じはしません。認証済みセッション中にkeyholderのoriginが侵害されれば、依然として鍵を操作できます。
+- **WindowsとLinuxではバーコードデコーダのバンドルが必要。** これらのChromeには`BarcodeDetector`の背後にあるプラットフォーム側のバーコード対応がない。
+- **期限付き共有コードには対応しない。** 自己完結する`sk`形式のみを対象とする。期限付きコードの符号化は公開SDKになく、引き換えにはサーバーが必要になるため。
 - **非抽出性はハードウェア保護ではない。** 鍵素材はブラウザプロファイル内のディスク上にあり、ファイル権限と全ディスク暗号化だけに守られます。ロック解除済みのマシンを取得した攻撃者は勝ちます。これはbrokerの設定ファイルや、公式アプリの入ったスマートフォンでも同じです。
 
 ## 検討した代替案
@@ -109,3 +141,8 @@ keyholderはsecretをそのまま使える形ではなく、ラップして保�
 - [libsesame3bt-core](https://github.com/homy-newfs8/libsesame3bt-core)
 - [Permissions-Policy: bluetooth](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy/bluetooth)
 - [WebAuthn PRF extension](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/WebAuthn_extensions)
+- [SesameSDK iOS `URL+Sesame2.swift`](https://github.com/CANDY-HOUSE/SesameSDK_iOS_with_DemoApp/blob/master/SesameUI/Shared/Extensions/URL%2BSesame2.swift) — 共有QRの符号化
+- [SesameSDK iOS `KeyLevel.swift`](https://github.com/CANDY-HOUSE/SesameSDK_iOS_with_DemoApp/blob/master/SesameUI/Shared/Util/KeyLevel.swift) — オーナー、マネージャー、ゲスト
+- [Permissions-Policy: camera](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy/camera)
+- [Barcode Detection API](https://developer.mozilla.org/en-US/docs/Web/API/Barcode_Detection_API)
+- [NIST SP 800-38C](https://csrc.nist.gov/pubs/sp/800/38/c/upd1/final) と [RFC 3610](https://www.rfc-editor.org/rfc/rfc3610) — AES-CCM

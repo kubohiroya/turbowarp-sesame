@@ -116,6 +116,68 @@ information about what is brokered. The renamed package keeps its role as the cl
 which remains necessary for remote operation, for browsers without Web Bluetooth, and for control
 from outside Bluetooth range.
 
+### 6. Pairing reads the app's share QR code, in a top-level keyholder window
+
+The sesame app shares a key as a QR code holding an `ssm://UI` URL. Its `sk`
+form is self-contained and needs no server:
+
+```text
+ssm://UI?t=sk&sk=<base64>&l=<key level>&n=<device name>
+```
+
+The base64 value decodes to a packed record. Its shape depends on the product
+model in its first byte, because SESAME 5 and later carry a four-byte public
+key where earlier models carry sixty-four:
+
+```text
+model >= 5   [0] model | [1..16] secret | [17..20] public key  | [21..22] key index | [23..38] UUID
+model <  5   [0] model | [1..16] secret | [17..80] public key  | [81..82] key index | [83..98] UUID
+```
+
+Those sixteen secret bytes are the `device_secret` decision 2 describes, and
+the UUID is the same device UUID the Web API uses. Scanning therefore replaces
+the whole manual credential step: no hexadecimal to copy, no UUID to paste, and
+the right public key for the model comes along with it.
+
+**The scan happens in a top-level window on the keyholder origin, not in the
+iframe and not in TurboWarp's page.** The QR carries the secret in cleartext,
+so a page that decodes it holds the secret; letting TurboWarp's page do that
+would undo decision 3. The iframe cannot do it either: the `camera` Permissions
+Policy defaults to an allowlist of `self`, exactly as `bluetooth` does, and
+TurboWarp emits no `allow="camera"`. A top-level browsing context on the
+keyholder origin is its own `self`, so the camera works there. Pairing opens
+that window, scans, imports the secret as a non-extractable `CryptoKey`, wraps
+it, and closes; the extension learns only a device name and that pairing
+succeeded. Sessions afterwards run through the iframe, which needs no camera.
+
+Decoding uses `BarcodeDetector` where the platform provides it — macOS,
+Android, and ChromeOS — and a bundled decoder elsewhere, since Chrome on
+Windows and Linux has no platform barcode support. Either way the video frames
+stay inside the keyholder.
+
+### 7. The key level in the QR code is advisory, and policy is stored separately
+
+The app offers owner, manager, and guest QR codes. The level travels as the
+`l` query parameter — `0`, `1`, or `2` — alongside the payload rather than
+inside it. It is neither encrypted nor authenticated, and the Bluetooth
+protocol has no concept of it: item codes `82` and `83` are accepted from
+anyone holding a valid session. What actually differs between levels in the
+published SDK is _which_ secret the payload carries, because sharing a guest
+key substitutes a separate guest secret into the record.
+
+So the keyholder records `l` to show the user which kind of key was scanned and
+must not treat it as a permission. Any restriction this project enforces —
+confirmation before unlock, a lock-only mode, rate limiting — belongs to policy
+the keyholder stores next to the key, applied to every key regardless of level.
+
+The app can also present a short-lived encrypted sharing code. The published
+SDK defines two further QR types beside `sk` (`friend` and `matter`) and a
+separate `invite` parameter, but not the encoding of a time-limited code, so
+this project does not attempt to read one. A code that expires necessarily has
+a server deciding whether it is still valid, which is the dependency the
+Bluetooth path exists to remove. Where only such a code is available, the
+answer is to export an `sk` code instead, or to use the broker.
+
 ## Consequences
 
 ### Gained
@@ -126,6 +188,9 @@ from outside Bluetooth range.
   prove the lock physically moved.
 - Physical Bluetooth proximity becomes a factor an attacker must also satisfy.
 - Lower latency than the cloud round trip.
+- Pairing by scanning the app's share QR code, which replaces copying a
+  hexadecimal secret and a device UUID by hand and cannot transcribe them
+  wrongly.
 
 ### Given up or newly required
 
@@ -146,6 +211,11 @@ from outside Bluetooth range.
 - **Same-origin use remains possible in principle.** The iframe origin and the PRF gate reduce the
   window; they do not eliminate it. A compromise of the keyholder origin during an authenticated
   session can still drive the lock.
+- **Barcode decoding needs a bundled decoder on Windows and Linux**, where
+  Chrome has no platform barcode support behind `BarcodeDetector`.
+- **Time-limited sharing codes are not supported**, only the self-contained
+  `sk` form. Their encoding is not in the published SDK, and redeeming one
+  would reintroduce a server.
 - **Non-extractable is not hardware-backed.** The key material lives in the browser profile on
   disk, protected by file permissions and full-disk encryption only. An attacker with the user's
   unlocked machine wins — as they also would with the broker's configuration file or with the phone
@@ -178,3 +248,8 @@ avoids that entirely, matching how `libsesame3bt` operates with `set_keys("", SE
 - [libsesame3bt-core](https://github.com/homy-newfs8/libsesame3bt-core)
 - [Permissions-Policy: bluetooth](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy/bluetooth)
 - [WebAuthn PRF extension](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/WebAuthn_extensions)
+- [SesameSDK iOS `URL+Sesame2.swift`](https://github.com/CANDY-HOUSE/SesameSDK_iOS_with_DemoApp/blob/master/SesameUI/Shared/Extensions/URL%2BSesame2.swift) — share QR encoding
+- [SesameSDK iOS `KeyLevel.swift`](https://github.com/CANDY-HOUSE/SesameSDK_iOS_with_DemoApp/blob/master/SesameUI/Shared/Util/KeyLevel.swift) — owner, manager, guest
+- [Permissions-Policy: camera](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy/camera)
+- [Barcode Detection API](https://developer.mozilla.org/en-US/docs/Web/API/Barcode_Detection_API)
+- [NIST SP 800-38C](https://csrc.nist.gov/pubs/sp/800/38/c/upd1/final) and [RFC 3610](https://www.rfc-editor.org/rfc/rfc3610) — AES-CCM
