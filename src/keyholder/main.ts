@@ -25,7 +25,12 @@ import {
 import { isScanningSupported, scanQrCode } from "./scan.js";
 import { KeyholderServer, type KeyholderBackend } from "./server.js";
 import { IndexedDbStorage } from "./storage.js";
-import { normalizeDeviceName, Vault, type PairedRecord } from "./vault.js";
+import {
+  normalizeDeviceName,
+  suggestDeviceName,
+  Vault,
+  type PairedRecord,
+} from "./vault.js";
 
 const vault = new Vault(new IndexedDbStorage());
 
@@ -146,13 +151,20 @@ async function storeManual(): Promise<void> {
 }
 
 async function store(key: SharedKey): Promise<void> {
-  const alias = normalizeDeviceName(
-    element<HTMLInputElement>("alias").value || (key.name ?? "sesame"),
-  );
-
   const usePasskey =
     isWebAuthnAvailable() && element<HTMLInputElement>("use-passkey").checked;
   try {
+    // Inside the try, because only the scan path had its own error handling:
+    // a rejected alias was reported there and swallowed everywhere else.
+    //
+    // A typed alias is taken at its word, so a mistake in it is reported
+    // against what was typed. An empty field falls back to the name from the
+    // code, which is a label chosen for people and often cannot be an alias.
+    const typed = element<HTMLInputElement>("alias").value.trim();
+    const alias = normalizeDeviceName(
+      typed.length > 0 ? typed : suggestDeviceName(key.name),
+    );
+
     if (usePasskey) {
       status("Confirm with your passkey to protect this key.");
       const { credentialId, salt } = await createPasskey(alias);

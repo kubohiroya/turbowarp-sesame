@@ -600,7 +600,7 @@ var Ee = "sesame-keyholder", H = "devices", De = 1, Oe = class {
 		this.storage = e, this.subtle = t, this.randomBytes = n;
 	}
 	async pair(e, t, n, r) {
-		let i = W(e), a = je(t.secret), o = await this.subtle.importKey("raw", K(a), { name: "AES-CBC" }, !0, ["encrypt"]);
+		let i = W(e), a = Me(t.secret), o = await this.subtle.importKey("raw", K(a), { name: "AES-CBC" }, !0, ["encrypt"]);
 		a.fill(0);
 		let s = this.randomBytes(ke), c = new Uint8Array(await this.subtle.wrapKey("raw", o, n, {
 			name: U,
@@ -649,8 +649,12 @@ var Ee = "sesame-keyholder", H = "devices", De = 1, Oe = class {
 };
 function W(e) {
 	let t = e.trim().toLowerCase().replace(/\s+/gu, "-");
-	if (!/^[a-z0-9][a-z0-9._-]{0,63}$/u.test(t)) throw TypeError("A device alias must start with a letter or digit and use only letters, digits, dot, dash, or underscore.");
+	if (!/^[a-z0-9][a-z0-9._-]{0,63}$/u.test(t)) throw TypeError(`"${e.trim()}" cannot be used as a device alias. It has to be typed identically into the project's block, so it is limited to letters, digits, dot, dash, and underscore, starting with a letter or digit — front-door, for example.`);
 	return t;
+}
+function je(e) {
+	let t = (e ?? "").trim().toLowerCase().replace(/\s+/gu, "-").replace(/[^a-z0-9._-]/gu, "").replace(/^[^a-z0-9]+/u, "").slice(0, 64);
+	return t.length > 0 ? t : "sesame";
 }
 function G(e) {
 	return {
@@ -660,7 +664,7 @@ function G(e) {
 		pairedAt: e.pairedAt
 	};
 }
-function je(e) {
+function Me(e) {
 	return Uint8Array.from(e.match(/.{2}/gu) ?? [], (e) => Number.parseInt(e, 16));
 }
 function K(e) {
@@ -675,7 +679,7 @@ var q = new Ae(new Oe()), J = (e) => {
 }, Y = (e, t = "info") => {
 	let n = J("status");
 	n.textContent = e, n.dataset.kind = t;
-}, Me = new z({
+}, Ne = new z({
 	isPaired: (e) => q.has(e),
 	unlock: async (e) => {
 		let t = await q.protectionFor(e);
@@ -689,7 +693,7 @@ var q = new Ae(new Oe()), J = (e) => {
 });
 window.addEventListener("message", (e) => {
 	let t = e.data, n = e.ports[0];
-	t?.sesameKeyholder === 1 && n !== void 0 && (Me.listen(n), J("embedded").hidden = !1);
+	t?.sesameKeyholder === 1 && n !== void 0 && (Ne.listen(n), J("embedded").hidden = !1);
 });
 async function X() {
 	let e = J("passphrase").value;
@@ -698,9 +702,9 @@ async function X() {
 }
 async function Z() {
 	let e = J("devices"), t = await q.list();
-	e.replaceChildren(...t.map((e) => Ne(e))), J("empty").hidden = t.length > 0;
+	e.replaceChildren(...t.map((e) => Pe(e))), J("empty").hidden = t.length > 0;
 }
-function Ne(e) {
+function Pe(e) {
 	let t = document.createElement("li"), n = document.createElement("strong");
 	n.textContent = e.deviceName;
 	let r = document.createElement("span");
@@ -722,7 +726,7 @@ async function Q(e) {
 	}
 	await $(t);
 }
-async function Pe() {
+async function Fe() {
 	let e;
 	try {
 		e = r({
@@ -736,31 +740,32 @@ async function Pe() {
 	await $(e), J("manual-secret").value = "";
 }
 async function $(e) {
-	let t = W(J("alias").value || (e.name ?? "sesame")), n = h() && J("use-passkey").checked;
+	let t = h() && J("use-passkey").checked;
 	try {
-		if (n) {
+		let n = J("alias").value.trim(), r = W(n.length > 0 ? n : je(e.name));
+		if (t) {
 			Y("Confirm with your passkey to protect this key.");
-			let { credentialId: n, salt: r } = await g(t), i = await _(n, r);
-			await q.pair(t, e, i, {
+			let { credentialId: t, salt: n } = await g(r), i = await _(t, n);
+			await q.pair(r, e, i, {
 				kind: "webauthn-prf",
-				credentialId: n,
-				salt: r
+				credentialId: t,
+				salt: n
 			});
 		} else {
-			let n = crypto.getRandomValues(/* @__PURE__ */ new Uint8Array(32)), r = await v(await X(), n, f);
-			await q.pair(t, e, r, {
+			let t = crypto.getRandomValues(/* @__PURE__ */ new Uint8Array(32)), n = await v(await X(), t, f);
+			await q.pair(r, e, n, {
 				kind: "passphrase",
-				salt: n,
+				salt: t,
 				iterations: f
 			});
 		}
-		Y(`Paired "${t}" (${i(e).uuid}).`), J("paste").value = "", J("passphrase").value = "", await Z();
+		Y(`Paired "${r}" (${i(e).uuid}).`), J("paste").value = "", J("passphrase").value = "", await Z();
 	} catch (e) {
 		Y(e instanceof Error ? e.message : String(e), "error");
 	}
 }
-var Fe = (e) => document.getElementById(e) ?? void 0;
-function Ie() {
+var Ie = (e) => document.getElementById(e) ?? void 0;
+function Le() {
 	J("scan").addEventListener("click", () => {
 		(async () => {
 			let e = J("preview");
@@ -776,21 +781,21 @@ function Ie() {
 		})();
 	}), J("use-pasted").addEventListener("click", () => {
 		Q(J("paste").value);
-	}), Fe("use-manual")?.addEventListener("click", () => {
-		Pe();
+	}), Ie("use-manual")?.addEventListener("click", () => {
+		Fe();
 	}), J("use-passkey").addEventListener("change", () => {
 		J("passphrase-row").hidden = J("use-passkey").checked;
 	});
 }
-function Le() {
+function Re() {
 	"serviceWorker" in navigator && navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(() => {});
 }
-async function Re() {
-	Ie(), Le();
+async function ze() {
+	Le(), Re();
 	let e = h(), t = J("use-passkey");
 	t.checked = e, t.disabled = !e, J("passphrase-row").hidden = e, J("no-passkeys").hidden = e, J("scan").hidden = !await te(), J("no-camera").hidden = !J("scan").hidden, await Z(), Y("Ready.");
 }
-Re().catch((e) => {
+ze().catch((e) => {
 	Y(e instanceof Error ? e.message : String(e), "error");
 });
 //#endregion

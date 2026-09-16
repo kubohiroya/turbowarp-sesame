@@ -138,10 +138,30 @@ export function normalizeDeviceName(value: string): string {
   const trimmed = value.trim().toLowerCase().replace(/\s+/gu, "-");
   if (!/^[a-z0-9][a-z0-9._-]{0,63}$/u.test(trimmed)) {
     throw new TypeError(
-      "A device alias must start with a letter or digit and use only letters, digits, dot, dash, or underscore.",
+      `"${value.trim()}" cannot be used as a device alias. It has to be typed identically into the project's block, so it is limited to letters, digits, dot, dash, and underscore, starting with a letter or digit — front-door, for example.`,
     );
   }
   return trimmed;
+}
+
+/**
+ * Derives a usable alias from a device name the person chose in the sesame app.
+ *
+ * Those names are for people: they contain spaces, punctuation, and scripts
+ * other than Latin. An alias has to survive being typed into a Scratch block,
+ * so anything that will not fit is dropped, and a name that leaves nothing
+ * behind falls back rather than failing. The alias is shown after pairing, so
+ * a poor guess is visible and correctable rather than silent.
+ */
+export function suggestDeviceName(name: string | undefined): string {
+  const slug = (name ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/gu, "-")
+    .replace(/[^a-z0-9._-]/gu, "")
+    .replace(/^[^a-z0-9]+/u, "")
+    .slice(0, 64);
+  return slug.length > 0 ? slug : "sesame";
 }
 
 function toPairedRecord(record: VaultRecord): PairedRecord {
