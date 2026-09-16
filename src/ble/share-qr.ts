@@ -23,6 +23,13 @@ const FIRST_SHORT_PUBLIC_KEY_MODEL = 5;
 const SHORT_PUBLIC_KEY_BYTES = 4;
 const LONG_PUBLIC_KEY_BYTES = 64;
 
+/**
+ * Highest product model the published documentation lists. A first byte above
+ * this is not a model, which means the payload is not the record this parser
+ * understands.
+ */
+const HIGHEST_KNOWN_MODEL = 20;
+
 const SECRET_BYTES = 16;
 
 /**
@@ -96,6 +103,13 @@ export function parseShareQr(text: string): SharedKey {
   if (model === undefined) {
     throw new Error("This sesame QR code is empty.");
   }
+  // A leading byte outside the known range is not a product model at all, so
+  // reporting a length mismatch against it would be misleading.
+  if (model > HIGHEST_KNOWN_MODEL) {
+    throw new Error(
+      `This sesame QR code is in a format this project does not know: ${describeShape(record)}. It is not the "share a key" code — see docs/device-testing.md.`,
+    );
+  }
   const publicKeyBytes =
     model >= FIRST_SHORT_PUBLIC_KEY_MODEL
       ? SHORT_PUBLIC_KEY_BYTES
@@ -104,7 +118,7 @@ export function parseShareQr(text: string): SharedKey {
     1 + SECRET_BYTES + publicKeyBytes + KEY_INDEX_BYTES + UUID_BYTES;
   if (record.length !== expected) {
     throw new Error(
-      `This sesame QR code is ${record.length} bytes, but model ${model} needs ${expected}.`,
+      `This sesame QR code is ${record.length} bytes, but model ${model} needs ${expected}. ${describeShape(record)}`,
     );
   }
 
@@ -136,6 +150,60 @@ export function parseShareQr(text: string): SharedKey {
 }
 
 /**
+ * Builds a key from values entered by hand.
+ *
+ * The QR code is the convenient route, not the only one. Anyone already using
+ * this project's Direct mode has the same 16-byte secret and device UUID, and
+ * a sesame app that shows a sharing code this parser cannot read should not
+ * leave them stuck.
+ */
+export function sharedKeyFromParts(parts: {
+  secret: string;
+  uuid: string;
+  model?: number;
+  publicKey?: string;
+  name?: string;
+}): SharedKey {
+  const secret = parts.secret.trim().toLowerCase().replace(/\s+/gu, "");
+  if (!/^[0-9a-f]{32}$/u.test(secret)) {
+    throw new Error(
+      "The secret key must be exactly 32 hexadecimal characters.",
+    );
+  }
+  if (secret.startsWith(GUEST_SECRET_PREFIX)) {
+    throw new Error(
+      "That is a guest key's secret, which is missing the half Bluetooth needs. Use an owner or manager key.",
+    );
+  }
+  const uuid = parts.uuid.trim().toUpperCase();
+  if (
+    !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/u.test(
+      uuid,
+    )
+  ) {
+    throw new Error(
+      "The device UUID must look like 00000000-0000-0000-0000-000000000000.",
+    );
+  }
+  const model = parts.model ?? FIRST_SHORT_PUBLIC_KEY_MODEL;
+  if (!Number.isInteger(model) || model < 0 || model > HIGHEST_KNOWN_MODEL) {
+    throw new Error(`Unknown product model: ${String(model)}.`);
+  }
+  const name = parts.name?.trim();
+  return {
+    model,
+    secret,
+    // Only SESAME 5 and later are reachable this way, and their login uses the
+    // secret alone; the public key is recorded for display, not for the
+    // protocol.
+    publicKey: parts.publicKey ?? "",
+    keyIndex: "",
+    uuid,
+    ...(name === undefined || name.length === 0 ? {} : { name }),
+  };
+}
+
+/**
  * Returns the record with its secret replaced, for logging or display.
  *
  * Parsed keys should not be printed, stored, or sent anywhere; where one has to
@@ -143,6 +211,21 @@ export function parseShareQr(text: string): SharedKey {
  */
 export function redact(key: SharedKey): SharedKey {
   return { ...key, secret: "[redacted]" };
+}
+
+/**
+ * Describes an unrecognized payload well enough to identify its format, and no
+ * better.
+ *
+ * Length and a few leading bytes place a format; they cannot reconstruct a key.
+ * This exists so an unknown code can be reported without anyone being asked to
+ * share the code itself, which would be sharing a credential.
+ */
+export function describeShape(record: Uint8Array): string {
+  const head = Array.from(record.subarray(0, 4), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join(" ");
+  return `${record.length} bytes beginning ${head}`;
 }
 
 function keyLevelName(value: string | null): KeyLevelName | undefined {
@@ -155,9 +238,14 @@ function keyLevelName(value: string | null): KeyLevelName | undefined {
 }
 
 function decodeBase64(value: string): Uint8Array {
-  // The app percent-encodes the value into the URL, so "+" survives as "+"
-  // through URLSearchParams; accept the URL-safe alphabet as well.
-  const normalized = value.replace(/-/gu, "+").replace(/_/gu, "/");
+  // URLSearchParams decodes "+" as a space, and the payload is standard base64
+  // where "+" is a real character. Restoring it is not optional: atob strips
+  // whitespace rather than failing, so a lost "+" silently shifts every byte
+  // after it and yields plausible-looking garbage.
+  const normalized = value
+    .replace(/ /gu, "+")
+    .replace(/-/gu, "+")
+    .replace(/_/gu, "/");
   let binary: string;
   try {
     binary = atob(normalized);

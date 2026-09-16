@@ -73,8 +73,23 @@ a guest key. Share a manager key.
 
 **If you see `This is not a sesame sharing QR code.`** — the app displayed a
 different kind of code. Read the QR with any QR reader and check whether the
-text begins with `ssm://UI?t=sk`. If it does not, note what it does begin with:
-that is a format this project does not handle, and it is worth knowing.
+text begins with `ssm://UI?t=sk`.
+
+**If you see `This sesame QR code is in a format this project does not know`** —
+the code is the right kind but its payload is not the record this parser
+understands. The message ends with the payload's length and first four bytes,
+which identify the format; that is safe to report, and the code itself is not.
+Newer app versions can show a short-lived encrypted sharing code whose encoding
+is not in the published SDK. Use the manual route below.
+
+### If the QR code cannot be read
+
+Scroll down to **…or enter the key by hand** and give it the lock's UUID and its
+32-character secret key. These are the same two values this project's Direct
+mode needs, so anyone already using Direct mode has them.
+
+The secret key opens your lock. Do not paste it into a chat, an issue, or
+anywhere other than this page.
 
 **If the passkey prompt does not appear**, the checkbox fell back to a
 passphrase. That is fine; enter one and remember it.

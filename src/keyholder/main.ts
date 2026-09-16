@@ -8,7 +8,12 @@
  * See docs/adr/0001-ble-transport-and-key-custody.md.
  */
 
-import { parseShareQr, redact, type SharedKey } from "../ble/share-qr.js";
+import {
+  parseShareQr,
+  redact,
+  sharedKeyFromParts,
+  type SharedKey,
+} from "../ble/share-qr.js";
 import {
   createPasskey,
   deriveFor,
@@ -121,6 +126,26 @@ async function storeScanned(text: string): Promise<void> {
     status(error instanceof Error ? error.message : String(error), "error");
     return;
   }
+  await store(key);
+}
+
+/** Turns values typed in by hand into a stored, wrapped key. */
+async function storeManual(): Promise<void> {
+  let key: SharedKey;
+  try {
+    key = sharedKeyFromParts({
+      secret: element<HTMLInputElement>("manual-secret").value,
+      uuid: element<HTMLInputElement>("manual-uuid").value,
+    });
+  } catch (error) {
+    status(error instanceof Error ? error.message : String(error), "error");
+    return;
+  }
+  await store(key);
+  element<HTMLInputElement>("manual-secret").value = "";
+}
+
+async function store(key: SharedKey): Promise<void> {
   const alias = normalizeDeviceName(
     element<HTMLInputElement>("alias").value || (key.name ?? "sesame"),
   );
@@ -183,6 +208,10 @@ function wire(): void {
 
   element("use-pasted").addEventListener("click", () => {
     void storeScanned(element<HTMLInputElement>("paste").value);
+  });
+
+  element("use-manual").addEventListener("click", () => {
+    void storeManual();
   });
 
   element<HTMLInputElement>("use-passkey").addEventListener("change", () => {

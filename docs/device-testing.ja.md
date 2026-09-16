@@ -47,7 +47,15 @@ keyholderでデバイス別名を入力します。サンプルプロジェク�
 
 **`This is a guest key, which does not contain the half of the secret that Bluetooth needs. Share an owner or manager key instead.` と出た場合** — ゲスト鍵をシェアしています。マネージャー鍵をシェアしてください。
 
-**`This is not a sesame sharing QR code.` と出た場合** — アプリが別種のコードを表示しています。任意のQRリーダーでそのコードを読み、テキストが `ssm://UI?t=sk` で始まるか確認してください。**始まらない場合、それは何で始まっているかを記録してください。** このプロジェクトが扱えない形式であり、知る価値があります。
+**`This is not a sesame sharing QR code.` と出た場合** — アプリが別種のコードを表示しています。任意のQRリーダーでそのコードを読み、テキストが `ssm://UI?t=sk` で始まるか確認してください。
+
+**`This sesame QR code is in a format this project does not know` と出た場合** — 種類は合っていますが、中身がこのパーサの理解するレコードではありません。メッセージの末尾にペイロードの長さと先頭4バイトが付きます。これは形式を特定するための情報で、**報告しても安全**です（コード本体は安全ではありません）。新しいアプリ版は、公開SDKに符号化が無い短命の暗号化共有コードを表示することがあります。下の手入力を使ってください。
+
+### QRコードが読めない場合
+
+ページ下部の **…or enter the key by hand** まで進み、錠前のUUIDと32文字のsecret keyを入力してください。**これはこのプロジェクトのDirect modeが必要とするのと同じ2つの値**なので、すでにDirect modeを使っているなら手元にあるはずです。
+
+secret keyは錠前を開けられます。チャットやissue、このページ以外のどこへも貼り付けないでください。
 
 **パスキーの確認が出ない場合**、チェックボックスがパスフレーズへフォールバックしています。それで構いません。入力して覚えておいてください。
 
