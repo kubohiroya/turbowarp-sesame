@@ -3,7 +3,11 @@ import { aesCmacWithKey } from "../src/aes-cmac.js";
 import type { SharedKey } from "../src/ble/share-qr.js";
 import { deriveFromPassphrase } from "../src/keyholder/kek.js";
 import { MemoryStorage } from "../src/keyholder/storage.js";
-import { normalizeDeviceName, Vault } from "../src/keyholder/vault.js";
+import {
+  normalizeDeviceName,
+  suggestDeviceName,
+  Vault,
+} from "../src/keyholder/vault.js";
 
 const SECRET = "2b7e151628aed2a6abf7158809cf4f3c";
 
@@ -187,5 +191,51 @@ describe("device aliases", () => {
     expect(() => normalizeDeviceName("")).toThrow(TypeError);
     expect(() => normalizeDeviceName("front/door")).toThrow(TypeError);
     expect(() => normalizeDeviceName("-leading")).toThrow(TypeError);
+  });
+});
+
+describe("suggesting an alias from a device name", () => {
+  it("slugifies a name that can be one", () => {
+    expect(suggestDeviceName("Front Door")).toBe("front-door");
+    expect(suggestDeviceName("  Back.Gate_2  ")).toBe("back.gate_2");
+  });
+
+  it("falls back rather than failing on a name it cannot use", () => {
+    // Device names are chosen by people, in whatever script they use.
+    expect(suggestDeviceName("玄関")).toBe("sesame");
+    expect(suggestDeviceName("🚪")).toBe("sesame");
+    expect(suggestDeviceName("")).toBe("sesame");
+    expect(suggestDeviceName(undefined)).toBe("sesame");
+  });
+
+  it("keeps the part of a mixed name that can be used", () => {
+    expect(suggestDeviceName("玄関 door")).toBe("door");
+  });
+
+  it("drops leading characters that cannot start an alias", () => {
+    expect(suggestDeviceName("--front")).toBe("front");
+    expect(suggestDeviceName("...")).toBe("sesame");
+  });
+
+  it("always produces something normalizeDeviceName accepts", () => {
+    for (const name of [
+      "Front Door",
+      "玄関",
+      "🚪",
+      "",
+      "--x",
+      "A".repeat(200),
+    ]) {
+      expect(() => normalizeDeviceName(suggestDeviceName(name))).not.toThrow();
+    }
+  });
+});
+
+describe("the alias error", () => {
+  it("says what was rejected and what is allowed", () => {
+    expect(() => normalizeDeviceName("玄関")).toThrow(/"玄関" cannot be used/u);
+    expect(() => normalizeDeviceName("玄関")).toThrow(
+      /front-door, for example/u,
+    );
   });
 });

@@ -22,7 +22,7 @@ function r(e, t) {
 }
 //#endregion
 //#region src/keyholder/service-worker.ts
-var i = n("05239e3255faa8f2"), a = self;
+var i = n("2062596acf1caec5"), a = self;
 a.addEventListener("install", ((t) => {
 	t.waitUntil((async () => {
 		await (await caches.open(i)).addAll(e.map((e) => new Request(e, { cache: "reload" }))), await a.skipWaiting();
