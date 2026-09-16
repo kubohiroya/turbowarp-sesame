@@ -66,6 +66,13 @@
       }
     },
     {
+      "opcode": "openKeyholder",
+      "blockType": "COMMAND",
+      "text": "open the Sesame keyholder",
+      "description": "Opens the keyholder window and waits for it. Run this from its own click: opening a window and opening the Bluetooth chooser each need a fresh user gesture.",
+      "arguments": {}
+    },
+    {
       "opcode": "pairBluetooth",
       "blockType": "COMMAND",
       "text": "pair Sesame by scanning its sharing QR code",

@@ -47,6 +47,8 @@ keyholderでデバイス別名を入力します。サンプルプロジェク�
 
 **`This is a guest key, which does not contain the half of the secret that Bluetooth needs. Share an owner or manager key instead.` と出た場合** — ゲスト鍵をシェアしています。マネージャー鍵をシェアしてください。
 
+**手順5で `No Sesame is paired as "front-door"` と出た場合** — ペアリングしたkeyholderと、プロジェクトが話しているkeyholderが同じストアではありません。これは実際にあった不具合です。以前はkeyholderをTurboWarpのページへ埋め込んでおり、Chromeはクロスサイトのframeに独自の分割ストレージを与えるため、ペアリングした内容が見えませんでした。現在は独立したウィンドウとして開きます。それでも出る場合は、keyholderが保持している別名とブロックの別名が違います。keyholderの一覧で確認してください。
+
 **`This is not a sesame sharing QR code.` と出た場合** — アプリが別種のコードを表示しています。任意のQRリーダーでそのコードを読み、テキストが `ssm://UI?t=sk` で始まるか確認してください。
 
 **`This sesame QR code is in a format this project does not know` と出た場合** — 種類は合っていますが、中身がこのパーサの理解するレコードではありません。メッセージの末尾にペイロードの長さ、先頭4バイト、クエリパラメータ名が付きます。これらは形式を特定するための情報で、**報告しても安全**です（コード本体は安全ではありません）。
@@ -98,11 +100,13 @@ keyholderのまま、DevToolsの **Application** を開きます。
 
 ## 5. 接続する
 
-緑の旗をクリックします。**期待:** `Press SPACE to connect over Bluetooth.`
+緑の旗をクリックします。**期待:** `Press SPACE to open the keyholder, then C to connect.`
 
-**SPACE**を押します。
+**SPACE**を押します。**期待:** keyholderが独立したウィンドウとして開き、プロジェクトが `Keyholder open. Now press C to connect.` と言うこと。ブラウザがブロックしたらポップアップを許可してください。**そのウィンドウは開いたままにしてください** — セッションの間、鍵を保持しています。
 
-**期待:** ブラウザのBluetoothデバイス選択画面が開き、お使いのSesameが一覧に出ること。
+**C**を押します。**期待:** ブラウザのBluetoothデバイス選択画面が開き、お使いのSesameが一覧に出ること。
+
+キーを2つに分けているのは、**ウィンドウを開くこととデバイス選択画面を開くことが、それぞれページのユーザー操作を1回ずつ消費する**ためです。1回の押下では両方をまかなえません。
 
 **何も起きない場合**、`last Sesame error` ブロックをパレット領域へドラッグしてクリックしてください。どの段階で失敗したかが分かります。
 

@@ -23,7 +23,10 @@
           "next": null,
           "parent": "s1_hat",
           "inputs": {
-            "MESSAGE": [1, [10, "Press SPACE to connect over Bluetooth."]]
+            "MESSAGE": [
+              1,
+              [10, "Press SPACE to open the keyholder, then C to connect."]
+            ]
           },
           "fields": {},
           "shadow": false,
@@ -44,7 +47,7 @@
         },
         "s2_configure": {
           "opcode": "kubohiroyasesame_configureBluetooth",
-          "next": "s2_connect",
+          "next": "s2_open",
           "parent": "s2_hat",
           "inputs": {
             "KEYHOLDER_URL": [
@@ -60,7 +63,7 @@
         "s2_connect": {
           "opcode": "kubohiroyasesame_connectBluetooth",
           "next": "s2_if",
-          "parent": "s2_configure",
+          "parent": "s6_hat",
           "inputs": {},
           "fields": {},
           "shadow": false,
@@ -274,6 +277,39 @@
           },
           "shadow": true,
           "topLevel": false
+        },
+        "s2_open": {
+          "opcode": "kubohiroyasesame_openKeyholder",
+          "next": "s2_say",
+          "parent": "s2_configure",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s2_say": {
+          "opcode": "looks_say",
+          "next": null,
+          "parent": "s2_open",
+          "inputs": {
+            "MESSAGE": [1, [10, "Keyholder open. Now press C to connect."]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "s6_hat": {
+          "opcode": "event_whenkeypressed",
+          "next": "s2_connect",
+          "parent": null,
+          "inputs": {},
+          "fields": {
+            "KEY_OPTION": ["c", null]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 40,
+          "y": 300
         }
       },
       "comments": {},
@@ -283,8 +319,8 @@
           "name": "instructions",
           "bitmapResolution": 1,
           "dataFormat": "svg",
-          "assetId": "32c876ffa0d76f8792255fe7d94292d2",
-          "md5ext": "32c876ffa0d76f8792255fe7d94292d2.svg",
+          "assetId": "d4c5263badd52a7cbb853547570cf906",
+          "md5ext": "d4c5263badd52a7cbb853547570cf906.svg",
           "rotationCenterX": 240,
           "rotationCenterY": 180
         }

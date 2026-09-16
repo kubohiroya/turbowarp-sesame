@@ -86,6 +86,34 @@ window.addEventListener("message", (event: MessageEvent) => {
   element("embedded").hidden = false;
 });
 
+/**
+ * Tells whoever opened this window that it is ready for a channel.
+ *
+ * A cross-origin opener gets no load event for this document, so without an
+ * announcement it can only guess when to offer its port. The message carries
+ * nothing but the fact of being ready, which is why posting it to any origin
+ * is safe: the opener's origin is not known here, and the channel itself is
+ * established the other way round, addressed to this origin.
+ */
+if (window.opener !== null) {
+  window.opener.postMessage({ sesameKeyholder: "ready" }, "*");
+}
+
+/**
+ * Warns when this page is embedded rather than opened.
+ *
+ * Chrome partitions storage for a cross-site frame, so an embedded copy sees
+ * an empty store instead of the keys paired here — which reads as "no Sesame
+ * is paired" and looks like the pairing failed. Saying so plainly is better
+ * than leaving someone to pair again into a store nothing will read.
+ */
+if (window.top !== window.self) {
+  status(
+    "This keyholder is embedded in another page, where the browser gives it separate storage. Keys paired here are not visible to it.",
+    "error",
+  );
+}
+
 async function askPassphrase(): Promise<string> {
   const value = element<HTMLInputElement>("passphrase").value;
   if (value.length === 0) {

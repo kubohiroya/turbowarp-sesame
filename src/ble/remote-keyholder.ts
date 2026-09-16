@@ -2,13 +2,18 @@
  * The TurboWarp-side half of the keyholder boundary.
  *
  * ADR 0001 puts the device secret on its own origin, so this holds no key and
- * performs no cryptography. It embeds the keyholder in a hidden iframe, talks
- * to it over a private `MessageChannel`, and forwards seal and open requests.
- * Everything crossing this boundary is either already sealed or already public.
+ * performs no cryptography. It opens the keyholder in a window of its own,
+ * talks to it over a private `MessageChannel`, and forwards seal and open
+ * requests. Everything crossing this boundary is either already sealed or
+ * already public.
  *
- * Pairing is delegated to a top-level window the keyholder opens for itself,
- * because the camera is gated by a Permissions Policy that defaults to `self`
- * and TurboWarp grants no `allow="camera"` to a frame.
+ * A window rather than an iframe, for two reasons that point the same way.
+ * Chrome partitions storage for a cross-site iframe, so an embedded keyholder
+ * gets an empty store rather than the keys the person paired in the keyholder
+ * page — confirmed on real hardware, where every session failed with "No
+ * Sesame is paired". And pairing needs the camera, which a frame cannot have
+ * because the `camera` Permissions Policy defaults to `self`. A window is a
+ * top-level browsing context: first-party storage, and its own permissions.
  */
 
 import type {
@@ -22,6 +27,11 @@ import type { ParsingType } from "./segment.js";
 /** Long enough for a biometric prompt, short enough to not hang a project. */
 const DEFAULT_TIMEOUT_MS = 120_000;
 
+/** Reusing one window name keeps a second connect from opening a second one. */
+const WINDOW_NAME = "sesame-keyholder";
+
+const OFFER_INTERVAL_MS = 400;
+
 interface Request {
   resolve(value: unknown): void;
   reject(error: Error): void;
@@ -31,9 +41,9 @@ interface Request {
 export interface RemoteKeyholderOptions {
   /** Absolute https URL of the keyholder page. */
   url: string;
-  /** Where the hidden iframe is attached. Defaults to `document.body`. */
-  container?: HTMLElement;
   timeoutMs?: number;
+  /** Opens the window. Replaceable in tests. */
+  open?: (url: string, name: string) => Window | null;
 }
 
 /**
@@ -69,7 +79,7 @@ export class RemoteKeyholder implements KeyholderPort {
   private readonly timeoutMs: number;
   private readonly pending = new Map<number, Request>();
   private port: MessagePort | undefined;
-  private frame: HTMLIFrameElement | undefined;
+  private window: Window | undefined;
   private connecting: Promise<MessagePort> | undefined;
   private nextId = 1;
 
@@ -109,7 +119,23 @@ export class RemoteKeyholder implements KeyholderPort {
     return { session: new RemoteSession(this, sessionId), loginProof };
   }
 
-  /** Releases the iframe and fails anything still outstanding. */
+  /** True once the keyholder window has answered. */
+  public isOpen(): boolean {
+    return this.port !== undefined && this.window?.closed !== true;
+  }
+
+  /**
+   * Opens the keyholder window and waits for it.
+   *
+   * Separate from the calls that use it because opening a window consumes the
+   * page's transient activation, and so does the Bluetooth device chooser. One
+   * click cannot pay for both.
+   */
+  public async ready(): Promise<void> {
+    await this.connect();
+  }
+
+  /** Closes the window and fails anything still outstanding. */
   public dispose(): void {
     for (const [, request] of this.pending) {
       clearTimeout(request.timer);
@@ -119,8 +145,8 @@ export class RemoteKeyholder implements KeyholderPort {
     this.port?.close();
     this.port = undefined;
     this.connecting = undefined;
-    this.frame?.remove();
-    this.frame = undefined;
+    this.window?.close();
+    this.window = undefined;
   }
 
   /** @internal Used by {@link RemoteSession}. */
@@ -150,50 +176,64 @@ export class RemoteKeyholder implements KeyholderPort {
   }
 
   private open(): Promise<MessagePort> {
-    if (typeof document === "undefined") {
-      throw new Error("A keyholder needs a browser document.");
+    const opener = this.options.open ?? defaultOpener();
+    const child = opener(this.url.toString(), WINDOW_NAME);
+    if (child === null) {
+      throw new Error(
+        "The browser blocked the keyholder window. Allow pop-ups for this site, then try again.",
+      );
     }
-    return new Promise<MessagePort>((resolve, reject) => {
-      const frame = document.createElement("iframe");
-      frame.src = this.url.toString();
-      frame.setAttribute("aria-hidden", "true");
-      frame.setAttribute("title", "Sesame keyholder");
-      // Nothing is displayed, but it must stay in the document to run.
-      frame.style.cssText =
-        "position:absolute;width:0;height:0;border:0;visibility:hidden";
-      this.frame = frame;
+    this.window = child;
 
+    return new Promise<MessagePort>((resolve, reject) => {
       const timer = setTimeout(() => {
-        reject(new Error("The keyholder did not load."));
+        stop();
+        reject(new Error("The keyholder window did not answer."));
       }, this.timeoutMs);
 
-      frame.addEventListener("load", () => {
+      // The keyholder announces itself once it has loaded, because a
+      // cross-origin window gives the opener no load event to wait for. Until
+      // the announcement arrives, a fresh port is offered periodically so a
+      // window that was already open is picked up too.
+      const offer = (): void => {
         const channel = new MessageChannel();
         channel.port1.onmessage = (event: MessageEvent) => {
           const data = event.data as { ready?: boolean } | null;
-          if (data?.ready === true) {
-            clearTimeout(timer);
-            channel.port1.onmessage = (message: MessageEvent) => {
-              this.receive(message);
-            };
-            this.port = channel.port1;
-            resolve(channel.port1);
-            return;
-          }
-          this.receive(event);
+          if (data?.ready !== true) return;
+          stop();
+          channel.port1.onmessage = (message: MessageEvent) => {
+            this.receive(message);
+          };
+          this.port = channel.port1;
+          resolve(channel.port1);
         };
-        frame.contentWindow?.postMessage(
-          { sesameKeyholder: 1 },
-          this.url.origin,
-          [channel.port2],
-        );
-      });
-      frame.addEventListener("error", () => {
-        clearTimeout(timer);
-        reject(new Error("The keyholder failed to load."));
-      });
+        try {
+          child.postMessage({ sesameKeyholder: 1 }, this.url.origin, [
+            channel.port2,
+          ]);
+        } catch {
+          // The window is not ready for a message yet; the next offer retries.
+        }
+      };
 
-      (this.options.container ?? document.body).append(frame);
+      const announced = (event: MessageEvent): void => {
+        if (event.origin !== this.url.origin || event.source !== child) return;
+        const data = event.data as { sesameKeyholder?: string } | null;
+        if (data?.sesameKeyholder === "ready") offer();
+      };
+      const host = globalThis as {
+        addEventListener?: typeof addEventListener;
+        removeEventListener?: typeof removeEventListener;
+      };
+      host.addEventListener?.("message", announced);
+      const retry = setInterval(offer, OFFER_INTERVAL_MS);
+
+      const stop = (): void => {
+        clearTimeout(timer);
+        clearInterval(retry);
+        host.removeEventListener?.("message", announced);
+      };
+      offer();
     });
   }
 
@@ -257,6 +297,19 @@ class RemoteSession implements KeyholderSession {
   public async close(): Promise<void> {
     await this.keyholder.call("closeSession", { sessionId: this.sessionId });
   }
+}
+
+/**
+ * How the window is opened when the caller has not said.
+ *
+ * Resolved when it is needed rather than at construction, so a test can supply
+ * its own opener without a browser being present at all.
+ */
+function defaultOpener(): (url: string, name: string) => Window | null {
+  if (typeof window === "undefined") {
+    throw new Error("A keyholder needs a browser window.");
+  }
+  return (url, name) => window.open(url, name, "width=460,height=680");
 }
 
 function asRecord(value: unknown, what: string): Record<string, unknown> {

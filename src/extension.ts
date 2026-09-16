@@ -159,6 +159,13 @@ export class SesameExtension implements TurboWarpExtension {
     });
   }
 
+  public async openKeyholder(): Promise<void> {
+    await this.captureAsync(async () => {
+      const connection = this.requireBluetooth();
+      await this.keyholder(connection).ready();
+    }, undefined);
+  }
+
   public async pairBluetooth(): Promise<void> {
     await this.captureAsync(async () => {
       const connection = this.requireBluetooth();
