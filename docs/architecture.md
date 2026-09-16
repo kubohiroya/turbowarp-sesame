@@ -69,6 +69,7 @@ drift in local checks and CI.
 ## Operations
 
 - [Hosting the keyholder](keyholder-hosting.md)
+- [Testing against a real Sesame](device-testing.md)
 
 ## Decision records
 

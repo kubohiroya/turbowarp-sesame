@@ -53,6 +53,7 @@ v1契約は次の情報を含みます。
 ## 運用
 
 - [keyholderのホスティング](keyholder-hosting.ja.md)
+- [実機のSesameで検証する](device-testing.ja.md)
 
 ## 決定記録
 

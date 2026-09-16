@@ -111,9 +111,17 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
+const built = await readFile(outputPath);
 await writeFile(
   new URL("../dist/turbowarp-sesame-app.sb3.sha256", import.meta.url),
-  `${await sha256(await readFile(outputPath))}  turbowarp-sesame-app.sb3\n`,
+  `${await sha256(built)}  turbowarp-sesame-app.sb3\n`,
+);
+
+// Also published by GitHub Pages, so the download has a plain URL people can
+// be given rather than a repository path.
+await writeFile(
+  new URL("../docs/turbowarp-sesame-app.sb3", import.meta.url),
+  built,
 );
 
 process.stdout.write(

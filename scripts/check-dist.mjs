@@ -12,6 +12,7 @@ const generated = [
   "dist",
   "docs/keyholder/keyholder.js",
   "docs/keyholder/sw.js",
+  "docs/turbowarp-sesame-app.sb3",
   "app/extensions",
 ];
 const { stdout } = await execFileAsync(
