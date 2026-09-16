@@ -103,8 +103,8 @@ export interface PairedDevice {
   /** Name to pass to {@link KeyholderPort.startSession}. */
   deviceName: string;
 
-  /** Device UUID from the QR code, for showing which lock was paired. */
-  uuid: string;
+  /** Device UUID, when the sharing code carried one. For display only. */
+  uuid?: string;
 
   /**
    * Key level the QR code claimed, when it claimed one.

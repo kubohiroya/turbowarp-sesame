@@ -17,7 +17,7 @@ const IV_BYTES = 12;
 
 export interface PairedRecord {
   deviceName: string;
-  uuid: string;
+  uuid?: string;
   level?: string;
   pairedAt: number;
 }
@@ -64,7 +64,7 @@ export class Vault {
 
     const record: VaultRecord = {
       deviceName: alias,
-      uuid: key.uuid,
+      ...(key.uuid === undefined ? {} : { uuid: key.uuid }),
       model: key.model,
       publicKey: key.publicKey,
       ...(key.level === undefined ? {} : { level: key.level }),
@@ -167,7 +167,7 @@ export function suggestDeviceName(name: string | undefined): string {
 function toPairedRecord(record: VaultRecord): PairedRecord {
   return {
     deviceName: record.deviceName,
-    uuid: record.uuid,
+    ...(record.uuid === undefined ? {} : { uuid: record.uuid }),
     ...(record.level === undefined ? {} : { level: record.level }),
     pairedAt: record.pairedAt,
   };

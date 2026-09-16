@@ -67,8 +67,15 @@ export interface SharedKey {
   /** The device's public key, as lowercase hexadecimal. */
   publicKey: string;
   keyIndex: string;
-  /** Device UUID in the canonical dashed form, uppercased as the API uses it. */
-  uuid: string;
+  /**
+   * Device UUID, when the code carried one.
+   *
+   * Bluetooth never needs it: the lock is chosen in the browser's device
+   * chooser and the session is established from the secret alone. It is kept
+   * for showing which lock a stored key belongs to, and the shortest sharing
+   * codes do not include it.
+   */
+  uuid?: string;
   /** Advisory key level, when the URL carried a recognizable one. */
   level?: KeyLevelName;
   /** Device name the sharer chose, when the URL carried one. */
@@ -167,7 +174,7 @@ export function parseShareQr(text: string): SharedKey {
  */
 export function sharedKeyFromParts(parts: {
   secret: string;
-  uuid: string;
+  uuid?: string;
   model?: number;
   publicKey?: string;
   name?: string;
@@ -183,14 +190,18 @@ export function sharedKeyFromParts(parts: {
       "That is a guest key's secret, which is missing the half Bluetooth needs. Use an owner or manager key.",
     );
   }
-  const uuid = parts.uuid.trim().toUpperCase();
+  // Optional, because Bluetooth does not use it. A value that is given is
+  // checked, so a typo is caught rather than stored as a label that misleads.
+  const given = parts.uuid?.trim() ?? "";
+  const uuid = given.length === 0 ? undefined : given.toUpperCase();
   if (
+    uuid !== undefined &&
     !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/u.test(
       uuid,
     )
   ) {
     throw new Error(
-      "The device UUID must look like 00000000-0000-0000-0000-000000000000.",
+      "The device UUID must look like 00000000-0000-0000-0000-000000000000, or be left empty.",
     );
   }
   const model = parts.model ?? FIRST_SHORT_PUBLIC_KEY_MODEL;
@@ -206,7 +217,7 @@ export function sharedKeyFromParts(parts: {
     // protocol.
     publicKey: parts.publicKey ?? "",
     keyIndex: "",
-    uuid,
+    ...(uuid === undefined ? {} : { uuid }),
     ...(name === undefined || name.length === 0 ? {} : { name }),
   };
 }
@@ -245,12 +256,9 @@ export function describeShape(record: Uint8Array): string {
  * parser working if the parameter is renamed.
  */
 function fromBareSecret(secret: Uint8Array, query: URLSearchParams): SharedKey {
+  // The shortest observed code is `ssm://UI?t=sk&sk=<16 bytes>` and carries no
+  // device identity at all. That is enough: the UUID was only ever a label.
   const uuid = findUuid(query);
-  if (uuid === undefined) {
-    throw new Error(
-      `This sesame QR code carries a key but no device UUID (parameters ${parameterNames(query)}). Enter the key by hand instead — see docs/device-testing.md.`,
-    );
-  }
   const hex = toHex(secret, 0, SECRET_BYTES);
   if (hex.startsWith(GUEST_SECRET_PREFIX)) {
     throw new Error(
@@ -270,7 +278,7 @@ function fromBareSecret(secret: Uint8Array, query: URLSearchParams): SharedKey {
     // secret alone.
     publicKey: "",
     keyIndex: "",
-    uuid,
+    ...(uuid === undefined ? {} : { uuid }),
     ...(level === undefined ? {} : { level }),
     ...(name === undefined || name.length === 0 ? {} : { name }),
   };

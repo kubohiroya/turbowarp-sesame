@@ -348,10 +348,11 @@ describe("a code whose sk is the secret alone", () => {
     ).toBe(7);
   });
 
-  it("names the parameters when no UUID is among them", () => {
-    expect(() => parseShareQr(`ssm://UI?t=sk&sk=${sk}&l=1&n=door`)).toThrow(
-      /carries a key but no device UUID \(parameters t, sk, l, n\)/u,
-    );
+  it("pairs without a UUID, keeping the level and name it did carry", () => {
+    const key = parseShareQr(`ssm://UI?t=sk&sk=${sk}&l=1&n=door`);
+    expect(key.uuid).toBeUndefined();
+    expect(key.level).toBe("manager");
+    expect(key.name).toBe("door");
   });
 
   it("still rejects a guest secret in this form", () => {
@@ -367,10 +368,9 @@ describe("a code whose sk is the secret alone", () => {
   });
 
   it("does not mistake the secret itself for a UUID", () => {
-    // The secret is 16 bytes too, but it is base64 in sk, not hex in a value.
-    expect(() => parseShareQr(`ssm://UI?t=sk&sk=${sk}`)).toThrow(
-      /no device UUID/u,
-    );
+    // The secret is 16 bytes too, so a careless search of every parameter
+    // would find it. sk is excluded, and the result carries no UUID at all.
+    expect(parseShareQr(`ssm://UI?t=sk&sk=${sk}`).uuid).toBeUndefined();
   });
 });
 
@@ -382,5 +382,57 @@ describe("reporting an unfamiliar code", () => {
     expect(() =>
       parseShareQr(`ssm://UI?t=sk&sk=${payload}&l=2&n=door&x=1`),
     ).toThrow(/parameters t, sk, l, n, x/u);
+  });
+});
+
+describe("a code carrying nothing but the secret", () => {
+  // The shortest code observed on real hardware: ssm://UI?t=sk&sk=<16 bytes>,
+  // with no device identity at all.
+  const SECRET = "aa968704" + "11".repeat(12);
+  const url = `ssm://UI?t=sk&sk=${Buffer.from(SECRET, "hex").toString("base64")}`;
+
+  it("pairs, because Bluetooth needs only the secret", () => {
+    const key = parseShareQr(url);
+    expect(key.secret).toBe(SECRET);
+    expect(key.uuid).toBeUndefined();
+    expect(key.model).toBe(5);
+  });
+
+  it("still rejects a guest secret", () => {
+    const guest = Buffer.from(
+      "0".repeat(16) + "abcdef0123456789",
+      "hex",
+    ).toString("base64");
+    expect(() => parseShareQr(`ssm://UI?t=sk&sk=${guest}`)).toThrow(
+      /guest key/iu,
+    );
+  });
+
+  it("uses a UUID when one happens to be present", () => {
+    expect(
+      parseShareQr(`${url}&u=00010203-0405-0607-0809-0A0B0C0D0E0F`).uuid,
+    ).toBe("00010203-0405-0607-0809-0A0B0C0D0E0F");
+  });
+});
+
+describe("entering a key with no UUID", () => {
+  const SECRET = "2b7e151628aed2a6abf7158809cf4f3c";
+
+  it("accepts the secret alone", () => {
+    const key = sharedKeyFromParts({ secret: SECRET });
+    expect(key.secret).toBe(SECRET);
+    expect(key.uuid).toBeUndefined();
+  });
+
+  it("treats an empty or blank UUID as absent", () => {
+    expect(
+      sharedKeyFromParts({ secret: SECRET, uuid: "   " }).uuid,
+    ).toBeUndefined();
+  });
+
+  it("still catches a typo in a UUID that was given", () => {
+    expect(() =>
+      sharedKeyFromParts({ secret: SECRET, uuid: "00010203-0405" }),
+    ).toThrow(/device UUID/u);
   });
 });

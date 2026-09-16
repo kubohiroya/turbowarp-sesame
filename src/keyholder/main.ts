@@ -107,7 +107,11 @@ function renderDevice(device: PairedRecord): HTMLElement {
   const name = document.createElement("strong");
   name.textContent = device.deviceName;
   const detail = document.createElement("span");
-  detail.textContent = `${device.uuid}${device.level === undefined ? "" : ` · ${device.level} key`}`;
+  const parts = [
+    device.uuid ?? "UUID not in the sharing code",
+    ...(device.level === undefined ? [] : [`${device.level} key`]),
+  ];
+  detail.textContent = parts.join(" · ");
   const forget = document.createElement("button");
   forget.type = "button";
   forget.textContent = "Forget";
@@ -187,7 +191,12 @@ async function store(key: SharedKey): Promise<void> {
         iterations: PBKDF2_ITERATIONS,
       });
     }
-    status(`Paired "${alias}" (${redact(key).uuid}).`);
+    const uuid = redact(key).uuid;
+    status(
+      uuid === undefined
+        ? `Paired "${alias}". The sharing code carried no device UUID, which Bluetooth does not need.`
+        : `Paired "${alias}" (${uuid}).`,
+    );
     element<HTMLInputElement>("paste").value = "";
     element<HTMLInputElement>("passphrase").value = "";
     await refresh();

@@ -181,15 +181,17 @@
       <h2>…or enter the key by hand</h2>
       <p class="note">
         Use this if the sesame app shows a sharing code this page cannot read.
-        These are the same two values this project's Direct mode needs, so if
-        you already use that, you already have them.
+        Only the secret key is required — Bluetooth chooses the lock through the
+        browser's device chooser, so the UUID is just a label. Both are the same
+        values this project's Direct mode needs, so if you already use that, you
+        already have them.
       </p>
       <p class="note warning">
         The secret key opens your lock. Do not paste it into a chat, an issue,
         or anywhere other than this page.
       </p>
 
-      <label for="manual-uuid">Device UUID</label>
+      <label for="manual-uuid">Device UUID (optional)</label>
       <input
         id="manual-uuid"
         type="text"

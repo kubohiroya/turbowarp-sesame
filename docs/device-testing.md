@@ -77,16 +77,31 @@ text begins with `ssm://UI?t=sk`.
 
 **If you see `This sesame QR code is in a format this project does not know`** —
 the code is the right kind but its payload is not the record this parser
-understands. The message ends with the payload's length and first four bytes,
-which identify the format; that is safe to report, and the code itself is not.
-Newer app versions can show a short-lived encrypted sharing code whose encoding
-is not in the published SDK. Use the manual route below.
+understands. The message ends with the payload's length, its first four bytes,
+and the query parameter names, which together identify the format. Those are
+safe to report; the code itself is not.
+
+Newer app versions can show a **short-lived encrypted sharing code**, whose
+encoding is not in the published SDK and which this project cannot read. The
+app offers a choice: **share the code without encryption**, and this project
+reads the result.
+
+Two unencrypted layouts have been seen in practice:
+
+```text
+ssm://UI?t=sk&sk=<99 or 39 bytes>   the record the published SDK documents
+ssm://UI?t=sk&sk=<16 bytes>         the secret alone, and nothing else
+```
+
+Both work. The second carries no device UUID, and does not need to: Bluetooth
+picks the lock through the browser's device chooser, so the UUID was only ever
+a label in the paired list.
 
 ### If the QR code cannot be read
 
-Scroll down to **…or enter the key by hand** and give it the lock's UUID and its
-32-character secret key. These are the same two values this project's Direct
-mode needs, so anyone already using Direct mode has them.
+Scroll down to **…or enter the key by hand** and give it the 32-character
+secret key. That is the only required value — the UUID field is a label and may
+be left empty. Anyone already using this project's Direct mode has both.
 
 The secret key opens your lock. Do not paste it into a chat, an issue, or
 anywhere other than this page.
