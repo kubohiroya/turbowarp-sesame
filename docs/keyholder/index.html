@@ -77,6 +77,10 @@
         border-left: 3px solid #d33;
         padding-left: 0.6rem;
       }
+      .warning {
+        border-left: 3px solid #d33;
+        padding-left: 0.6rem;
+      }
       #preview {
         width: 100%;
         max-width: 22rem;
@@ -166,6 +170,37 @@
         placeholder="ssm://UI?t=sk&amp;sk=…"
       ></textarea>
       <button id="use-pasted" type="button">Pair from pasted text</button>
+    </section>
+
+    <section>
+      <h2>…or enter the key by hand</h2>
+      <p class="note">
+        Use this if the sesame app shows a sharing code this page cannot read.
+        These are the same two values this project's Direct mode needs, so if
+        you already use that, you already have them.
+      </p>
+      <p class="note warning">
+        The secret key opens your lock. Do not paste it into a chat, an issue,
+        or anywhere other than this page.
+      </p>
+
+      <label for="manual-uuid">Device UUID</label>
+      <input
+        id="manual-uuid"
+        type="text"
+        spellcheck="false"
+        placeholder="00000000-0000-0000-0000-000000000000"
+      />
+
+      <label for="manual-secret">Secret key (32 hexadecimal characters)</label>
+      <input
+        id="manual-secret"
+        type="password"
+        autocomplete="off"
+        spellcheck="false"
+      />
+
+      <button id="use-manual" type="button">Pair from these values</button>
     </section>
 
     <section>
