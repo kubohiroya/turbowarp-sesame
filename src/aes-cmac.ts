@@ -12,14 +12,39 @@ export async function aesCmac(
       "Secret key must be exactly 32 hexadecimal characters.",
     );
   }
+  const key = await importCmacKey(keyBytes, subtle);
+  return bytesToHex(await aesCmacWithKey(key, message, subtle));
+}
 
-  const key = await subtle.importKey(
+/** Imports key material for {@link aesCmacWithKey}, without making it readable. */
+export async function importCmacKey(
+  raw: Uint8Array,
+  subtle: SubtleCrypto = crypto.subtle,
+): Promise<CryptoKey> {
+  if (raw.length !== BLOCK_SIZE) {
+    throw new TypeError("AES-CMAC key must be exactly sixteen bytes.");
+  }
+  return subtle.importKey(
     "raw",
-    toArrayBuffer(keyBytes),
+    toArrayBuffer(raw),
     { name: "AES-CBC" },
     false,
     ["encrypt"],
   );
+}
+
+/**
+ * AES-CMAC over a key the caller already holds.
+ *
+ * The key may be non-extractable: CMAC needs only single-block encryption, and
+ * the subkeys are derived from ciphertext rather than from the key material.
+ * This is what lets the device secret stay unreadable for its whole lifetime.
+ */
+export async function aesCmacWithKey(
+  key: CryptoKey,
+  message: Uint8Array,
+  subtle: SubtleCrypto = crypto.subtle,
+): Promise<Uint8Array> {
   const encryptBlock = async (block: Uint8Array): Promise<Uint8Array> => {
     const encrypted = await subtle.encrypt(
       { name: "AES-CBC", iv: new Uint8Array(BLOCK_SIZE) },
@@ -46,7 +71,7 @@ export async function aesCmac(
   const finalBlock = completeLastBlock
     ? xor(message.slice(lastStart, lastStart + BLOCK_SIZE), firstSubkey)
     : xor(pad(message.slice(lastStart)), secondSubkey);
-  return bytesToHex(await encryptBlock(xor(state, finalBlock)));
+  return encryptBlock(xor(state, finalBlock));
 }
 
 export function sesameTimestampMessage(timestampSeconds: number): Uint8Array {

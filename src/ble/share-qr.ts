@@ -24,6 +24,16 @@ const SHORT_PUBLIC_KEY_BYTES = 4;
 const LONG_PUBLIC_KEY_BYTES = 64;
 
 const SECRET_BYTES = 16;
+
+/**
+ * A guest key has the first half of its secret zeroed.
+ *
+ * The published SDK detects this exact pattern and, when it matches, requires
+ * the network and asks a server to sign the session token instead of computing
+ * it locally. Those eight bytes are simply not in the QR code, so a guest key
+ * cannot open a Bluetooth session at all.
+ */
+const GUEST_SECRET_PREFIX = "0000000000000000";
 const KEY_INDEX_BYTES = 2;
 const UUID_BYTES = 16;
 
@@ -62,7 +72,8 @@ export interface SharedKey {
  * Parses the text decoded from a share QR code.
  *
  * Throws with a message suitable for showing to the person scanning, because
- * the common failures are pointing the camera at the wrong code.
+ * the common failures are pointing the camera at the wrong code and scanning a
+ * guest key, which cannot work over Bluetooth.
  */
 export function parseShareQr(text: string): SharedKey {
   const trimmed = text.trim();
@@ -99,6 +110,11 @@ export function parseShareQr(text: string): SharedKey {
 
   let offset = 1;
   const secret = toHex(record, offset, SECRET_BYTES);
+  if (secret.startsWith(GUEST_SECRET_PREFIX)) {
+    throw new Error(
+      "This is a guest key, which does not contain the half of the secret that Bluetooth needs. Share an owner or manager key instead.",
+    );
+  }
   offset += SECRET_BYTES;
   const publicKey = toHex(record, offset, publicKeyBytes);
   offset += publicKeyBytes;

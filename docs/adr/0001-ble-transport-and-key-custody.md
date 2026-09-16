@@ -161,12 +161,27 @@ The app offers owner, manager, and guest QR codes. The level travels as the
 `l` query parameter — `0`, `1`, or `2` — alongside the payload rather than
 inside it. It is neither encrypted nor authenticated, and the Bluetooth
 protocol has no concept of it: item codes `82` and `83` are accepted from
-anyone holding a valid session. What actually differs between levels in the
-published SDK is _which_ secret the payload carries, because sharing a guest
-key substitutes a separate guest secret into the record.
+anyone holding a valid session.
 
-So the keyholder records `l` to show the user which kind of key was scanned and
-must not treat it as a permission. Any restriction this project enforces —
+What separates a guest key is not the label but the payload, and the difference
+is decisive. **A guest key has the first eight bytes of its secret zeroed.** The
+published SDK detects exactly that pattern, and when it matches it refuses to
+work offline: it waits for the network and asks a server to sign the session
+token rather than computing `AES_CMAC(device_secret, randomCode)` itself. Those
+eight bytes are not in the QR code at all. A guest key therefore cannot open a
+Bluetooth session, and this project rejects one at parse time with an
+explanation rather than failing later at login.
+
+Owner and manager keys carry the whole secret and work offline. Between them,
+prefer a manager key: it is a separate key the owner can delete from the app,
+whereas the owner key is the one everything else depends on.
+
+The consequence is worth stating plainly. Bluetooth control requires a
+full-strength credential; there is no weaker one to hand out. That is precisely
+why the key is confined to the keyholder origin and gated behind user
+verification, and why policy is stored beside the key rather than inferred from
+`l`. The keyholder records `l` to show the user which kind of key was scanned
+and must not treat it as a permission. Any restriction this project enforces —
 confirmation before unlock, a lock-only mode, rate limiting — belongs to policy
 the keyholder stores next to the key, applied to every key regardless of level.
 
@@ -213,6 +228,9 @@ answer is to export an `sk` code instead, or to use the broker.
   session can still drive the lock.
 - **Barcode decoding needs a bundled decoder on Windows and Linux**, where
   Chrome has no platform barcode support behind `BarcodeDetector`.
+- **Guest keys cannot be used.** Their secret is half-zeroed and a server holds
+  the rest, so Bluetooth control requires an owner or manager key — a
+  full-strength credential, with no weaker one available to hand out.
 - **Time-limited sharing codes are not supported**, only the self-contained
   `sk` form. Their encoding is not in the published SDK, and redeeming one
   would reintroduce a server.

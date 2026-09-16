@@ -118,3 +118,33 @@ describe("redaction", () => {
     expect(JSON.stringify(safe)).not.toContain("abab");
   });
 });
+
+describe("guest keys", () => {
+  /** A guest key as the app writes one: the first eight secret bytes zeroed. */
+  const guestUrl = (): string => {
+    const record = new Uint8Array(39);
+    record[0] = 5;
+    record.fill(0x00, 1, 9); // the half the server keeps
+    record.fill(0xab, 9, 17);
+    record.fill(0xcd, 17, 21);
+    const query = new URLSearchParams({
+      t: "sk",
+      sk: Buffer.from(record).toString("base64"),
+      l: "2",
+    });
+    return `ssm://UI?${query.toString()}`;
+  };
+
+  it("rejects a guest key, explaining that the secret is incomplete", () => {
+    expect(() => parseShareQr(guestUrl())).toThrow(
+      /guest key.*owner or manager/isu,
+    );
+  });
+
+  it("rejects it on the payload, not on the advisory level", () => {
+    // The same payload labelled as an owner key is still a guest key.
+    expect(() => parseShareQr(guestUrl().replace("l=2", "l=0"))).toThrow(
+      /guest key/iu,
+    );
+  });
+});
