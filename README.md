@@ -135,7 +135,9 @@ Notes:
 - Keys are kept in one browser profile on the keyholder's origin. Clearing site
   data erases them, and they do not sync between devices.
 - Host the keyholder on a domain of its own where you can. On a shared host such
-  as `*.github.io`, every other page on that host shares the origin.
+  as `*.github.io`, every other page on that host shares the origin, and no
+  response headers can be set so any site may embed it. See
+  [Running the keyholder on its own domain](docs/keyholder-domain.md).
 
 ## Direct mode
 

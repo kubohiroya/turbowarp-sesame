@@ -66,6 +66,10 @@ changes from documentation or localization changes.
 Git reports any modified, deleted, or untracked file below `dist/`. This catches manifest and bundle
 drift in local checks and CI.
 
+## Operations
+
+- [Running the keyholder on its own domain](keyholder-domain.md)
+
 ## Decision records
 
 - [ADR 0001: BLE transport and browser-side key custody](adr/0001-ble-transport-and-key-custody.md) — Proposed

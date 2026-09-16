@@ -50,6 +50,10 @@ v1契約は次の情報を含みます。
 
 `dist/`はリリース成果物としてコミットされます。`pnpm run check:dist`は両方のファイルを再ビルドし、`dist/`配下に変更、削除、未追跡ファイルがある場合に失敗します。これにより、ローカル検証とCIの両方でmanifestとバンドルの差分を検出できます。
 
+## 運用
+
+- [keyholderを専用ドメインで運用する](keyholder-domain.ja.md)
+
 ## 決定記録
 
 - [ADR 0001: BLE transportとブラウザ側の鍵保管](adr/0001-ble-transport-and-key-custody.ja.md) — Proposed
