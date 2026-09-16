@@ -306,3 +306,81 @@ describe("entering a key by hand", () => {
     expect(key.name).toBe("front door");
   });
 });
+
+describe("a code whose sk is the secret alone", () => {
+  // Observed on real hardware: sk decoded to exactly 16 bytes, so the device
+  // identity has to come from elsewhere in the URL.
+  const SECRET = "aa968704" + "00".repeat(12);
+  const sk = Buffer.from(SECRET, "hex").toString("base64");
+
+  it("pairs when a parameter carries a UUID", () => {
+    const key = parseShareQr(
+      `ssm://UI?t=sk&sk=${sk}&u=00010203-0405-0607-0809-0A0B0C0D0E0F&n=front%20door`,
+    );
+    expect(key.secret).toBe(SECRET);
+    expect(key.uuid).toBe("00010203-0405-0607-0809-0A0B0C0D0E0F");
+    expect(key.name).toBe("front door");
+    expect(key.model).toBe(5);
+  });
+
+  it("finds the UUID whatever the parameter is called", () => {
+    for (const name of ["u", "uuid", "d", "device", "id"]) {
+      expect(
+        parseShareQr(
+          `ssm://UI?t=sk&sk=${sk}&${name}=00010203-0405-0607-0809-0A0B0C0D0E0F`,
+        ).uuid,
+      ).toBe("00010203-0405-0607-0809-0A0B0C0D0E0F");
+    }
+  });
+
+  it("accepts a UUID written without dashes", () => {
+    expect(
+      parseShareQr(`ssm://UI?t=sk&sk=${sk}&u=000102030405060708090a0b0c0d0e0f`)
+        .uuid,
+    ).toBe("00010203-0405-0607-0809-0A0B0C0D0E0F");
+  });
+
+  it("takes the model when one is given", () => {
+    expect(
+      parseShareQr(
+        `ssm://UI?t=sk&sk=${sk}&u=00010203-0405-0607-0809-0A0B0C0D0E0F&m=7`,
+      ).model,
+    ).toBe(7);
+  });
+
+  it("names the parameters when no UUID is among them", () => {
+    expect(() => parseShareQr(`ssm://UI?t=sk&sk=${sk}&l=1&n=door`)).toThrow(
+      /carries a key but no device UUID \(parameters t, sk, l, n\)/u,
+    );
+  });
+
+  it("still rejects a guest secret in this form", () => {
+    const guest = Buffer.from(
+      "0".repeat(16) + "abcdef0123456789",
+      "hex",
+    ).toString("base64");
+    expect(() =>
+      parseShareQr(
+        `ssm://UI?t=sk&sk=${guest}&u=00010203-0405-0607-0809-0A0B0C0D0E0F`,
+      ),
+    ).toThrow(/guest key/iu);
+  });
+
+  it("does not mistake the secret itself for a UUID", () => {
+    // The secret is 16 bytes too, but it is base64 in sk, not hex in a value.
+    expect(() => parseShareQr(`ssm://UI?t=sk&sk=${sk}`)).toThrow(
+      /no device UUID/u,
+    );
+  });
+});
+
+describe("reporting an unfamiliar code", () => {
+  it("lists parameter names, which identify a format but are not secrets", () => {
+    const record = new Uint8Array(160);
+    record[0] = 0xfd;
+    const payload = Buffer.from(record).toString("base64");
+    expect(() =>
+      parseShareQr(`ssm://UI?t=sk&sk=${payload}&l=2&n=door&x=1`),
+    ).toThrow(/parameters t, sk, l, n, x/u);
+  });
+});

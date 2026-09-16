@@ -99,6 +99,14 @@ export function parseShareQr(text: string): SharedKey {
   }
 
   const record = decodeBase64(encoded);
+
+  // Newer codes carry the bare 16-byte secret in `sk` and move the device
+  // identity into other query parameters. The parameter names vary, so the
+  // UUID is located by its shape rather than by a name guessed in advance.
+  if (record.length === SECRET_BYTES) {
+    return fromBareSecret(record, query);
+  }
+
   const model = record[0];
   if (model === undefined) {
     throw new Error("This sesame QR code is empty.");
@@ -107,7 +115,7 @@ export function parseShareQr(text: string): SharedKey {
   // reporting a length mismatch against it would be misleading.
   if (model > HIGHEST_KNOWN_MODEL) {
     throw new Error(
-      `This sesame QR code is in a format this project does not know: ${describeShape(record)}. It is not the "share a key" code — see docs/device-testing.md.`,
+      `This sesame QR code is in a format this project does not know: ${describeShape(record)}, parameters ${parameterNames(query)}. See docs/device-testing.md.`,
     );
   }
   const publicKeyBytes =
@@ -118,7 +126,7 @@ export function parseShareQr(text: string): SharedKey {
     1 + SECRET_BYTES + publicKeyBytes + KEY_INDEX_BYTES + UUID_BYTES;
   if (record.length !== expected) {
     throw new Error(
-      `This sesame QR code is ${record.length} bytes, but model ${model} needs ${expected}. ${describeShape(record)}`,
+      `This sesame QR code is ${record.length} bytes, but model ${model} needs ${expected}. ${describeShape(record)}, parameters ${parameterNames(query)}`,
     );
   }
 
@@ -226,6 +234,75 @@ export function describeShape(record: Uint8Array): string {
     byte.toString(16).padStart(2, "0"),
   ).join(" ");
   return `${record.length} bytes beginning ${head}`;
+}
+
+/**
+ * Builds a key from a code whose `sk` is the secret alone.
+ *
+ * The device UUID has to come from somewhere else in the URL. Rather than
+ * guessing which parameter holds it, every value is checked against the shape
+ * of a UUID: that shape is distinctive enough to identify, and it keeps the
+ * parser working if the parameter is renamed.
+ */
+function fromBareSecret(secret: Uint8Array, query: URLSearchParams): SharedKey {
+  const uuid = findUuid(query);
+  if (uuid === undefined) {
+    throw new Error(
+      `This sesame QR code carries a key but no device UUID (parameters ${parameterNames(query)}). Enter the key by hand instead — see docs/device-testing.md.`,
+    );
+  }
+  const hex = toHex(secret, 0, SECRET_BYTES);
+  if (hex.startsWith(GUEST_SECRET_PREFIX)) {
+    throw new Error(
+      "This is a guest key, which does not contain the half of the secret that Bluetooth needs. Share an owner or manager key instead.",
+    );
+  }
+  const level = keyLevelName(query.get("l"));
+  const name = query.get("n") ?? undefined;
+  const model = Number.parseInt(query.get("m") ?? "", 10);
+  return {
+    model:
+      Number.isInteger(model) && model >= 0 && model <= HIGHEST_KNOWN_MODEL
+        ? model
+        : FIRST_SHORT_PUBLIC_KEY_MODEL,
+    secret: hex,
+    // Only SESAME 5 and later use this shorter form, and their login needs the
+    // secret alone.
+    publicKey: "",
+    keyIndex: "",
+    uuid,
+    ...(level === undefined ? {} : { level }),
+    ...(name === undefined || name.length === 0 ? {} : { name }),
+  };
+}
+
+/** Finds the one value in the query that is shaped like a device UUID. */
+function findUuid(query: URLSearchParams): string | undefined {
+  for (const [name, value] of query) {
+    if (name === "sk") continue;
+    const candidate = value.trim().replace(/-/gu, "");
+    if (/^[0-9a-f]{32}$/iu.test(candidate)) {
+      const hex = candidate.toUpperCase();
+      return [
+        hex.slice(0, 8),
+        hex.slice(8, 12),
+        hex.slice(12, 16),
+        hex.slice(16, 20),
+        hex.slice(20, 32),
+      ].join("-");
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Lists the query parameter names, for reporting an unfamiliar code.
+ *
+ * Names identify a format; values are the credential. Only names are returned.
+ */
+function parameterNames(query: URLSearchParams): string {
+  const names = [...new Set([...query.keys()])];
+  return names.length === 0 ? "(none)" : names.join(", ");
 }
 
 function keyLevelName(value: string | null): KeyLevelName | undefined {

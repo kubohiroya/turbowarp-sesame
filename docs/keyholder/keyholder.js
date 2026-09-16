@@ -11,27 +11,29 @@ function n(t) {
 	if (r.get("t") !== "sk") throw Error("This sesame QR code does not share a key. Choose the key sharing code in the sesame app.");
 	let i = r.get("sk");
 	if (i === null || i.length === 0) throw Error("This sesame QR code carries no key.");
-	let u = s(i), d = u[0];
-	if (d === void 0) throw Error("This sesame QR code is empty.");
-	if (d > 20) throw Error(`This sesame QR code is in a format this project does not know: ${a(u)}. It is not the "share a key" code — see docs/device-testing.md.`);
-	let f = d >= 5 ? 4 : 64, p = 17 + f + 2 + 16;
-	if (u.length !== p) throw Error(`This sesame QR code is ${u.length} bytes, but model ${d} needs ${p}. ${a(u)}`);
-	let m = 1, h = c(u, m, 16);
-	if (h.startsWith(e)) throw Error("This is a guest key, which does not contain the half of the secret that Bluetooth needs. Share an owner or manager key instead.");
-	m += 16;
-	let g = c(u, m, f);
-	m += f;
-	let _ = c(u, m, 2);
-	m += 2;
-	let v = l(u, m), y = o(r.get("l")), b = r.get("n") ?? void 0;
+	let s = u(i);
+	if (s.length === 16) return o(s, r);
+	let f = s[0];
+	if (f === void 0) throw Error("This sesame QR code is empty.");
+	if (f > 20) throw Error(`This sesame QR code is in a format this project does not know: ${a(s)}, parameters ${c(r)}. See docs/device-testing.md.`);
+	let p = f >= 5 ? 4 : 64, m = 17 + p + 2 + 16;
+	if (s.length !== m) throw Error(`This sesame QR code is ${s.length} bytes, but model ${f} needs ${m}. ${a(s)}, parameters ${c(r)}`);
+	let h = 1, g = d(s, h, 16);
+	if (g.startsWith(e)) throw Error("This is a guest key, which does not contain the half of the secret that Bluetooth needs. Share an owner or manager key instead.");
+	h += 16;
+	let _ = d(s, h, p);
+	h += p;
+	let v = d(s, h, 2);
+	h += 2;
+	let y = ee(s, h), b = l(r.get("l")), x = r.get("n") ?? void 0;
 	return {
-		model: d,
-		secret: h,
-		publicKey: g,
-		keyIndex: _,
-		uuid: v,
-		...y === void 0 ? {} : { level: y },
-		...b === void 0 || b.length === 0 ? {} : { name: b }
+		model: f,
+		secret: g,
+		publicKey: _,
+		keyIndex: v,
+		uuid: y,
+		...b === void 0 ? {} : { level: b },
+		...x === void 0 || x.length === 0 ? {} : { name: x }
 	};
 }
 function r(t) {
@@ -62,12 +64,48 @@ function a(e) {
 	let t = Array.from(e.subarray(0, 4), (e) => e.toString(16).padStart(2, "0")).join(" ");
 	return `${e.length} bytes beginning ${t}`;
 }
-function o(e) {
+function o(t, n) {
+	let r = s(n);
+	if (r === void 0) throw Error(`This sesame QR code carries a key but no device UUID (parameters ${c(n)}). Enter the key by hand instead — see docs/device-testing.md.`);
+	let i = d(t, 0, 16);
+	if (i.startsWith(e)) throw Error("This is a guest key, which does not contain the half of the secret that Bluetooth needs. Share an owner or manager key instead.");
+	let a = l(n.get("l")), o = n.get("n") ?? void 0, u = Number.parseInt(n.get("m") ?? "", 10);
+	return {
+		model: Number.isInteger(u) && u >= 0 && u <= 20 ? u : 5,
+		secret: i,
+		publicKey: "",
+		keyIndex: "",
+		uuid: r,
+		...a === void 0 ? {} : { level: a },
+		...o === void 0 || o.length === 0 ? {} : { name: o }
+	};
+}
+function s(e) {
+	for (let [t, n] of e) {
+		if (t === "sk") continue;
+		let e = n.trim().replace(/-/gu, "");
+		if (/^[0-9a-f]{32}$/iu.test(e)) {
+			let t = e.toUpperCase();
+			return [
+				t.slice(0, 8),
+				t.slice(8, 12),
+				t.slice(12, 16),
+				t.slice(16, 20),
+				t.slice(20, 32)
+			].join("-");
+		}
+	}
+}
+function c(e) {
+	let t = [.../* @__PURE__ */ new Set([...e.keys()])];
+	return t.length === 0 ? "(none)" : t.join(", ");
+}
+function l(e) {
 	if (e === null) return;
 	let n = Number.parseInt(e, 10);
 	for (let [e, r] of Object.entries(t)) if (r === n) return e;
 }
-function s(e) {
+function u(e) {
 	let t = e.replace(/ /gu, "+").replace(/-/gu, "+").replace(/_/gu, "/"), n;
 	try {
 		n = atob(t);
@@ -76,13 +114,13 @@ function s(e) {
 	}
 	return Uint8Array.from(n, (e) => e.charCodeAt(0));
 }
-function c(e, t, n) {
+function d(e, t, n) {
 	let r = "";
 	for (let i = t; i < t + n; i += 1) r += (e[i] ?? 0).toString(16).padStart(2, "0");
 	return r;
 }
-function l(e, t) {
-	let n = c(e, t, 16).toUpperCase();
+function ee(e, t) {
+	let n = d(e, t, 16).toUpperCase();
 	return [
 		n.slice(0, 8),
 		n.slice(8, 12),
@@ -93,14 +131,14 @@ function l(e, t) {
 }
 //#endregion
 //#region src/keyholder/kek.ts
-var u = 6e5, d = {
+var f = 6e5, p = {
 	name: "AES-GCM",
 	length: 256
-}, f = new TextEncoder().encode("sesame-keyholder/kek/v1");
-function p() {
+}, m = new TextEncoder().encode("sesame-keyholder/kek/v1");
+function h() {
 	return globalThis.PublicKeyCredential !== void 0 && typeof navigator < "u" && typeof navigator.credentials?.get == "function";
 }
-async function m(e, t = crypto.subtle) {
+async function g(e, t = crypto.subtle) {
 	let n = await navigator.credentials.create({ publicKey: {
 		challenge: crypto.getRandomValues(/* @__PURE__ */ new Uint8Array(32)),
 		rp: { name: "Sesame keyholder" },
@@ -129,48 +167,48 @@ async function m(e, t = crypto.subtle) {
 		salt: crypto.getRandomValues(/* @__PURE__ */ new Uint8Array(32))
 	};
 }
-async function h(e, t, n = crypto.subtle) {
+async function _(e, t, n = crypto.subtle) {
 	let r = (await navigator.credentials.get({ publicKey: {
 		challenge: crypto.getRandomValues(/* @__PURE__ */ new Uint8Array(32)),
 		allowCredentials: [{
 			type: "public-key",
-			id: y(e)
+			id: x(e)
 		}],
 		userVerification: "required",
-		extensions: { prf: { eval: { first: y(t) } } }
+		extensions: { prf: { eval: { first: x(t) } } }
 	} }))?.getClientExtensionResults().prf?.results?.first;
 	if (r === void 0) throw Error("This passkey did not return key material. Pair again with a passphrase.");
-	return v(new Uint8Array(r), t, n);
+	return b(new Uint8Array(r), t, n);
 }
-async function g(e, t, n = u, r = crypto.subtle) {
+async function v(e, t, n = f, r = crypto.subtle) {
 	if (e.length < 8) throw TypeError("A passphrase must be at least eight characters.");
-	let i = await r.importKey("raw", y(new TextEncoder().encode(e)), "PBKDF2", !1, ["deriveKey"]);
+	let i = await r.importKey("raw", x(new TextEncoder().encode(e)), "PBKDF2", !1, ["deriveKey"]);
 	return r.deriveKey({
 		name: "PBKDF2",
-		salt: y(t),
+		salt: x(t),
 		iterations: n,
 		hash: "SHA-256"
-	}, i, d, !1, ["wrapKey", "unwrapKey"]);
+	}, i, p, !1, ["wrapKey", "unwrapKey"]);
 }
-async function _(e, t, n = crypto.subtle) {
-	return e.kind === "webauthn-prf" ? h(e.credentialId, e.salt, n) : g(await t(), e.salt, e.iterations, n);
+async function y(e, t, n = crypto.subtle) {
+	return e.kind === "webauthn-prf" ? _(e.credentialId, e.salt, n) : v(await t(), e.salt, e.iterations, n);
 }
-async function v(e, t, n) {
-	let r = await n.importKey("raw", y(e), "HKDF", !1, ["deriveKey"]);
+async function b(e, t, n) {
+	let r = await n.importKey("raw", x(e), "HKDF", !1, ["deriveKey"]);
 	return e.fill(0), n.deriveKey({
 		name: "HKDF",
 		hash: "SHA-256",
-		salt: y(t),
-		info: y(f)
-	}, r, d, !1, ["wrapKey", "unwrapKey"]);
+		salt: x(t),
+		info: x(m)
+	}, r, p, !1, ["wrapKey", "unwrapKey"]);
 }
-function y(e) {
+function x(e) {
 	return e.slice().buffer;
 }
 //#endregion
 //#region src/keyholder/scan.ts
-async function b() {
-	let e = x();
+async function te() {
+	let e = S();
 	if (e === void 0) return !1;
 	try {
 		return (await e.getSupportedFormats?.() ?? ["qr_code"]).includes("qr_code");
@@ -178,8 +216,8 @@ async function b() {
 		return !1;
 	}
 }
-async function ee(e = 6e4, t = 200) {
-	let n = x();
+async function ne(e = 6e4, t = 200) {
+	let n = S();
 	if (n === void 0) throw Error("This browser cannot read a QR code from the camera. Paste the code's text instead.");
 	let r = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }), i = document.createElement("video");
 	i.srcObject = r, i.muted = !0, i.playsInline = !0, await i.play();
@@ -214,82 +252,82 @@ async function ee(e = 6e4, t = 200) {
 		}
 	};
 }
-function x() {
+function S() {
 	return globalThis.BarcodeDetector;
 }
 //#endregion
 //#region src/aes-cmac.ts
-var S = 16, te = 135;
-async function ne(e, t, n = crypto.subtle) {
+var C = 16, re = 135;
+async function ie(e, t, n = crypto.subtle) {
 	let r = async (t) => {
 		let r = await n.encrypt({
 			name: "AES-CBC",
-			iv: new Uint8Array(S)
-		}, e, ie(t));
-		return new Uint8Array(r).slice(0, S);
-	}, i = new Uint8Array(S), a = C(await r(i)), o = C(a), s = Math.max(1, Math.ceil(t.length / S)), c = t.length > 0 && t.length % S === 0, l = i;
+			iv: new Uint8Array(C)
+		}, e, oe(t));
+		return new Uint8Array(r).slice(0, C);
+	}, i = new Uint8Array(C), a = w(await r(i)), o = w(a), s = Math.max(1, Math.ceil(t.length / C)), c = t.length > 0 && t.length % C === 0, l = i;
 	for (let e = 0; e < s - 1; e += 1) {
-		let n = t.slice(e * S, (e + 1) * S);
-		l = await r(w(l, n));
+		let n = t.slice(e * C, (e + 1) * C);
+		l = await r(T(l, n));
 	}
-	let u = (s - 1) * S, d = c ? w(t.slice(u, u + S), a) : w(re(t.slice(u)), o);
-	return r(w(l, d));
+	let u = (s - 1) * C, d = c ? T(t.slice(u, u + C), a) : T(ae(t.slice(u)), o);
+	return r(T(l, d));
 }
-function C(e) {
-	let t = new Uint8Array(S), n = 0;
+function w(e) {
+	let t = new Uint8Array(C), n = 0;
 	for (let r = 15; r >= 0; --r) {
 		let i = e[r] ?? 0;
 		t[r] = i << 1 & 255 | n, n = i & 128 ? 1 : 0;
 	}
-	return n !== 0 && (t[15] = (t[15] ?? 0) ^ te), t;
+	return n !== 0 && (t[15] = (t[15] ?? 0) ^ re), t;
 }
-function re(e) {
-	let t = new Uint8Array(S);
+function ae(e) {
+	let t = new Uint8Array(C);
 	return t.set(e), t[e.length] = 128, t;
 }
-function w(e, t) {
-	let n = new Uint8Array(S);
-	for (let r = 0; r < S; r += 1) n[r] = (e[r] ?? 0) ^ (t[r] ?? 0);
+function T(e, t) {
+	let n = new Uint8Array(C);
+	for (let r = 0; r < C; r += 1) n[r] = (e[r] ?? 0) ^ (t[r] ?? 0);
 	return n;
 }
-function ie(e) {
+function oe(e) {
 	return e.slice().buffer;
 }
 //#endregion
 //#region src/ble/aes-ccm.ts
-var T = 16;
-async function ae(e, t = crypto.subtle) {
+var E = 16;
+async function se(e, t = crypto.subtle) {
 	let n = N(e), [r, i] = await Promise.all([t.importKey("raw", n, { name: "AES-CBC" }, !1, ["encrypt"]), t.importKey("raw", n, { name: "AES-CTR" }, !1, ["encrypt"])]);
 	return {
 		cbc: r,
 		ctr: i
 	};
 }
-async function oe(e, t, n = crypto.subtle) {
-	let r = E(e, t.length), i = await D(r, t, n), a = await O(r, t.length, n);
+async function ce(e, t, n = crypto.subtle) {
+	let r = D(e, t.length), i = await O(r, t, n), a = await k(r, t.length, n);
 	return {
-		ciphertext: M(t, a.subarray(T)),
+		ciphertext: M(t, a.subarray(E)),
 		tag: M(i, a.subarray(0, r.tagLength))
 	};
 }
-async function se(e, t, n, r = crypto.subtle) {
-	let i = E(e, t.length);
+async function le(e, t, n, r = crypto.subtle) {
+	let i = D(e, t.length);
 	if (n.length !== i.tagLength) throw Error(`AES-CCM tag must be ${i.tagLength} bytes, received ${n.length}.`);
-	let a = await O(i, t.length, r), o = M(t, a.subarray(T));
-	if (!fe(M(await D(i, o, r), a.subarray(0, i.tagLength)), n)) throw Error("AES-CCM authentication tag mismatch.");
+	let a = await k(i, t.length, r), o = M(t, a.subarray(E));
+	if (!he(M(await O(i, o, r), a.subarray(0, i.tagLength)), n)) throw Error("AES-CCM authentication tag mismatch.");
 	return o;
 }
-async function ce(e, t, n = crypto.subtle) {
-	let { ciphertext: r, tag: i } = await oe(e, t, n), a = new Uint8Array(r.length + i.length);
+async function ue(e, t, n = crypto.subtle) {
+	let { ciphertext: r, tag: i } = await ce(e, t, n), a = new Uint8Array(r.length + i.length);
 	return a.set(r), a.set(i, r.length), a;
 }
-async function le(e, t, n = crypto.subtle) {
+async function de(e, t, n = crypto.subtle) {
 	let r = e.tagLength ?? 4;
 	if (t.length < r) throw Error("AES-CCM frame is shorter than its authentication tag.");
 	let i = t.length - r;
-	return se(e, t.subarray(0, i), t.subarray(i), n);
+	return le(e, t.subarray(0, i), t.subarray(i), n);
 }
-function E(e, t) {
+function D(e, t) {
 	let n = e.tagLength ?? 4;
 	if (n < 4 || n > 16 || n % 2 != 0) throw TypeError("AES-CCM tag length must be an even number of bytes from 4 to 16.");
 	let r = e.nonce.length;
@@ -304,47 +342,47 @@ function E(e, t) {
 		lengthSize: i
 	};
 }
-async function D(e, t, n) {
-	let r = de([
-		k(e, t.length),
-		ue(e.additionalData),
+async function O(e, t, n) {
+	let r = me([
+		fe(e, t.length),
+		pe(e.additionalData),
 		A(t)
 	]), i = new Uint8Array(await n.encrypt({
 		name: "AES-CBC",
-		iv: new Uint8Array(T)
-	}, e.key.cbc, N(r))), a = i.length - T;
-	return i.slice(a - T, a - T + e.tagLength);
+		iv: new Uint8Array(E)
+	}, e.key.cbc, N(r))), a = i.length - E;
+	return i.slice(a - E, a - E + e.tagLength);
 }
-async function O(e, t, n) {
-	let r = new Uint8Array(T);
+async function k(e, t, n) {
+	let r = new Uint8Array(E);
 	r[0] = e.lengthSize - 1, r.set(e.nonce, 1);
-	let i = Math.ceil(t / T) + 1, a = await n.encrypt({
+	let i = Math.ceil(t / E) + 1, a = await n.encrypt({
 		name: "AES-CTR",
 		counter: r,
 		length: e.lengthSize * 8
-	}, e.key.ctr, /* @__PURE__ */ new ArrayBuffer(i * T));
+	}, e.key.ctr, /* @__PURE__ */ new ArrayBuffer(i * E));
 	return new Uint8Array(a);
 }
-function k(e, t) {
-	let n = new Uint8Array(T);
-	return n[0] = (e.additionalData.length > 0) * 64 + (e.tagLength - 2) / 2 * 8 + (e.lengthSize - 1), n.set(e.nonce, 1), j(n, T - e.lengthSize, t), n;
+function fe(e, t) {
+	let n = new Uint8Array(E);
+	return n[0] = (e.additionalData.length > 0) * 64 + (e.tagLength - 2) / 2 * 8 + (e.lengthSize - 1), n.set(e.nonce, 1), j(n, E - e.lengthSize, t), n;
 }
-function ue(e) {
+function pe(e) {
 	if (e.length === 0) return /* @__PURE__ */ new Uint8Array();
 	if (e.length >= 65280) throw TypeError("AES-CCM additional data above 65280 bytes is not supported.");
 	let t = new Uint8Array(e.length + 2);
 	return j(t, 0, e.length, 2), t.set(e, 2), A(t);
 }
 function A(e) {
-	if (e.length % T === 0) return e;
-	let t = new Uint8Array(Math.ceil(e.length / T) * T);
+	if (e.length % E === 0) return e;
+	let t = new Uint8Array(Math.ceil(e.length / E) * E);
 	return t.set(e), t;
 }
 function j(e, t, n, r = e.length - t) {
 	let i = n;
 	for (let n = r - 1; n >= 0; --n) e[t + n] = i & 255, i = Math.floor(i / 256);
 }
-function de(e) {
+function me(e) {
 	let t = e.reduce((e, t) => e + t.length, 0), n = new Uint8Array(t), r = 0;
 	for (let t of e) n.set(t, r), r += t.length;
 	return n;
@@ -354,7 +392,7 @@ function M(e, t) {
 	for (let r = 0; r < e.length; r += 1) n[r] = (e[r] ?? 0) ^ (t[r] ?? 0);
 	return n;
 }
-function fe(e, t) {
+function he(e, t) {
 	if (e.length !== t.length) return !1;
 	let n = 0;
 	for (let r = 0; r < e.length; r += 1) n |= (e[r] ?? 0) ^ (t[r] ?? 0);
@@ -386,42 +424,42 @@ function F(e, t) {
 	let n = /* @__PURE__ */ new Uint8Array(13);
 	return new DataView(n.buffer).setBigInt64(0, BigInt(e), !0), n.set(t, 9), n;
 }
-var pe = 1, me = 2, he = 4;
-function ge(e, t = 20) {
-	let n = I(t), r = e.parsing === "cipher" ? he : me, i = [], a = Math.max(1, Math.ceil(e.data.length / n));
+var ge = 1, _e = 2, I = 4;
+function ve(e, t = 20) {
+	let n = ye(t), r = e.parsing === "cipher" ? I : _e, i = [], a = Math.max(1, Math.ceil(e.data.length / n));
 	for (let t = 0; t < a; t += 1) {
-		let o = e.data.subarray(t * n, (t + 1) * n), s = (t === 0 ? pe : 0) | (t === a - 1 ? r : 0), c = new Uint8Array(o.length + 1);
+		let o = e.data.subarray(t * n, (t + 1) * n), s = (t === 0 ? ge : 0) | (t === a - 1 ? r : 0), c = new Uint8Array(o.length + 1);
 		c[0] = s, c.set(o, 1), i.push(c);
 	}
 	return i;
 }
-function I(e) {
+function ye(e) {
 	if (!Number.isInteger(e) || e < 2) throw TypeError("Sesame BLE packet size must be an integer above one.");
 	return e - 1;
 }
 //#endregion
 //#region src/ble/keyholder-session.ts
-var L = new Uint8Array([0]), R = 4, _e = 4;
-async function z(e, t, n = crypto.subtle) {
+var L = new Uint8Array([0]), R = 4, be = 4;
+async function xe(e, t, n = crypto.subtle) {
 	if (t.length !== 4) throw TypeError("Sesame session random code must be four bytes.");
-	let r = await ne(e, t, n), i = await ae(r, n), a = r.slice(0, _e);
+	let r = await ie(e, t, n), i = await se(r, n), a = r.slice(0, be);
 	return r.fill(0), {
-		session: new ve(i, t, n),
+		session: new Se(i, t, n),
 		loginProof: a
 	};
 }
-var ve = class {
+var Se = class {
 	constructor(e, t, n) {
 		this.randomCode = t, this.subtle = n, this.sentCount = 0, this.receivedCount = 0, this.closed = !1, this.key = e;
 	}
 	async seal(e) {
-		let t = await ce({
+		let t = await ue({
 			key: this.requireOpen(),
 			nonce: F(this.sentCount, this.randomCode),
 			additionalData: L,
 			tagLength: R
 		}, e, this.subtle);
-		return this.sentCount += 1, ge({
+		return this.sentCount += 1, ve({
 			parsing: "cipher",
 			data: t
 		});
@@ -429,7 +467,7 @@ var ve = class {
 	async open(e, t) {
 		let n = this.requireOpen();
 		if (e === "plain") return t;
-		let r = await le({
+		let r = await de({
 			key: n,
 			nonce: F(this.receivedCount, this.randomCode),
 			additionalData: L,
@@ -444,7 +482,7 @@ var ve = class {
 		if (this.closed || this.key === void 0) throw Error("This Sesame session is closed.");
 		return this.key;
 	}
-}, ye = 4, be = class {
+}, Ce = 4, z = class {
 	constructor(e) {
 		this.backend = e, this.sessions = /* @__PURE__ */ new Map(), this.nextSessionId = 1;
 	}
@@ -474,20 +512,20 @@ var ve = class {
 		}
 	}
 	async handle(e, t) {
-		let n = xe(t);
+		let n = we(t);
 		switch (e) {
 			case "isPaired": return this.backend.isPaired(B(n.deviceName, "deviceName"));
 			case "pair": return this.backend.pair();
 			case "startSession": return this.startSession(B(n.deviceName, "deviceName"), V(n.randomCode, "randomCode"));
 			case "seal": return this.session(n).seal(V(n.message, "message"));
-			case "open": return this.session(n).open(Se(n.parsing), V(n.data, "data"));
+			case "open": return this.session(n).open(Te(n.parsing), V(n.data, "data"));
 			case "closeSession": return this.closeSession(B(n.sessionId, "sessionId"));
 			default: throw Error(`Unknown keyholder request: ${e}.`);
 		}
 	}
 	async startSession(e, t) {
-		if (this.sessions.size >= ye) throw Error("Too many Sesame sessions are open.");
-		let { session: n, loginProof: r } = await z(await this.backend.unlock(e), t), i = `s${String(this.nextSessionId)}`;
+		if (this.sessions.size >= Ce) throw Error("Too many Sesame sessions are open.");
+		let { session: n, loginProof: r } = await xe(await this.backend.unlock(e), t), i = `s${String(this.nextSessionId)}`;
 		return this.nextSessionId += 1, this.sessions.set(i, n), {
 			sessionId: i,
 			loginProof: r
@@ -503,7 +541,7 @@ var ve = class {
 		return n;
 	}
 };
-function xe(e) {
+function we(e) {
 	return typeof e == "object" && e && !Array.isArray(e) ? e : {};
 }
 function B(e, t) {
@@ -515,13 +553,13 @@ function V(e, t) {
 	if (e instanceof ArrayBuffer) return new Uint8Array(e);
 	throw TypeError(`The ${t} must be bytes.`);
 }
-function Se(e) {
+function Te(e) {
 	if (e === "plain" || e === "cipher") return e;
 	throw TypeError("The parsing type must be plain or cipher.");
 }
 //#endregion
 //#region src/keyholder/storage.ts
-var Ce = "sesame-keyholder", H = "devices", we = 1, Te = class {
+var Ee = "sesame-keyholder", H = "devices", De = 1, Oe = class {
 	async get(e) {
 		return this.run("readonly", (t) => t.get(e));
 	}
@@ -536,7 +574,7 @@ var Ce = "sesame-keyholder", H = "devices", we = 1, Te = class {
 	}
 	open() {
 		return this.database ?? (this.database = new Promise((e, t) => {
-			let n = indexedDB.open(Ce, we);
+			let n = indexedDB.open(Ee, De);
 			n.onupgradeneeded = () => {
 				n.result.createObjectStore(H, { keyPath: "deviceName" });
 			}, n.onsuccess = () => {
@@ -557,14 +595,14 @@ var Ce = "sesame-keyholder", H = "devices", we = 1, Te = class {
 			};
 		});
 	}
-}, U = "AES-GCM", Ee = 12, De = class {
+}, U = "AES-GCM", ke = 12, Ae = class {
 	constructor(e, t = crypto.subtle, n = (e) => crypto.getRandomValues(new Uint8Array(e))) {
 		this.storage = e, this.subtle = t, this.randomBytes = n;
 	}
 	async pair(e, t, n, r) {
-		let i = W(e), a = Oe(t.secret), o = await this.subtle.importKey("raw", K(a), { name: "AES-CBC" }, !0, ["encrypt"]);
+		let i = W(e), a = je(t.secret), o = await this.subtle.importKey("raw", K(a), { name: "AES-CBC" }, !0, ["encrypt"]);
 		a.fill(0);
-		let s = this.randomBytes(Ee), c = new Uint8Array(await this.subtle.wrapKey("raw", o, n, {
+		let s = this.randomBytes(ke), c = new Uint8Array(await this.subtle.wrapKey("raw", o, n, {
 			name: U,
 			iv: K(s)
 		})), l = {
@@ -622,7 +660,7 @@ function G(e) {
 		pairedAt: e.pairedAt
 	};
 }
-function Oe(e) {
+function je(e) {
 	return Uint8Array.from(e.match(/.{2}/gu) ?? [], (e) => Number.parseInt(e, 16));
 }
 function K(e) {
@@ -630,19 +668,19 @@ function K(e) {
 }
 //#endregion
 //#region src/keyholder/main.ts
-var q = new De(new Te()), J = (e) => {
+var q = new Ae(new Oe()), J = (e) => {
 	let t = document.getElementById(e);
 	if (t === null) throw Error(`The keyholder page is missing #${e}.`);
 	return t;
 }, Y = (e, t = "info") => {
 	let n = J("status");
 	n.textContent = e, n.dataset.kind = t;
-}, ke = new be({
+}, Me = new z({
 	isPaired: (e) => q.has(e),
 	unlock: async (e) => {
 		let t = await q.protectionFor(e);
 		Y(t.kind === "webauthn-prf" ? `Confirm to unlock "${e}".` : `Enter the passphrase for "${e}".`);
-		let n = await _(t, X), r = await q.unlock(e, n);
+		let n = await y(t, X), r = await q.unlock(e, n);
 		return Y(`Session open for "${e}".`), r;
 	},
 	pair: async () => {
@@ -651,7 +689,7 @@ var q = new De(new Te()), J = (e) => {
 });
 window.addEventListener("message", (e) => {
 	let t = e.data, n = e.ports[0];
-	t?.sesameKeyholder === 1 && n !== void 0 && (ke.listen(n), J("embedded").hidden = !1);
+	t?.sesameKeyholder === 1 && n !== void 0 && (Me.listen(n), J("embedded").hidden = !1);
 });
 async function X() {
 	let e = J("passphrase").value;
@@ -660,9 +698,9 @@ async function X() {
 }
 async function Z() {
 	let e = J("devices"), t = await q.list();
-	e.replaceChildren(...t.map((e) => Ae(e))), J("empty").hidden = t.length > 0;
+	e.replaceChildren(...t.map((e) => Ne(e))), J("empty").hidden = t.length > 0;
 }
-function Ae(e) {
+function Ne(e) {
 	let t = document.createElement("li"), n = document.createElement("strong");
 	n.textContent = e.deviceName;
 	let r = document.createElement("span");
@@ -684,7 +722,7 @@ async function Q(e) {
 	}
 	await $(t);
 }
-async function je() {
+async function Pe() {
 	let e;
 	try {
 		e = r({
@@ -698,22 +736,22 @@ async function je() {
 	await $(e), J("manual-secret").value = "";
 }
 async function $(e) {
-	let t = W(J("alias").value || (e.name ?? "sesame")), n = p() && J("use-passkey").checked;
+	let t = W(J("alias").value || (e.name ?? "sesame")), n = h() && J("use-passkey").checked;
 	try {
 		if (n) {
 			Y("Confirm with your passkey to protect this key.");
-			let { credentialId: n, salt: r } = await m(t), i = await h(n, r);
+			let { credentialId: n, salt: r } = await g(t), i = await _(n, r);
 			await q.pair(t, e, i, {
 				kind: "webauthn-prf",
 				credentialId: n,
 				salt: r
 			});
 		} else {
-			let n = crypto.getRandomValues(/* @__PURE__ */ new Uint8Array(32)), r = await g(await X(), n, u);
+			let n = crypto.getRandomValues(/* @__PURE__ */ new Uint8Array(32)), r = await v(await X(), n, f);
 			await q.pair(t, e, r, {
 				kind: "passphrase",
 				salt: n,
-				iterations: u
+				iterations: f
 			});
 		}
 		Y(`Paired "${t}" (${i(e).uuid}).`), J("paste").value = "", J("passphrase").value = "", await Z();
@@ -721,14 +759,14 @@ async function $(e) {
 		Y(e instanceof Error ? e.message : String(e), "error");
 	}
 }
-var Me = (e) => document.getElementById(e) ?? void 0;
-function Ne() {
+var Fe = (e) => document.getElementById(e) ?? void 0;
+function Ie() {
 	J("scan").addEventListener("click", () => {
 		(async () => {
 			let e = J("preview");
 			try {
 				Y("Point the camera at the sharing QR code.");
-				let t = await ee();
+				let t = await ne();
 				e.srcObject = t.stream, e.hidden = !1, await e.play();
 				let n = await t.result;
 				e.hidden = !0, e.srcObject = null, await Q(n);
@@ -738,21 +776,21 @@ function Ne() {
 		})();
 	}), J("use-pasted").addEventListener("click", () => {
 		Q(J("paste").value);
-	}), Me("use-manual")?.addEventListener("click", () => {
-		je();
+	}), Fe("use-manual")?.addEventListener("click", () => {
+		Pe();
 	}), J("use-passkey").addEventListener("change", () => {
 		J("passphrase-row").hidden = J("use-passkey").checked;
 	});
 }
-function Pe() {
+function Le() {
 	"serviceWorker" in navigator && navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(() => {});
 }
-async function Fe() {
-	Ne(), Pe();
-	let e = p(), t = J("use-passkey");
-	t.checked = e, t.disabled = !e, J("passphrase-row").hidden = e, J("no-passkeys").hidden = e, J("scan").hidden = !await b(), J("no-camera").hidden = !J("scan").hidden, await Z(), Y("Ready.");
+async function Re() {
+	Ie(), Le();
+	let e = h(), t = J("use-passkey");
+	t.checked = e, t.disabled = !e, J("passphrase-row").hidden = e, J("no-passkeys").hidden = e, J("scan").hidden = !await te(), J("no-camera").hidden = !J("scan").hidden, await Z(), Y("Ready.");
 }
-Fe().catch((e) => {
+Re().catch((e) => {
 	Y(e instanceof Error ? e.message : String(e), "error");
 });
 //#endregion
