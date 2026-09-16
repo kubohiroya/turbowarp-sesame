@@ -78,7 +78,7 @@ resulting token is never written to a block or `.sb3` file.
 One file, no server, no extension to load by hand.
 
 1. Download
-   [`dist/turbowarp-sesame-app.sb3`](dist/turbowarp-sesame-app.sb3?raw=1).
+   <https://kubohiroya.github.io/turbowarp-sesame/turbowarp-sesame-app.sb3>.
 2. Open it at [turbowarp.org](https://turbowarp.org). The extension travels
    inside the file as a `data:` URL, so nothing is fetched.
 3. When TurboWarp asks whether to load the custom extension, **tick "run
@@ -100,6 +100,10 @@ One file, no server, no extension to load by hand.
 
 `scripts/build-sb3.mjs` fails the build if any credential appears in the file,
 and `tests/app-sb3.test.ts` checks the same properties on the built artifact.
+
+Running this against a real lock for the first time?
+[Testing against a real Sesame](docs/device-testing.md) is the step-by-step
+procedure, including what has not been verified yet.
 
 Use the web version rather than TurboWarp Desktop: Electron needs its own
 Bluetooth device-chooser handling, which the desktop app does not provide.

@@ -58,7 +58,7 @@ endpointとデバイス別名は秘密ではありません。8桁コードは5�
 
 ファイル1個。サーバー不要、機能拡張の手動読み込みも不要です。
 
-1. [`dist/turbowarp-sesame-app.sb3`](dist/turbowarp-sesame-app.sb3?raw=1)をダウンロードします。
+1. <https://kubohiroya.github.io/turbowarp-sesame/turbowarp-sesame-app.sb3> をダウンロードします。
 2. [turbowarp.org](https://turbowarp.org)で開きます。機能拡張は`data:` URLとしてファイルの中を一緒に運ばれるため、何も取得しません。
 3. カスタム機能拡張を読み込むか尋ねられたら、**「サンドボックスなしで実行」にチェックして**許可します。sandbox内ではWeb Bluetoothが使えないためです。この選択はTurboWarpが記憶します。
 4. keyholderページを開き、オーナー鍵かマネージャー鍵をペアリングします。
@@ -70,6 +70,8 @@ endpointとデバイス別名は秘密ではありません。8桁コードは5�
 > それでもこのファイル単体では何も開けません。device secretもAPIキーもtokenも含みません。操作するには、keyholder（独自のorigin）でパスキーまたはパスフレーズの背後に共有QRコードをペアリングし、かつ鍵のBluetooth圏内にいる必要があります。
 
 `scripts/build-sb3.mjs`はファイル内に資格情報が現れるとbuildを失敗させ、`tests/app-sb3.test.ts`が生成物に対して同じ性質を検査します。
+
+実機で初めて動かす場合は、[実機のSesameで検証する](docs/device-testing.ja.md)に手順があります。まだ検証できていない箇所も明示してあります。
 
 TurboWarp Desktopではなくウェブ版を使ってください。ElectronはBluetoothのデバイス選択を独自に実装する必要があり、desktop版はそれを提供していません。
 
