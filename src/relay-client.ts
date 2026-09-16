@@ -1,5 +1,5 @@
 import type { FetchLike, SesameCommand } from "./sesame-client.js";
-import type { SesameTransport } from "./transport.js";
+import type { SesameTransport, TransportCapability } from "./transport.js";
 
 const LOOPBACK_HOSTNAMES = new Set(["127.0.0.1", "localhost", "[::1]"]);
 const ALIAS_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/iu;
@@ -53,6 +53,10 @@ export async function pairWithRelay(
   };
 }
 
+const BROKER_CAPABILITIES: ReadonlySet<TransportCapability> = new Set([
+  "history",
+]);
+
 export class RelayClient implements SesameTransport {
   private readonly session: RelaySession;
 
@@ -72,6 +76,10 @@ export class RelayClient implements SesameTransport {
       token: session.token,
       expiresAt: session.expiresAt,
     };
+  }
+
+  public capabilities(): ReadonlySet<TransportCapability> {
+    return BROKER_CAPABILITIES;
   }
 
   public async getStatus(): Promise<Record<string, unknown>> {

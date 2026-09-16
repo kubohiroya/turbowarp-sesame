@@ -219,6 +219,7 @@
   		expiresAt: record.expiresAt
   	};
   }
+  var BROKER_CAPABILITIES = /* @__PURE__ */ new Set(["history"]);
   var RelayClient = class {
   	constructor(session, fetcher = fetch) {
   		this.fetcher = fetcher;
@@ -230,6 +231,9 @@
   			token: session.token,
   			expiresAt: session.expiresAt
   		};
+  	}
+  	capabilities() {
+  		return BROKER_CAPABILITIES;
   	}
   	async getStatus() {
   		return requireRecord$1(await this.request(this.devicePath("status")), "Relay returned an invalid status response.");
@@ -385,12 +389,16 @@
   	unlock: 83,
   	toggle: 88
   };
+  var CLOUD_CAPABILITIES = /* @__PURE__ */ new Set(["history"]);
   var SesameClient = class {
   	constructor(credentials, fetcher = fetch, now = Date.now) {
   		this.credentials = credentials;
   		this.fetcher = fetcher;
   		this.now = now;
   		validateCredentials(credentials);
+  	}
+  	capabilities() {
+  		return CLOUD_CAPABILITIES;
   	}
   	async getStatus() {
   		return requireRecord(await this.request(this.deviceUrl()));
@@ -464,6 +472,14 @@
   	let binary = "";
   	for (const byte of bytes) binary += String.fromCharCode(byte);
   	return btoa(binary);
+  }
+  //#endregion
+  //#region src/transport.ts
+  function supports(transport, capability) {
+  	return transport.capabilities().has(capability);
+  }
+  function requireCapability(transport, capability, explanation) {
+  	if (!supports(transport, capability)) throw new Error(explanation);
   }
   //#endregion
   //#region src/extension.ts
@@ -550,7 +566,11 @@
   		return this.captureAsync(async () => {
   			const page = boundedInteger(Scratch.Cast.toNumber(args.PAGE), 0, Number.MAX_SAFE_INTEGER);
   			const length = boundedInteger(Scratch.Cast.toNumber(args.LENGTH), 1, 50);
-  			return JSON.stringify(await this.transport().getHistory(page, length));
+  			const transport = this.transport();
+  			requireCapability(transport, "history", "This connection cannot read paginated history.");
+  			const getHistory = transport.getHistory?.bind(transport);
+  			if (getHistory === void 0) throw new Error("This connection cannot read paginated history.");
+  			return JSON.stringify(await getHistory(page, length));
   		}, "[]");
   	}
   	async sendCommand(args) {

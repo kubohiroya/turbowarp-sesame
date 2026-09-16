@@ -13,7 +13,7 @@ import {
   type SesameCommand,
   type SesameCredentials,
 } from "./sesame-client.js";
-import type { SesameTransport } from "./transport.js";
+import { requireCapability, type SesameTransport } from "./transport.js";
 
 type BlockTypeName = "COMMAND" | "REPORTER" | "BOOLEAN";
 type ArgumentTypeName = "STRING" | "NUMBER" | "BOOLEAN";
@@ -164,7 +164,17 @@ export class SesameExtension implements TurboWarpExtension {
         Number.MAX_SAFE_INTEGER,
       );
       const length = boundedInteger(Scratch.Cast.toNumber(args.LENGTH), 1, 50);
-      return JSON.stringify(await this.transport().getHistory(page, length));
+      const transport = this.transport();
+      requireCapability(
+        transport,
+        "history",
+        "This connection cannot read paginated history.",
+      );
+      const getHistory = transport.getHistory?.bind(transport);
+      if (getHistory === undefined) {
+        throw new Error("This connection cannot read paginated history.");
+      }
+      return JSON.stringify(await getHistory(page, length));
     }, "[]");
   }
 
