@@ -184,6 +184,16 @@ async function store(key: SharedKey): Promise<void> {
   }
 }
 
+/**
+ * Like {@link element}, but for a control the page may not carry.
+ *
+ * A control that has gone missing should disable one route, not take the whole
+ * page down with it — which is exactly what happened when the manual entry
+ * markup and the code that wires it went out of step.
+ */
+const optional = <T extends HTMLElement>(id: string): T | undefined =>
+  (document.getElementById(id) as T | null) ?? undefined;
+
 function wire(): void {
   element("scan").addEventListener("click", () => {
     void (async () => {
@@ -210,7 +220,7 @@ function wire(): void {
     void storeScanned(element<HTMLInputElement>("paste").value);
   });
 
-  element("use-manual").addEventListener("click", () => {
+  optional("use-manual")?.addEventListener("click", () => {
     void storeManual();
   });
 

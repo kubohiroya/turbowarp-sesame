@@ -721,7 +721,8 @@ async function $(e) {
 		Y(e instanceof Error ? e.message : String(e), "error");
 	}
 }
-function Me() {
+var Me = (e) => document.getElementById(e) ?? void 0;
+function Ne() {
 	J("scan").addEventListener("click", () => {
 		(async () => {
 			let e = J("preview");
@@ -737,21 +738,21 @@ function Me() {
 		})();
 	}), J("use-pasted").addEventListener("click", () => {
 		Q(J("paste").value);
-	}), J("use-manual").addEventListener("click", () => {
+	}), Me("use-manual")?.addEventListener("click", () => {
 		je();
 	}), J("use-passkey").addEventListener("change", () => {
 		J("passphrase-row").hidden = J("use-passkey").checked;
 	});
 }
-function Ne() {
+function Pe() {
 	"serviceWorker" in navigator && navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(() => {});
 }
-async function Pe() {
-	Me(), Ne();
+async function Fe() {
+	Ne(), Pe();
 	let e = p(), t = J("use-passkey");
 	t.checked = e, t.disabled = !e, J("passphrase-row").hidden = e, J("no-passkeys").hidden = e, J("scan").hidden = !await b(), J("no-camera").hidden = !J("scan").hidden, await Z(), Y("Ready.");
 }
-Pe().catch((e) => {
+Fe().catch((e) => {
 	Y(e instanceof Error ? e.message : String(e), "error");
 });
 //#endregion
