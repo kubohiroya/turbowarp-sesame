@@ -27,7 +27,6 @@
     "dist/",
     "config/",
     "docs/",
-    "schemas/",
     "src/",
     "README.md",
     "README.ja.md",
@@ -58,12 +57,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@kubohiroya/turbowarp-extension-manifest": "0.2.0",
     "@kubohiroya/vite-plugin-turbowarp-extension": "0.3.0",
     "@types/node": "^24.13.3",
     "eslint": "^9.39.5",
+    "prettier": "^3.6.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.66.0",
-    "prettier": "^3.6.2",
     "vite": "^8.2.2",
     "vitest": "^5.0.0"
   }
