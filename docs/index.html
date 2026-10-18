@@ -24,17 +24,51 @@
         background: #fff8e8;
       }
     </style>
-  <style id="block-reference-style">
-#extension-block-reference{max-width:72rem;margin:2rem auto;padding:1rem;line-height:1.6;overflow-wrap:anywhere}
-#extension-block-reference .block-reference-entry{display:block;scroll-margin-top:6rem;margin:2rem 0;padding:1rem;border:1px solid currentColor;border-radius:.5rem}
-#extension-block-reference .block-reference-table{overflow-x:auto}
-#extension-block-reference table{border-collapse:collapse;width:100%}
-#extension-block-reference th,#extension-block-reference td{text-align:left;vertical-align:top;border:1px solid currentColor;padding:.5rem}
-#extension-block-reference code{white-space:pre-wrap}
-#extension-block-reference a:focus-visible{outline:3px solid currentColor;outline-offset:3px}
-</style>
-</head>
-  <body><p lang="en" class="complete-block-reference-link"><a href="#extension-block-reference">Complete block reference (18 blocks)</a></p>
+    <style id="block-reference-style">
+      #extension-block-reference {
+        max-width: 72rem;
+        margin: 2rem auto;
+        padding: 1rem;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+      }
+      #extension-block-reference .block-reference-entry {
+        display: block;
+        scroll-margin-top: 6rem;
+        margin: 2rem 0;
+        padding: 1rem;
+        border: 1px solid currentColor;
+        border-radius: 0.5rem;
+      }
+      #extension-block-reference .block-reference-table {
+        overflow-x: auto;
+      }
+      #extension-block-reference table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      #extension-block-reference th,
+      #extension-block-reference td {
+        text-align: left;
+        vertical-align: top;
+        border: 1px solid currentColor;
+        padding: 0.5rem;
+      }
+      #extension-block-reference code {
+        white-space: pre-wrap;
+      }
+      #extension-block-reference a:focus-visible {
+        outline: 3px solid currentColor;
+        outline-offset: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <p lang="en" class="complete-block-reference-link">
+      <a href="#extension-block-reference"
+        >Complete block reference (18 blocks)</a
+      >
+    </p>
     <h1>TurboWarp-Sesame</h1>
     <p>
       A TurboWarp extension with sandboxed Direct mode and a localhost Relay
@@ -102,32 +136,531 @@
         >Source and full README</a
       >
     </p>
-  <!-- BEGIN COMPLETE BLOCK REFERENCE -->
-<section lang="en" id="extension-block-reference" aria-labelledby="block-reference-title">
-<h2 id="block-reference-title">TurboWarp-Sesame: complete block reference</h2>
-<p>All 18 blocks are documented below, including compatibility blocks and blocks available through optional features. Select a block to read its behavior, arguments, default values, and menu choices. Each block has a permanent link.</p>
-<nav aria-label="Block reference"><ul><li><a href="#block-configure"><code>configure Direct mode API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]</code></a></li>
-<li><a href="#block-configureRelay"><code>configure local Relay [ENDPOINT] device alias [DEVICE_ALIAS]</code></a></li>
-<li><a href="#block-pairRelay"><code>pair local Relay with one-time code [CODE]</code></a></li>
-<li><a href="#block-configureBluetooth"><code>configure Bluetooth keyholder [KEYHOLDER_URL] device alias [DEVICE_ALIAS]</code></a></li>
-<li><a href="#block-openKeyholder"><code>open the Sesame keyholder</code></a></li>
-<li><a href="#block-pairBluetooth"><code>pair Sesame by scanning its sharing QR code</code></a></li>
-<li><a href="#block-connectBluetooth"><code>connect to Sesame over Bluetooth</code></a></li>
-<li><a href="#block-bluetoothConnected"><code>Sesame Bluetooth connected?</code></a></li>
-<li><a href="#block-whenStateChanges"><code>when the Sesame state changes</code></a></li>
-<li><a href="#block-clearCredentials"><code>clear Sesame connection</code></a></li>
-<li><a href="#block-isConfigured"><code>Sesame connection ready?</code></a></li>
-<li><a href="#block-relayPaired"><code>local Relay paired?</code></a></li>
-<li><a href="#block-connectionMode"><code>Sesame connection mode</code></a></li>
-<li><a href="#block-getStatusField"><code>Sesame status [FIELD]</code></a></li>
-<li><a href="#block-getHistory"><code>Sesame history page [PAGE] length [LENGTH]</code></a></li>
-<li><a href="#block-sendCommand"><code>Sesame [COMMAND] with history [HISTORY]</code></a></li>
-<li><a href="#block-commandsEnabled"><code>Sesame remote commands enabled?</code></a></li>
-<li><a href="#block-lastError"><code>last Sesame error</code></a></li>
-</ul></nav>
-<article id="block-configure" class="block-reference-entry"><h3><code>configure Direct mode API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]</code></h3><p>Selects Direct mode and keeps the Candy House credentials in memory until they are cleared or the extension reloads.</p><p>Block type: COMMAND. Opcode: <code>configure</code>. <a href="#block-configure">Permanent link</a></p><div class="block-reference-table"><table><thead><tr><th>Argument</th><th>Type</th><th>Default value</th><th>Menu choices</th></tr></thead><tbody><tr><th scope="row"><code>API_KEY</code></th><td>STRING</td><td><code>api-key</code></td><td></td></tr><tr><th scope="row"><code>UUID</code></th><td>STRING</td><td><code>00000000-0000-0000-0000-000000000000</code></td><td></td></tr><tr><th scope="row"><code>SECRET_KEY</code></th><td>STRING</td><td><code>00000000000000000000000000000000</code></td><td></td></tr></tbody></table></div></article><article id="block-configureRelay" class="block-reference-entry"><h3><code>configure local Relay [ENDPOINT] device alias [DEVICE_ALIAS]</code></h3><p>Selects Relay mode for a localhost keybroker without storing Candy House credentials in the project.</p><p>Block type: COMMAND. Opcode: <code>configureRelay</code>. <a href="#block-configureRelay">Permanent link</a></p><div class="block-reference-table"><table><thead><tr><th>Argument</th><th>Type</th><th>Default value</th><th>Menu choices</th></tr></thead><tbody><tr><th scope="row"><code>ENDPOINT</code></th><td>STRING</td><td><code>http://127.0.0.1:8787</code></td><td></td></tr><tr><th scope="row"><code>DEVICE_ALIAS</code></th><td>STRING</td><td><code>front-door</code></td><td></td></tr></tbody></table></div></article><article id="block-pairRelay" class="block-reference-entry"><h3><code>pair local Relay with one-time code [CODE]</code></h3><p>Exchanges an eight-digit one-time code for a Relay token held only in extension memory.</p><p>Block type: COMMAND. Opcode: <code>pairRelay</code>. <a href="#block-pairRelay">Permanent link</a></p><div class="block-reference-table"><table><thead><tr><th>Argument</th><th>Type</th><th>Default value</th><th>Menu choices</th></tr></thead><tbody><tr><th scope="row"><code>CODE</code></th><td>STRING</td><td><code>00000000</code></td><td></td></tr></tbody></table></div></article><article id="block-configureBluetooth" class="block-reference-entry"><h3><code>configure Bluetooth keyholder [KEYHOLDER_URL] device alias [DEVICE_ALIAS]</code></h3><p>Selects Bluetooth mode. The keyholder page holds the device secret on its own origin, so no credential is stored in the project.</p><p>Block type: COMMAND. Opcode: <code>configureBluetooth</code>. <a href="#block-configureBluetooth">Permanent link</a></p><div class="block-reference-table"><table><thead><tr><th>Argument</th><th>Type</th><th>Default value</th><th>Menu choices</th></tr></thead><tbody><tr><th scope="row"><code>KEYHOLDER_URL</code></th><td>STRING</td><td><code>https://kubohiroya.github.io/turbowarp-sesame/keyholder/</code></td><td></td></tr><tr><th scope="row"><code>DEVICE_ALIAS</code></th><td>STRING</td><td><code>front-door</code></td><td></td></tr></tbody></table></div></article><article id="block-openKeyholder" class="block-reference-entry"><h3><code>open the Sesame keyholder</code></h3><p>Opens the keyholder window and waits for it. Run this from its own click: opening a window and opening the Bluetooth chooser each need a fresh user gesture.</p><p>Block type: COMMAND. Opcode: <code>openKeyholder</code>. <a href="#block-openKeyholder">Permanent link</a></p><p>This block has no arguments.</p></article><article id="block-pairBluetooth" class="block-reference-entry"><h3><code>pair Sesame by scanning its sharing QR code</code></h3><p>Opens the keyholder so it can scan an owner or manager sharing QR code from the sesame app. Guest codes cannot work over Bluetooth.</p><p>Block type: COMMAND. Opcode: <code>pairBluetooth</code>. <a href="#block-pairBluetooth">Permanent link</a></p><p>This block has no arguments.</p></article><article id="block-connectBluetooth" class="block-reference-entry"><h3><code>connect to Sesame over Bluetooth</code></h3><p>Opens the browser&#x27;s device chooser and logs in. Run this straight after a click, because the chooser needs a recent user gesture.</p><p>Block type: COMMAND. Opcode: <code>connectBluetooth</code>. <a href="#block-connectBluetooth">Permanent link</a></p><p>This block has no arguments.</p></article><article id="block-bluetoothConnected" class="block-reference-entry"><h3><code>Sesame Bluetooth connected?</code></h3><p>Reports whether a Bluetooth session is logged in and usable.</p><p>Block type: BOOLEAN. Opcode: <code>bluetoothConnected</code>. <a href="#block-bluetoothConnected">Permanent link</a></p><p>This block has no arguments.</p></article><article id="block-whenStateChanges" class="block-reference-entry"><h3><code>when the Sesame state changes</code></h3><p>Runs when the lock reports that it moved. Only Bluetooth reports this; the cloud modes cannot.</p><p>Block type: HAT. Opcode: <code>whenStateChanges</code>. <a href="#block-whenStateChanges">Permanent link</a></p><p>This block has no arguments.</p></article><article id="block-clearCredentials" class="block-reference-entry"><h3><code>clear Sesame connection</code></h3><p>Removes Direct credentials or the local Relay session held by the running extension.</p><p>Block type: COMMAND. Opcode: <code>clearCredentials</code>. <a href="#block-clearCredentials">Permanent link</a></p><p>This block has no arguments.</p></article><article id="block-isConfigured" class="block-reference-entry"><h3><code>Sesame connection ready?</code></h3><p>Reports whether Direct credentials or a paired Relay session are currently held in memory.</p><p>Block type: BOOLEAN. Opcode: <code>isConfigured</code>. <a href="#block-isConfigured">Permanent link</a></p><p>This block has no arguments.</p></article><article id="block-relayPaired" class="block-reference-entry"><h3><code>local Relay paired?</code></h3><p>Reports whether the current Relay connection has an in-memory session token.</p><p>Block type: BOOLEAN. Opcode: <code>relayPaired</code>. <a href="#block-relayPaired">Permanent link</a></p><p>This block has no arguments.</p></article><article id="block-connectionMode" class="block-reference-entry"><h3><code>Sesame connection mode</code></h3><p>Reports direct, relay, or not configured.</p><p>Block type: REPORTER. Opcode: <code>connectionMode</code>. <a href="#block-connectionMode">Permanent link</a></p><p>This block has no arguments.</p></article><article id="block-getStatusField" class="block-reference-entry"><h3><code>Sesame status [FIELD]</code></h3><p>Fetches one field from the current Sesame status.</p><p>Block type: REPORTER. Opcode: <code>getStatusField</code>. <a href="#block-getStatusField">Permanent link</a></p><div class="block-reference-table"><table><thead><tr><th>Argument</th><th>Type</th><th>Default value</th><th>Menu choices</th></tr></thead><tbody><tr><th scope="row"><code>FIELD</code></th><td>STRING</td><td><code>CHSesame2Status</code></td><td><ul><li><code>CHSesame2Status</code></li><li><code>batteryPercentage</code></li><li><code>batteryVoltage</code></li><li><code>position</code></li><li><code>timestamp</code></li><li><code>wm2State</code></li></ul></td></tr></tbody></table></div></article><article id="block-getHistory" class="block-reference-entry"><h3><code>Sesame history page [PAGE] length [LENGTH]</code></h3><p>Fetches up to 50 history records as a JSON string.</p><p>Block type: REPORTER. Opcode: <code>getHistory</code>. <a href="#block-getHistory">Permanent link</a></p><div class="block-reference-table"><table><thead><tr><th>Argument</th><th>Type</th><th>Default value</th><th>Menu choices</th></tr></thead><tbody><tr><th scope="row"><code>PAGE</code></th><td>NUMBER</td><td><code>0</code></td><td></td></tr><tr><th scope="row"><code>LENGTH</code></th><td>NUMBER</td><td><code>10</code></td><td></td></tr></tbody></table></div></article><article id="block-sendCommand" class="block-reference-entry"><h3><code>Sesame [COMMAND] with history [HISTORY]</code></h3><p>Requests a lock, unlock, or toggle operation when remote commands are enabled in the build.</p><p>Block type: COMMAND. Opcode: <code>sendCommand</code>. <a href="#block-sendCommand">Permanent link</a></p><div class="block-reference-table"><table><thead><tr><th>Argument</th><th>Type</th><th>Default value</th><th>Menu choices</th></tr></thead><tbody><tr><th scope="row"><code>COMMAND</code></th><td>STRING</td><td><code>lock</code></td><td><ul><li><code>lock</code></li><li><code>unlock</code></li><li><code>toggle</code></li></ul></td></tr><tr><th scope="row"><code>HISTORY</code></th><td>STRING</td><td><code>TurboWarp</code></td><td></td></tr></tbody></table></div></article><article id="block-commandsEnabled" class="block-reference-entry"><h3><code>Sesame remote commands enabled?</code></h3><p>Reports the build-time safety flag for remote lock commands.</p><p>Block type: BOOLEAN. Opcode: <code>commandsEnabled</code>. <a href="#block-commandsEnabled">Permanent link</a></p><p>This block has no arguments.</p></article><article id="block-lastError" class="block-reference-entry"><h3><code>last Sesame error</code></h3><p>Reports the most recent configuration or API error without exposing credentials.</p><p>Block type: REPORTER. Opcode: <code>lastError</code>. <a href="#block-lastError">Permanent link</a></p><p>This block has no arguments.</p></article>
-<p><a href="https://github.com/kubohiroya/turbowarp-sesame/blob/main/README.md">Repository guide and examples</a></p>
-</section>
-<!-- END COMPLETE BLOCK REFERENCE -->
-</body>
+    <!-- BEGIN COMPLETE BLOCK REFERENCE -->
+    <section
+      lang="en"
+      id="extension-block-reference"
+      aria-labelledby="block-reference-title"
+    >
+      <h2 id="block-reference-title">
+        TurboWarp-Sesame: complete block reference
+      </h2>
+      <p>
+        All 18 blocks are documented below, including compatibility blocks and
+        blocks available through optional features. Select a block to read its
+        behavior, arguments, default values, and menu choices. Each block has a
+        permanent link.
+      </p>
+      <nav aria-label="Block reference">
+        <ul>
+          <li>
+            <a href="#block-configure"
+              ><code
+                >configure Direct mode API key [API_KEY] UUID [UUID] secret key
+                [SECRET_KEY]</code
+              ></a
+            >
+          </li>
+          <li>
+            <a href="#block-configureRelay"
+              ><code
+                >configure local Relay [ENDPOINT] device alias
+                [DEVICE_ALIAS]</code
+              ></a
+            >
+          </li>
+          <li>
+            <a href="#block-pairRelay"
+              ><code>pair local Relay with one-time code [CODE]</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-configureBluetooth"
+              ><code
+                >configure Bluetooth keyholder [KEYHOLDER_URL] device alias
+                [DEVICE_ALIAS]</code
+              ></a
+            >
+          </li>
+          <li>
+            <a href="#block-openKeyholder"
+              ><code>open the Sesame keyholder</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-pairBluetooth"
+              ><code>pair Sesame by scanning its sharing QR code</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-connectBluetooth"
+              ><code>connect to Sesame over Bluetooth</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-bluetoothConnected"
+              ><code>Sesame Bluetooth connected?</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-whenStateChanges"
+              ><code>when the Sesame state changes</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-clearCredentials"
+              ><code>clear Sesame connection</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-isConfigured"
+              ><code>Sesame connection ready?</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-relayPaired"><code>local Relay paired?</code></a>
+          </li>
+          <li>
+            <a href="#block-connectionMode"
+              ><code>Sesame connection mode</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-getStatusField"
+              ><code>Sesame status [FIELD]</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-getHistory"
+              ><code>Sesame history page [PAGE] length [LENGTH]</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-sendCommand"
+              ><code>Sesame [COMMAND] with history [HISTORY]</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-commandsEnabled"
+              ><code>Sesame remote commands enabled?</code></a
+            >
+          </li>
+          <li>
+            <a href="#block-lastError"><code>last Sesame error</code></a>
+          </li>
+        </ul>
+      </nav>
+      <article id="block-configure" class="block-reference-entry">
+        <h3>
+          <code
+            >configure Direct mode API key [API_KEY] UUID [UUID] secret key
+            [SECRET_KEY]</code
+          >
+        </h3>
+        <p>
+          Selects Direct mode and keeps the Candy House credentials in memory
+          until they are cleared or the extension reloads.
+        </p>
+        <p>
+          Block type: COMMAND. Opcode: <code>configure</code>.
+          <a href="#block-configure">Permanent link</a>
+        </p>
+        <div class="block-reference-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Argument</th>
+                <th>Type</th>
+                <th>Default value</th>
+                <th>Menu choices</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><code>API_KEY</code></th>
+                <td>STRING</td>
+                <td><code>api-key</code></td>
+                <td></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>UUID</code></th>
+                <td>STRING</td>
+                <td><code>00000000-0000-0000-0000-000000000000</code></td>
+                <td></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>SECRET_KEY</code></th>
+                <td>STRING</td>
+                <td><code>00000000000000000000000000000000</code></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+      <article id="block-configureRelay" class="block-reference-entry">
+        <h3>
+          <code
+            >configure local Relay [ENDPOINT] device alias [DEVICE_ALIAS]</code
+          >
+        </h3>
+        <p>
+          Selects Relay mode for a localhost keybroker without storing Candy
+          House credentials in the project.
+        </p>
+        <p>
+          Block type: COMMAND. Opcode: <code>configureRelay</code>.
+          <a href="#block-configureRelay">Permanent link</a>
+        </p>
+        <div class="block-reference-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Argument</th>
+                <th>Type</th>
+                <th>Default value</th>
+                <th>Menu choices</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><code>ENDPOINT</code></th>
+                <td>STRING</td>
+                <td><code>http://127.0.0.1:8787</code></td>
+                <td></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>DEVICE_ALIAS</code></th>
+                <td>STRING</td>
+                <td><code>front-door</code></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+      <article id="block-pairRelay" class="block-reference-entry">
+        <h3><code>pair local Relay with one-time code [CODE]</code></h3>
+        <p>
+          Exchanges an eight-digit one-time code for a Relay token held only in
+          extension memory.
+        </p>
+        <p>
+          Block type: COMMAND. Opcode: <code>pairRelay</code>.
+          <a href="#block-pairRelay">Permanent link</a>
+        </p>
+        <div class="block-reference-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Argument</th>
+                <th>Type</th>
+                <th>Default value</th>
+                <th>Menu choices</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><code>CODE</code></th>
+                <td>STRING</td>
+                <td><code>00000000</code></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+      <article id="block-configureBluetooth" class="block-reference-entry">
+        <h3>
+          <code
+            >configure Bluetooth keyholder [KEYHOLDER_URL] device alias
+            [DEVICE_ALIAS]</code
+          >
+        </h3>
+        <p>
+          Selects Bluetooth mode. The keyholder page holds the device secret on
+          its own origin, so no credential is stored in the project.
+        </p>
+        <p>
+          Block type: COMMAND. Opcode: <code>configureBluetooth</code>.
+          <a href="#block-configureBluetooth">Permanent link</a>
+        </p>
+        <div class="block-reference-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Argument</th>
+                <th>Type</th>
+                <th>Default value</th>
+                <th>Menu choices</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><code>KEYHOLDER_URL</code></th>
+                <td>STRING</td>
+                <td>
+                  <code
+                    >https://kubohiroya.github.io/turbowarp-sesame/keyholder/</code
+                  >
+                </td>
+                <td></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>DEVICE_ALIAS</code></th>
+                <td>STRING</td>
+                <td><code>front-door</code></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+      <article id="block-openKeyholder" class="block-reference-entry">
+        <h3><code>open the Sesame keyholder</code></h3>
+        <p>
+          Opens the keyholder window and waits for it. Run this from its own
+          click: opening a window and opening the Bluetooth chooser each need a
+          fresh user gesture.
+        </p>
+        <p>
+          Block type: COMMAND. Opcode: <code>openKeyholder</code>.
+          <a href="#block-openKeyholder">Permanent link</a>
+        </p>
+        <p>This block has no arguments.</p>
+      </article>
+      <article id="block-pairBluetooth" class="block-reference-entry">
+        <h3><code>pair Sesame by scanning its sharing QR code</code></h3>
+        <p>
+          Opens the keyholder so it can scan an owner or manager sharing QR code
+          from the sesame app. Guest codes cannot work over Bluetooth.
+        </p>
+        <p>
+          Block type: COMMAND. Opcode: <code>pairBluetooth</code>.
+          <a href="#block-pairBluetooth">Permanent link</a>
+        </p>
+        <p>This block has no arguments.</p>
+      </article>
+      <article id="block-connectBluetooth" class="block-reference-entry">
+        <h3><code>connect to Sesame over Bluetooth</code></h3>
+        <p>
+          Opens the browser&#x27;s device chooser and logs in. Run this straight
+          after a click, because the chooser needs a recent user gesture.
+        </p>
+        <p>
+          Block type: COMMAND. Opcode: <code>connectBluetooth</code>.
+          <a href="#block-connectBluetooth">Permanent link</a>
+        </p>
+        <p>This block has no arguments.</p>
+      </article>
+      <article id="block-bluetoothConnected" class="block-reference-entry">
+        <h3><code>Sesame Bluetooth connected?</code></h3>
+        <p>Reports whether a Bluetooth session is logged in and usable.</p>
+        <p>
+          Block type: BOOLEAN. Opcode: <code>bluetoothConnected</code>.
+          <a href="#block-bluetoothConnected">Permanent link</a>
+        </p>
+        <p>This block has no arguments.</p>
+      </article>
+      <article id="block-whenStateChanges" class="block-reference-entry">
+        <h3><code>when the Sesame state changes</code></h3>
+        <p>
+          Runs when the lock reports that it moved. Only Bluetooth reports this;
+          the cloud modes cannot.
+        </p>
+        <p>
+          Block type: HAT. Opcode: <code>whenStateChanges</code>.
+          <a href="#block-whenStateChanges">Permanent link</a>
+        </p>
+        <p>This block has no arguments.</p>
+      </article>
+      <article id="block-clearCredentials" class="block-reference-entry">
+        <h3><code>clear Sesame connection</code></h3>
+        <p>
+          Removes Direct credentials or the local Relay session held by the
+          running extension.
+        </p>
+        <p>
+          Block type: COMMAND. Opcode: <code>clearCredentials</code>.
+          <a href="#block-clearCredentials">Permanent link</a>
+        </p>
+        <p>This block has no arguments.</p>
+      </article>
+      <article id="block-isConfigured" class="block-reference-entry">
+        <h3><code>Sesame connection ready?</code></h3>
+        <p>
+          Reports whether Direct credentials or a paired Relay session are
+          currently held in memory.
+        </p>
+        <p>
+          Block type: BOOLEAN. Opcode: <code>isConfigured</code>.
+          <a href="#block-isConfigured">Permanent link</a>
+        </p>
+        <p>This block has no arguments.</p>
+      </article>
+      <article id="block-relayPaired" class="block-reference-entry">
+        <h3><code>local Relay paired?</code></h3>
+        <p>
+          Reports whether the current Relay connection has an in-memory session
+          token.
+        </p>
+        <p>
+          Block type: BOOLEAN. Opcode: <code>relayPaired</code>.
+          <a href="#block-relayPaired">Permanent link</a>
+        </p>
+        <p>This block has no arguments.</p>
+      </article>
+      <article id="block-connectionMode" class="block-reference-entry">
+        <h3><code>Sesame connection mode</code></h3>
+        <p>Reports direct, relay, or not configured.</p>
+        <p>
+          Block type: REPORTER. Opcode: <code>connectionMode</code>.
+          <a href="#block-connectionMode">Permanent link</a>
+        </p>
+        <p>This block has no arguments.</p>
+      </article>
+      <article id="block-getStatusField" class="block-reference-entry">
+        <h3><code>Sesame status [FIELD]</code></h3>
+        <p>Fetches one field from the current Sesame status.</p>
+        <p>
+          Block type: REPORTER. Opcode: <code>getStatusField</code>.
+          <a href="#block-getStatusField">Permanent link</a>
+        </p>
+        <div class="block-reference-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Argument</th>
+                <th>Type</th>
+                <th>Default value</th>
+                <th>Menu choices</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><code>FIELD</code></th>
+                <td>STRING</td>
+                <td><code>CHSesame2Status</code></td>
+                <td>
+                  <ul>
+                    <li><code>CHSesame2Status</code></li>
+                    <li><code>batteryPercentage</code></li>
+                    <li><code>batteryVoltage</code></li>
+                    <li><code>position</code></li>
+                    <li><code>timestamp</code></li>
+                    <li><code>wm2State</code></li>
+                  </ul>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+      <article id="block-getHistory" class="block-reference-entry">
+        <h3><code>Sesame history page [PAGE] length [LENGTH]</code></h3>
+        <p>Fetches up to 50 history records as a JSON string.</p>
+        <p>
+          Block type: REPORTER. Opcode: <code>getHistory</code>.
+          <a href="#block-getHistory">Permanent link</a>
+        </p>
+        <div class="block-reference-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Argument</th>
+                <th>Type</th>
+                <th>Default value</th>
+                <th>Menu choices</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><code>PAGE</code></th>
+                <td>NUMBER</td>
+                <td><code>0</code></td>
+                <td></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>LENGTH</code></th>
+                <td>NUMBER</td>
+                <td><code>10</code></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+      <article id="block-sendCommand" class="block-reference-entry">
+        <h3><code>Sesame [COMMAND] with history [HISTORY]</code></h3>
+        <p>
+          Requests a lock, unlock, or toggle operation when remote commands are
+          enabled in the build.
+        </p>
+        <p>
+          Block type: COMMAND. Opcode: <code>sendCommand</code>.
+          <a href="#block-sendCommand">Permanent link</a>
+        </p>
+        <div class="block-reference-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Argument</th>
+                <th>Type</th>
+                <th>Default value</th>
+                <th>Menu choices</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><code>COMMAND</code></th>
+                <td>STRING</td>
+                <td><code>lock</code></td>
+                <td>
+                  <ul>
+                    <li><code>lock</code></li>
+                    <li><code>unlock</code></li>
+                    <li><code>toggle</code></li>
+                  </ul>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row"><code>HISTORY</code></th>
+                <td>STRING</td>
+                <td><code>TurboWarp</code></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+      <article id="block-commandsEnabled" class="block-reference-entry">
+        <h3><code>Sesame remote commands enabled?</code></h3>
+        <p>Reports the build-time safety flag for remote lock commands.</p>
+        <p>
+          Block type: BOOLEAN. Opcode: <code>commandsEnabled</code>.
+          <a href="#block-commandsEnabled">Permanent link</a>
+        </p>
+        <p>This block has no arguments.</p>
+      </article>
+      <article id="block-lastError" class="block-reference-entry">
+        <h3><code>last Sesame error</code></h3>
+        <p>
+          Reports the most recent configuration or API error without exposing
+          credentials.
+        </p>
+        <p>
+          Block type: REPORTER. Opcode: <code>lastError</code>.
+          <a href="#block-lastError">Permanent link</a>
+        </p>
+        <p>This block has no arguments.</p>
+      </article>
+      <p>
+        <a
+          href="https://github.com/kubohiroya/turbowarp-sesame/blob/main/README.md"
+          >Repository guide and examples</a
+        >
+      </p>
+    </section>
+    <!-- END COMPLETE BLOCK REFERENCE -->
+  </body>
 </html>
