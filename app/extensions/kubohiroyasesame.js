@@ -19,6 +19,179 @@
   	docsURI: "https://kubohiroya.github.io/turbowarp-sesame/",
   	blockIconURI: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iNSIgeT0iMyIgd2lkdGg9IjM4IiBoZWlnaHQ9IjQyIiByeD0iOCIgZmlsbD0iI2YyYjUyYiIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iMTkiIHI9IjgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSI0Ii8+PHBhdGggZD0iTTI0IDI3djEwIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"
   };
+  var block_editor_fixed_inputs_schema_default = {
+  	$schema: "http://json-schema.org/draft-07/schema#",
+  	$id: "https://kubohiroya.github.io/turbowarp-sesame/schemas/block-editor-fixed-inputs.schema.json",
+  	title: "turbowarp-sesame fixed editing contracts",
+  	$defs: {
+  		"getHistory": {
+  			"type": "object",
+  			"properties": {
+  				"PAGE": { "type": "number" },
+  				"LENGTH": { "type": "number" }
+  			},
+  			"additionalProperties": false
+  		},
+  		"sendCommand": {
+  			"type": "object",
+  			"properties": { "COMMAND": {
+  				"type": "string",
+  				"enum": [
+  					"lock",
+  					"unlock",
+  					"toggle"
+  				]
+  			} },
+  			"additionalProperties": false
+  		}
+  	}
+  };
+  //#endregion
+  //#region src/fixed-input-editors.ts
+  var contracts = block_editor_fixed_inputs_schema_default.$defs;
+  var repository = "turbowarp-sesame";
+  var extensionId = "kubohiroyasesame";
+  var token = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$/u;
+  function readNumber(value) {
+  	if (typeof value !== "string" && typeof value !== "number") throw new TypeError("Invalid numeric projection.");
+  	if (typeof value === "string" && value.trim() === "") throw new TypeError("Existing blank field is readonly.");
+  	const number = Number(value);
+  	if (!Number.isFinite(number)) throw new TypeError("Existing nonfinite field is readonly.");
+  	return number;
+  }
+  function newNumberToken(value) {
+  	if (typeof value === "number") {
+  		if (!Number.isFinite(value)) throw new TypeError("Invalid new number.");
+  		return Object.is(value, -0) ? "-0" : String(value);
+  	}
+  	if (typeof value !== "string" || !token.test(value.trim()) || !Number.isFinite(Number(value))) throw new TypeError("Invalid new number.");
+  	return value.trim();
+  }
+  function existingChoice(_opcode, value) {
+  	if (typeof value !== "string") throw new TypeError("Invalid string projection.");
+  	return value;
+  }
+  function candidateValid(_opcode, _argument, schema, value) {
+  	if (schema.type === "number" || schema.type === "integer") {
+  		let number;
+  		try {
+  			number = readNumber(value);
+  		} catch {
+  			return false;
+  		}
+  		if (schema.type === "integer" && !Number.isInteger(number)) return false;
+  		if (schema.minimum !== void 0 && number < schema.minimum) return false;
+  		if (schema.maximum !== void 0 && number > schema.maximum) return false;
+  		if (schema.exclusiveMinimum !== void 0 && number <= schema.exclusiveMinimum) return false;
+  		if (schema.enum && !schema.enum.includes(number)) return false;
+  		return true;
+  	}
+  	return typeof value === "string" && schema.enum.includes(value);
+  }
+  function fixedInputEditorOptions() {
+  	return Object.entries(contracts).map(([opcode, contract]) => ({
+  		apiVersion: 1,
+  		extensionId,
+  		editorId: `${extensionId}.fixed.${opcode}`,
+  		opcodes: [`${extensionId}_${opcode}`],
+  		contractId: `${repository}.${opcode}.fixed`,
+  		contractRevision: "fixed-inputs-v1",
+  		validationContext: () => ({
+  			consumerId: repository,
+  			nowMs: 0,
+  			settings: null
+  		}),
+  		bindings: Object.entries(contract.properties).map(([argument, schema]) => {
+  			const numeric = schema.type === "number" || schema.type === "integer";
+  			const source = {
+  				repository,
+  				path: "schemas/block-editor-fixed-inputs.schema.json",
+  				symbol: `/$defs/${opcode}/properties/${argument}`
+  			};
+  			return {
+  				argument,
+  				schemaBundle: {
+  					identity: {
+  						ownerId: repository,
+  						contractId: `${opcode}.${argument}`,
+  						revision: "fixed-inputs-v1",
+  						variantId: "fixed"
+  					},
+  					dialect: "draft-07",
+  					root: {
+  						retrievalUri: `${block_editor_fixed_inputs_schema_default.$id}?binding=${opcode}.${argument}`,
+  						document: schema,
+  						artifact: {
+  							role: "canonical-schema",
+  							source
+  						}
+  					},
+  					resources: [],
+  					provenance: {
+  						canonicalSources: [
+  							source,
+  							{
+  								repository,
+  								path: "src/block-definitions.json"
+  							},
+  							{
+  								repository,
+  								path: "src/extension.ts",
+  								symbol: opcode
+  							}
+  						],
+  						generatedFiles: [],
+  						referenceSchemas: [],
+  						generationSources: []
+  					}
+  				},
+  				control: numeric ? { kind: "number" } : {
+  					kind: "enum",
+  					choices: schema.enum.map((value) => ({
+  						value,
+  						label: String(value)
+  					}))
+  				},
+  				read: (value) => numeric ? readNumber(value) : existingChoice(opcode, value),
+  				encode: (value) => {
+  					if (numeric) return newNumberToken(value);
+  					if (typeof value !== "string" || !schema.enum.includes(value)) throw new TypeError("Invalid new enum value.");
+  					return value;
+  				},
+  				validateCandidate: (value) => candidateValid(opcode, argument, schema, value) ? [] : [{
+  					path: argument,
+  					message: "Check this value before saving."
+  				}]
+  			};
+  		})
+  	}));
+  }
+  /** Register only visible static contracts; ordinary composition consumers load no editor runtime. */
+  function registerFixedInputEditors(scratch, runtime, visibleBlocks) {
+  	const api = scratch.gui?.blockEditors;
+  	if (api?.apiVersion !== 1 || typeof api.registerFixedInputEditor !== "function") return void 0;
+  	const visibleOpcodes = new Set(visibleBlocks.flatMap((block) => {
+  		if (typeof block !== "object" || block === null || !("opcode" in block)) return [];
+  		return typeof block.opcode === "string" ? [block.opcode] : [];
+  	}));
+  	const events = runtime;
+  	const removers = [];
+  	let active = true;
+  	const dispose = () => {
+  		if (!active) return;
+  		active = false;
+  		events?.off?.("RUNTIME_DISPOSED", dispose);
+  		for (const remove of removers.splice(0).reverse()) remove();
+  	};
+  	try {
+  		for (const options of fixedInputEditorOptions()) if (options.opcodes.some((opcode) => visibleOpcodes.has(opcode.slice(17)))) removers.push(api.registerFixedInputEditor.call(api, options));
+  		events?.on?.("RUNTIME_DISPOSED", dispose);
+  	} catch (error) {
+  		dispose();
+  		throw error;
+  	}
+  	return dispose;
+  }
   //#endregion
   //#region config/feature-flags.ts
   var featureFlags = { sesameCommands: true };
@@ -1340,7 +1513,7 @@
   		this.stateChanged = false;
   	}
   	getInfo() {
-  		return {
+  		const info = {
   			id: extensionConfig.id,
   			name: Scratch.translate(block_definitions_default.extensionName),
   			docsURI: extensionConfig.docsURI,
@@ -1351,6 +1524,8 @@
   			blocks: blockDefinitions.map((block) => this.toScratchBlock(block)),
   			menus: menuDefinitions
   		};
+  		this.fixedEditorsDispose ?? (this.fixedEditorsDispose = registerFixedInputEditors(Scratch, Scratch.vm?.runtime, info.blocks));
+  		return info;
   	}
   	configure(args) {
   		this.capture(() => {

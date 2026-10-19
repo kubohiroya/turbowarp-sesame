@@ -1,3 +1,4 @@
+import {registerFixedInputEditors} from './fixed-input-editors.js';
 import { featureFlags } from "../config/feature-flags.js";
 import definitions from "./block-definitions.json";
 import { SesameBleTransport, type BleTransport } from "./ble/ble-transport.js";
@@ -50,6 +51,8 @@ const blockDefinitions = definitions.blocks as readonly BlockDefinition[];
 const menuDefinitions = definitions.menus as Record<string, MenuDefinition>;
 
 export class SesameExtension implements TurboWarpExtension {
+  private fixedEditorsDispose: (() => void) | undefined;
+
   private connection:
     | { mode: "direct"; credentials: SesameCredentials }
     | {
@@ -80,7 +83,7 @@ export class SesameExtension implements TurboWarpExtension {
   private stateChanged = false;
 
   public getInfo(): Record<string, unknown> {
-    return {
+    const info = {
       id: extensionConfig.id,
       name: Scratch.translate(definitions.extensionName),
       docsURI: extensionConfig.docsURI,
@@ -91,6 +94,8 @@ export class SesameExtension implements TurboWarpExtension {
       blocks: blockDefinitions.map((block) => this.toScratchBlock(block)),
       menus: menuDefinitions,
     };
+    this.fixedEditorsDispose ??= registerFixedInputEditors(Scratch, (Scratch as unknown as {vm?: {runtime?: unknown}}).vm?.runtime, info.blocks);
+    return info;
   }
 
   public configure(args: {
