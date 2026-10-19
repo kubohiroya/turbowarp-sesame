@@ -48,7 +48,7 @@ environment.
 For package consumers:
 
 ```bash
-pnpm add --save-exact @kubohiroya/turbowarp-sesame@0.1.0
+pnpm add --save-exact @kubohiroya/turbowarp-sesame@0.1.1
 ```
 
 ```text
