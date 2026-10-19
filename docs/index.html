@@ -556,7 +556,11 @@
           </table>
         </div>
       </article>
-      <article id="block-getHistory" class="block-reference-entry"><p class="fixed-input-help-link">Fixed literal fields: <code>PAGE, LENGTH</code>. <a href="#fixed-input-editing">Editing UI and preservation rules</a>.</p>
+      <article id="block-getHistory" class="block-reference-entry">
+        <p class="fixed-input-help-link">
+          Fixed literal fields: <code>PAGE, LENGTH</code>.
+          <a href="#fixed-input-editing">Editing UI and preservation rules</a>.
+        </p>
         <h3><code>Sesame history page [PAGE] length [LENGTH]</code></h3>
         <p>Fetches up to 50 history records as a JSON string.</p>
         <p>
@@ -590,7 +594,11 @@
           </table>
         </div>
       </article>
-      <article id="block-sendCommand" class="block-reference-entry"><p class="fixed-input-help-link">Fixed literal fields: <code>COMMAND</code>. <a href="#fixed-input-editing">Editing UI and preservation rules</a>.</p>
+      <article id="block-sendCommand" class="block-reference-entry">
+        <p class="fixed-input-help-link">
+          Fixed literal fields: <code>COMMAND</code>.
+          <a href="#fixed-input-editing">Editing UI and preservation rules</a>.
+        </p>
         <h3><code>Sesame [COMMAND] with history [HISTORY]</code></h3>
         <p>
           Requests a lock, unlock, or toggle operation when remote commands are
@@ -663,6 +671,31 @@
     </section>
     <!-- END COMPLETE BLOCK REFERENCE -->
 
-<section id="fixed-input-editing"><h2>Fixed input editing</h2><p>With a compatible TurboWarp GUI, enable fixed-input forms to edit only standard literal fields. Numbers use complete finite JSON number tokens; menu fields use existing choices. Connected reporters and unavailable fields stay read-only and are never evaluated. Saving an unchanged form preserves exact existing raw values, including legacy spellings and unknown choices. Invalid drafts stay in the same editing session; cancel, project/target replacement, or block removal discards them. Disabling the GUI feature flag restores native field editing. This form does not run blocks, open network/audio/key/QR sessions, resolve names, or edit Schema arguments. History page and length keep existing truncation, clamping, and fallback behavior.</p><ul><li><a href="#block-getHistory"><code>getHistory</code></a>: PAGE, LENGTH</li><li><a href="#block-sendCommand"><code>sendCommand</code></a>: COMMAND</li></ul></section>
-</body>
+    <section id="fixed-input-editing">
+      <h2>Fixed input editing</h2>
+      <p>
+        With a compatible TurboWarp GUI, enable fixed-input forms to edit only
+        standard literal fields. Numbers use complete finite JSON number tokens;
+        menu fields use existing choices. Connected reporters and unavailable
+        fields stay read-only and are never evaluated. Saving an unchanged form
+        preserves exact existing raw values, including legacy spellings and
+        unknown choices. Invalid drafts stay in the same editing session;
+        cancel, project/target replacement, or block removal discards them.
+        Disabling the GUI feature flag restores native field editing. This form
+        does not run blocks, open network/audio/key/QR sessions, resolve names,
+        or edit Schema arguments. History page and length keep existing
+        truncation, clamping, and fallback behavior.
+      </p>
+      <ul>
+        <li>
+          <a href="#block-getHistory"><code>getHistory</code></a
+          >: PAGE, LENGTH
+        </li>
+        <li>
+          <a href="#block-sendCommand"><code>sendCommand</code></a
+          >: COMMAND
+        </li>
+      </ul>
+    </section>
+  </body>
 </html>

@@ -1,4 +1,4 @@
-import {registerFixedInputEditors} from './fixed-input-editors.js';
+import { registerFixedInputEditors } from "./fixed-input-editors.js";
 import { featureFlags } from "../config/feature-flags.js";
 import definitions from "./block-definitions.json";
 import { SesameBleTransport, type BleTransport } from "./ble/ble-transport.js";
@@ -94,7 +94,11 @@ export class SesameExtension implements TurboWarpExtension {
       blocks: blockDefinitions.map((block) => this.toScratchBlock(block)),
       menus: menuDefinitions,
     };
-    this.fixedEditorsDispose ??= registerFixedInputEditors(Scratch, (Scratch as unknown as {vm?: {runtime?: unknown}}).vm?.runtime, info.blocks);
+    this.fixedEditorsDispose ??= registerFixedInputEditors(
+      Scratch,
+      (Scratch as unknown as { vm?: { runtime?: unknown } }).vm?.runtime,
+      info.blocks,
+    );
     return info;
   }
 

@@ -1,5 +1,5 @@
-import {SesameExtension} from '../src/extension.js';
-import previousGetInfo from './fixtures/fixed-getinfo-before.json' with {type: 'json'};
+import { SesameExtension } from "../src/extension.js";
+import previousGetInfo from "./fixtures/fixed-getinfo-before.json" with { type: "json" };
 import { describe, it, expect, vi } from "vitest";
 import {
   createFixedInputEditor,
@@ -352,19 +352,64 @@ describe("fixed static owner contract", () => {
   });
 });
 
-it('actual getInfo preserves metadata and registers once without owner constructor effects', () => {
- const remove=vi.fn(),register=vi.fn(()=>remove),listeners=new Map<string,()=>void>();
- const runtime={on:(event:string,fn:()=>void)=>listeners.set(event,fn),off:(event:string)=>listeners.delete(event)};
- vi.stubGlobal('Scratch',{BlockType:{COMMAND:'command',REPORTER:'reporter',BOOLEAN:'Boolean',HAT:'hat',CONDITIONAL:'conditional',EVENT:'event',LOOP:'loop',LABEL:'label',BUTTON:'button'},ArgumentType:{STRING:'string',NUMBER:'number',BOOLEAN:'Boolean',COLOR:'color'},translate:(value:unknown)=>typeof value==='string'?value:(value as {default:string}).default,Cast:{toString:String,toNumber:Number},vm:{runtime},gui:{blockEditors:{apiVersion:1,registerFixedInputEditor:register}}});
- try {
-  const instance=Object.create(SesameExtension.prototype) as SesameExtension;
-  Object.assign(instance,{runtime,fixedEditorRuntime:runtime,enabled:true});
-  const expected=structuredClone(previousGetInfo) as Record<string,unknown>;
-  
-  expect(JSON.parse(JSON.stringify(instance.getInfo()))).toEqual(expected);
-  expect(JSON.parse(JSON.stringify(instance.getInfo()))).toEqual(expected);
-  expect(register).toHaveBeenCalledTimes(options.length);
-  listeners.get('RUNTIME_DISPOSED')!();expect(remove).toHaveBeenCalledTimes(options.length);
-  instance.getInfo();expect(register).toHaveBeenCalledTimes(options.length);
- } finally {vi.unstubAllGlobals();}
+it("actual getInfo preserves metadata and registers once without owner constructor effects", () => {
+  const remove = vi.fn(),
+    register = vi.fn(() => remove),
+    listeners = new Map<string, () => void>();
+  const runtime = {
+    on: (event: string, fn: () => void) => listeners.set(event, fn),
+    off: (event: string) => listeners.delete(event),
+  };
+  vi.stubGlobal("Scratch", {
+    BlockType: {
+      COMMAND: "command",
+      REPORTER: "reporter",
+      BOOLEAN: "Boolean",
+      HAT: "hat",
+      CONDITIONAL: "conditional",
+      EVENT: "event",
+      LOOP: "loop",
+      LABEL: "label",
+      BUTTON: "button",
+    },
+    ArgumentType: {
+      STRING: "string",
+      NUMBER: "number",
+      BOOLEAN: "Boolean",
+      COLOR: "color",
+    },
+    translate: (value: unknown) =>
+      typeof value === "string"
+        ? value
+        : (value as { default: string }).default,
+    Cast: { toString: String, toNumber: Number },
+    vm: { runtime },
+    gui: {
+      blockEditors: { apiVersion: 1, registerFixedInputEditor: register },
+    },
+  });
+  try {
+    const instance = Object.create(
+      SesameExtension.prototype,
+    ) as SesameExtension;
+    Object.assign(instance, {
+      runtime,
+      fixedEditorRuntime: runtime,
+      enabled: true,
+    });
+    const expected = structuredClone(previousGetInfo) as Record<
+      string,
+      unknown
+    >;
+
+    expect(JSON.parse(JSON.stringify(instance.getInfo()))).toEqual(expected);
+    expect(JSON.parse(JSON.stringify(instance.getInfo()))).toEqual(expected);
+    expect(register).toHaveBeenCalledTimes(options.length);
+    listeners.get("RUNTIME_DISPOSED")!();
+    expect(remove).toHaveBeenCalledTimes(options.length);
+    instance.getInfo();
+    expect(register).toHaveBeenCalledTimes(options.length);
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });
