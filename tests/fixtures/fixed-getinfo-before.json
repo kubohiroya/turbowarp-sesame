@@ -1,0 +1,210 @@
+{
+  "id": "kubohiroyasesame",
+  "name": "TurboWarp-Sesame",
+  "docsURI": "https://kubohiroya.github.io/turbowarp-sesame/",
+  "blockIconURI": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iNSIgeT0iMyIgd2lkdGg9IjM4IiBoZWlnaHQ9IjQyIiByeD0iOCIgZmlsbD0iI2YyYjUyYiIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iMTkiIHI9IjgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSI0Ii8+PHBhdGggZD0iTTI0IDI3djEwIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+",
+  "color1": "#e8a51b",
+  "color2": "#ce8d0e",
+  "color3": "#ad7408",
+  "blocks": [
+    {
+      "opcode": "configure",
+      "blockType": "command",
+      "text": "configure Direct mode API key [API_KEY] UUID [UUID] secret key [SECRET_KEY]",
+      "arguments": {
+        "API_KEY": {
+          "type": "string",
+          "defaultValue": "api-key"
+        },
+        "UUID": {
+          "type": "string",
+          "defaultValue": "00000000-0000-0000-0000-000000000000"
+        },
+        "SECRET_KEY": {
+          "type": "string",
+          "defaultValue": "00000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "opcode": "configureRelay",
+      "blockType": "command",
+      "text": "configure local Relay [ENDPOINT] device alias [DEVICE_ALIAS]",
+      "arguments": {
+        "ENDPOINT": {
+          "type": "string",
+          "defaultValue": "http://127.0.0.1:8787"
+        },
+        "DEVICE_ALIAS": {
+          "type": "string",
+          "defaultValue": "front-door"
+        }
+      }
+    },
+    {
+      "opcode": "pairRelay",
+      "blockType": "command",
+      "text": "pair local Relay with one-time code [CODE]",
+      "arguments": {
+        "CODE": {
+          "type": "string",
+          "defaultValue": "00000000"
+        }
+      }
+    },
+    {
+      "opcode": "configureBluetooth",
+      "blockType": "command",
+      "text": "configure Bluetooth keyholder [KEYHOLDER_URL] device alias [DEVICE_ALIAS]",
+      "arguments": {
+        "KEYHOLDER_URL": {
+          "type": "string",
+          "defaultValue": "https://kubohiroya.github.io/turbowarp-sesame/keyholder/"
+        },
+        "DEVICE_ALIAS": {
+          "type": "string",
+          "defaultValue": "front-door"
+        }
+      }
+    },
+    {
+      "opcode": "openKeyholder",
+      "blockType": "command",
+      "text": "open the Sesame keyholder",
+      "arguments": {}
+    },
+    {
+      "opcode": "pairBluetooth",
+      "blockType": "command",
+      "text": "pair Sesame by scanning its sharing QR code",
+      "arguments": {}
+    },
+    {
+      "opcode": "connectBluetooth",
+      "blockType": "command",
+      "text": "connect to Sesame over Bluetooth",
+      "arguments": {}
+    },
+    {
+      "opcode": "bluetoothConnected",
+      "blockType": "Boolean",
+      "text": "Sesame Bluetooth connected?",
+      "arguments": {}
+    },
+    {
+      "opcode": "whenStateChanges",
+      "blockType": "hat",
+      "text": "when the Sesame state changes",
+      "arguments": {}
+    },
+    {
+      "opcode": "clearCredentials",
+      "blockType": "command",
+      "text": "clear Sesame connection",
+      "arguments": {}
+    },
+    {
+      "opcode": "isConfigured",
+      "blockType": "Boolean",
+      "text": "Sesame connection ready?",
+      "arguments": {}
+    },
+    {
+      "opcode": "relayPaired",
+      "blockType": "Boolean",
+      "text": "local Relay paired?",
+      "arguments": {}
+    },
+    {
+      "opcode": "connectionMode",
+      "blockType": "reporter",
+      "text": "Sesame connection mode",
+      "arguments": {}
+    },
+    {
+      "opcode": "getStatusField",
+      "blockType": "reporter",
+      "text": "Sesame status [FIELD]",
+      "arguments": {
+        "FIELD": {
+          "type": "string",
+          "defaultValue": "CHSesame2Status",
+          "menu": "statusFields"
+        }
+      }
+    },
+    {
+      "opcode": "getHistory",
+      "blockType": "reporter",
+      "text": "Sesame history page [PAGE] length [LENGTH]",
+      "arguments": {
+        "PAGE": {
+          "type": "number",
+          "defaultValue": 0
+        },
+        "LENGTH": {
+          "type": "number",
+          "defaultValue": 10
+        }
+      }
+    },
+    {
+      "opcode": "sendCommand",
+      "blockType": "command",
+      "text": "Sesame [COMMAND] with history [HISTORY]",
+      "arguments": {
+        "COMMAND": {
+          "type": "string",
+          "defaultValue": "lock",
+          "menu": "commands"
+        },
+        "HISTORY": {
+          "type": "string",
+          "defaultValue": "TurboWarp"
+        }
+      }
+    },
+    {
+      "opcode": "commandsEnabled",
+      "blockType": "Boolean",
+      "text": "Sesame remote commands enabled?",
+      "arguments": {}
+    },
+    {
+      "opcode": "lastError",
+      "blockType": "reporter",
+      "text": "last Sesame error",
+      "arguments": {}
+    }
+  ],
+  "menus": {
+    "statusFields": {
+      "acceptReporters": true,
+      "items": [
+        "CHSesame2Status",
+        "batteryPercentage",
+        "batteryVoltage",
+        "position",
+        "timestamp",
+        "wm2State"
+      ]
+    },
+    "commands": {
+      "acceptReporters": false,
+      "items": [
+        {
+          "text": "lock",
+          "value": "lock"
+        },
+        {
+          "text": "unlock",
+          "value": "unlock"
+        },
+        {
+          "text": "toggle",
+          "value": "toggle"
+        }
+      ]
+    }
+  }
+}
