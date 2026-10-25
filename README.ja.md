@@ -1,5 +1,7 @@
 # TurboWarp-Sesame
 
+<img src="assets/block-icon.svg" alt="" width="48" height="48">
+
 [English](README.md) | [日本語](README.ja.md)
 
 Candy House Sesameの状態確認と、明示的に有効化したbuildでの遠隔施錠操作を行うTurboWarp機能拡張です。APIをブラウザから直接呼ぶDirect modeと、資格情報をlocalhostに分離するRelay modeを選べます。
