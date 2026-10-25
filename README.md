@@ -2,7 +2,7 @@
 
 <img src="assets/block-icon.svg" alt="" width="48" height="48">
 
-[English](README.md) | [日本語](README.ja.md)
+English | [日本語](README.ja.md)
 
 A TurboWarp extension for inspecting Candy House Sesame devices and, in explicitly enabled builds,
 requesting remote lock operations. It supports Direct mode and a localhost Relay mode that keeps
