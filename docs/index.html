@@ -23,14 +23,24 @@
         padding: 0.5rem 1rem;
         background: #fff8e8;
       }
-    
-:root{color-scheme:light dark}
-@media (prefers-color-scheme:dark){
-  body{color:#efe7d6;background:#17140e}
-  code{background:#3a3220}
-  .warning{background:#2a2314;border-left-color:#e0a85c}
-}
-</style>
+
+      :root {
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          color: #efe7d6;
+          background: #17140e;
+        }
+        code {
+          background: #3a3220;
+        }
+        .warning {
+          background: #2a2314;
+          border-left-color: #e0a85c;
+        }
+      }
+    </style>
     <style id="block-reference-style">
       #extension-block-reference {
         max-width: 72rem;
@@ -704,9 +714,11 @@
         </li>
       </ul>
     </section>
-  <!-- The shared TurboWarp Plus header. It inserts itself at the top of the
+    <!-- The shared TurboWarp Plus header. It inserts itself at the top of the
        page in a shadow root, so it cannot disturb the styles below. -->
-  <script type="module"
-          src="https://kubohiroya.github.io/turbowarp-plus-site-header/dist/auto.js"></script>
+    <script
+      type="module"
+      src="https://kubohiroya.github.io/turbowarp-plus-site-header/dist/auto.js"
+    ></script>
   </body>
 </html>
