@@ -148,9 +148,10 @@ Candy House開発者ページから認証情報を取得し、`configure Direct 
 
 ## 開発
 
-Node.js 22.12以上と`package.json`指定のpnpmを使用します。
+Node.js 24以上と`package.json`指定のpnpmを使用します。
 
 ```bash
+npm install --global corepack@latest
 corepack enable
 pnpm install --frozen-lockfile
 pnpm check

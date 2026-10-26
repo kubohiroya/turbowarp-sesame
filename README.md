@@ -362,9 +362,10 @@ capability explicit.
 
 ## Development
 
-Requires Node.js 22.12 or newer and the pnpm version declared in `package.json`.
+Requires Node.js 24 or newer and the pnpm version declared in `package.json`.
 
 ```bash
+npm install --global corepack@latest
 corepack enable
 pnpm install --frozen-lockfile
 pnpm check
