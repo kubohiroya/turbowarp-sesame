@@ -5,3 +5,6 @@ minimumReleaseAgeExclude:
   - "@kubohiroya/turbowarp-extension-data-editor@0.2.1"
   - "@kubohiroya/turbowarp-extension-manifest@0.3.2"
   - "@kubohiroya/vite-plugin-turbowarp-extension@0.6.1"
+  - "@kubohiroya/turbowarp-extension-data-editor@0.3.4"
+  - "@kubohiroya/vite-plugin-turbowarp-extension@0.8.0"
+  - "@kubohiroya/sb3-toolchain@0.17.0"
