@@ -5,3 +5,4 @@ docs/keyholder/sw.js
 app/extensions/
 pnpm-lock.yaml
 LICENSE
+_site/

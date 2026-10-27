@@ -1,0 +1,1327 @@
+{
+  "targets": [
+    {
+      "isStage": true,
+      "name": "Stage",
+      "variables": {
+        "sample-state": ["Sample state", ""],
+        "sample-endpoint": ["Relay endpoint", ""],
+        "sample-alias": ["Device alias", ""],
+        "sample-paired": ["Relay paired", ""],
+        "sample-result": ["Result", ""],
+        "sample-error": ["Last error", ""],
+        "sample-connection": ["Connection", ""]
+      },
+      "lists": {},
+      "broadcasts": {
+        "configure": "Configure",
+        "start": "Start",
+        "stop": "Stop"
+      },
+      "blocks": {
+        "b1": {
+          "opcode": "kubohiroyasesame_clearCredentials",
+          "next": "b2",
+          "parent": "b11",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b2": {
+          "opcode": "data_setvariableto",
+          "next": "b3",
+          "parent": "b1",
+          "inputs": {
+            "VALUE": [1, [10, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["Relay endpoint", "sample-endpoint"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b3": {
+          "opcode": "data_setvariableto",
+          "next": "b4",
+          "parent": "b2",
+          "inputs": {
+            "VALUE": [1, [10, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["Device alias", "sample-alias"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b4": {
+          "opcode": "data_setvariableto",
+          "next": "b5",
+          "parent": "b3",
+          "inputs": {
+            "VALUE": [1, [10, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["Result", "sample-result"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b5": {
+          "opcode": "data_setvariableto",
+          "next": "b7",
+          "parent": "b4",
+          "inputs": {
+            "VALUE": [1, [10, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["Last error", "sample-error"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b6": {
+          "opcode": "kubohiroyasesame_relayPaired",
+          "next": null,
+          "parent": "b7",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b7": {
+          "opcode": "data_setvariableto",
+          "next": "b9",
+          "parent": "b5",
+          "inputs": {
+            "VALUE": [2, "b6"]
+          },
+          "fields": {
+            "VARIABLE": ["Relay paired", "sample-paired"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b8": {
+          "opcode": "kubohiroyasesame_connectionMode",
+          "next": null,
+          "parent": "b9",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b9": {
+          "opcode": "data_setvariableto",
+          "next": "b10",
+          "parent": "b7",
+          "inputs": {
+            "VALUE": [2, "b8"]
+          },
+          "fields": {
+            "VARIABLE": ["Connection", "sample-connection"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b10": {
+          "opcode": "data_setvariableto",
+          "next": null,
+          "parent": "b9",
+          "inputs": {
+            "VALUE": [1, [10, "Ready"]]
+          },
+          "fields": {
+            "VARIABLE": ["Sample state", "sample-state"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b11": {
+          "opcode": "event_whenflagclicked",
+          "next": "b1",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 30,
+          "y": 118
+        },
+        "b12": {
+          "opcode": "kubohiroyasesame_clearCredentials",
+          "next": "b13",
+          "parent": "b52",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b13": {
+          "opcode": "data_setvariableto",
+          "next": "b14",
+          "parent": "b12",
+          "inputs": {
+            "VALUE": [1, [10, "Configure"]]
+          },
+          "fields": {
+            "VARIABLE": ["Sample state", "sample-state"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b14": {
+          "opcode": "sensing_askandwait",
+          "next": "b16",
+          "parent": "b13",
+          "inputs": {
+            "QUESTION": [1, [10, "Local relay origin (blank cancels):"]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b15": {
+          "opcode": "sensing_answer",
+          "next": null,
+          "parent": "b16",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b16": {
+          "opcode": "data_setvariableto",
+          "next": "b21",
+          "parent": "b14",
+          "inputs": {
+            "VALUE": [2, "b15"]
+          },
+          "fields": {
+            "VARIABLE": ["Relay endpoint", "sample-endpoint"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b17": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "b18",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["Relay endpoint", "sample-endpoint"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b18": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "b21",
+          "inputs": {
+            "OPERAND1": [2, "b17"],
+            "OPERAND2": [1, [10, ""]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b19": {
+          "opcode": "data_setvariableto",
+          "next": "b20",
+          "parent": "b21",
+          "inputs": {
+            "VALUE": [1, [10, "Relay endpoint required"]]
+          },
+          "fields": {
+            "VARIABLE": ["Sample state", "sample-state"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b20": {
+          "opcode": "control_stop",
+          "next": null,
+          "parent": "b19",
+          "inputs": {},
+          "fields": {
+            "STOP_OPTION": ["this script", null]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b21": {
+          "opcode": "control_if",
+          "next": "b22",
+          "parent": "b16",
+          "inputs": {
+            "CONDITION": [2, "b18"],
+            "SUBSTACK": [2, "b19"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b22": {
+          "opcode": "sensing_askandwait",
+          "next": "b24",
+          "parent": "b21",
+          "inputs": {
+            "QUESTION": [
+              1,
+              [10, "Device alias configured in keybroker (blank cancels):"]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b23": {
+          "opcode": "sensing_answer",
+          "next": null,
+          "parent": "b24",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b24": {
+          "opcode": "data_setvariableto",
+          "next": "b29",
+          "parent": "b22",
+          "inputs": {
+            "VALUE": [2, "b23"]
+          },
+          "fields": {
+            "VARIABLE": ["Device alias", "sample-alias"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b25": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "b26",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["Device alias", "sample-alias"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b26": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "b29",
+          "inputs": {
+            "OPERAND1": [2, "b25"],
+            "OPERAND2": [1, [10, ""]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b27": {
+          "opcode": "data_setvariableto",
+          "next": "b28",
+          "parent": "b29",
+          "inputs": {
+            "VALUE": [1, [10, "Device alias required"]]
+          },
+          "fields": {
+            "VARIABLE": ["Sample state", "sample-state"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b28": {
+          "opcode": "control_stop",
+          "next": null,
+          "parent": "b27",
+          "inputs": {},
+          "fields": {
+            "STOP_OPTION": ["this script", null]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b29": {
+          "opcode": "control_if",
+          "next": "b32",
+          "parent": "b24",
+          "inputs": {
+            "CONDITION": [2, "b26"],
+            "SUBSTACK": [2, "b27"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b30": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "b32",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["Relay endpoint", "sample-endpoint"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b31": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "b32",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["Device alias", "sample-alias"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b32": {
+          "opcode": "kubohiroyasesame_configureRelay",
+          "next": "b34",
+          "parent": "b29",
+          "inputs": {
+            "ENDPOINT": [2, "b30"],
+            "DEVICE_ALIAS": [2, "b31"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b33": {
+          "opcode": "kubohiroyasesame_lastError",
+          "next": null,
+          "parent": "b34",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b34": {
+          "opcode": "data_setvariableto",
+          "next": "b40",
+          "parent": "b32",
+          "inputs": {
+            "VALUE": [2, "b33"]
+          },
+          "fields": {
+            "VARIABLE": ["Last error", "sample-error"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b35": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "b36",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["Last error", "sample-error"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b36": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "b37",
+          "inputs": {
+            "OPERAND1": [2, "b35"],
+            "OPERAND2": [1, [10, ""]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b37": {
+          "opcode": "operator_not",
+          "next": null,
+          "parent": "b40",
+          "inputs": {
+            "OPERAND": [2, "b36"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b38": {
+          "opcode": "data_setvariableto",
+          "next": "b39",
+          "parent": "b40",
+          "inputs": {
+            "VALUE": [1, [10, "Invalid relay settings"]]
+          },
+          "fields": {
+            "VARIABLE": ["Sample state", "sample-state"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b39": {
+          "opcode": "control_stop",
+          "next": null,
+          "parent": "b38",
+          "inputs": {},
+          "fields": {
+            "STOP_OPTION": ["this script", null]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b40": {
+          "opcode": "control_if",
+          "next": "b41",
+          "parent": "b34",
+          "inputs": {
+            "CONDITION": [2, "b37"],
+            "SUBSTACK": [2, "b38"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b41": {
+          "opcode": "sensing_askandwait",
+          "next": "b43",
+          "parent": "b40",
+          "inputs": {
+            "QUESTION": [
+              1,
+              [10, "One-time 8-digit pairing code (never an API key):"]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b42": {
+          "opcode": "sensing_answer",
+          "next": null,
+          "parent": "b43",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b43": {
+          "opcode": "kubohiroyasesame_pairRelay",
+          "next": "b45",
+          "parent": "b41",
+          "inputs": {
+            "CODE": [2, "b42"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b44": {
+          "opcode": "kubohiroyasesame_lastError",
+          "next": null,
+          "parent": "b45",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b45": {
+          "opcode": "data_setvariableto",
+          "next": "b47",
+          "parent": "b43",
+          "inputs": {
+            "VALUE": [2, "b44"]
+          },
+          "fields": {
+            "VARIABLE": ["Last error", "sample-error"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b46": {
+          "opcode": "kubohiroyasesame_relayPaired",
+          "next": null,
+          "parent": "b47",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b47": {
+          "opcode": "data_setvariableto",
+          "next": "b48",
+          "parent": "b45",
+          "inputs": {
+            "VALUE": [2, "b46"]
+          },
+          "fields": {
+            "VARIABLE": ["Relay paired", "sample-paired"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b48": {
+          "opcode": "sensing_askandwait",
+          "next": "b50",
+          "parent": "b47",
+          "inputs": {
+            "QUESTION": [
+              1,
+              [
+                10,
+                "Press Enter with an empty answer to clear the entered code."
+              ]
+            ]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b49": {
+          "opcode": "kubohiroyasesame_connectionMode",
+          "next": null,
+          "parent": "b50",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b50": {
+          "opcode": "data_setvariableto",
+          "next": "b51",
+          "parent": "b48",
+          "inputs": {
+            "VALUE": [2, "b49"]
+          },
+          "fields": {
+            "VARIABLE": ["Connection", "sample-connection"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b51": {
+          "opcode": "data_setvariableto",
+          "next": null,
+          "parent": "b50",
+          "inputs": {
+            "VALUE": [1, [10, "Configured; check Relay paired"]]
+          },
+          "fields": {
+            "VARIABLE": ["Sample state", "sample-state"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b52": {
+          "opcode": "event_whenbroadcastreceived",
+          "next": "b12",
+          "parent": null,
+          "inputs": {},
+          "fields": {
+            "BROADCAST_OPTION": ["Configure", "configure"]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 30,
+          "y": 446
+        },
+        "b53": {
+          "opcode": "kubohiroyasesame_relayPaired",
+          "next": null,
+          "parent": "b54",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b54": {
+          "opcode": "data_setvariableto",
+          "next": "b59",
+          "parent": "sample-empty-endpoint",
+          "inputs": {
+            "VALUE": [2, "b53"]
+          },
+          "fields": {
+            "VARIABLE": ["Relay paired", "sample-paired"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b55": {
+          "opcode": "kubohiroyasesame_relayPaired",
+          "next": null,
+          "parent": "b56",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b56": {
+          "opcode": "operator_not",
+          "next": null,
+          "parent": "b59",
+          "inputs": {
+            "OPERAND": [2, "b55"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b57": {
+          "opcode": "data_setvariableto",
+          "next": "b58",
+          "parent": "b59",
+          "inputs": {
+            "VALUE": [1, [10, "Pair first"]]
+          },
+          "fields": {
+            "VARIABLE": ["Sample state", "sample-state"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b58": {
+          "opcode": "control_stop",
+          "next": null,
+          "parent": "b57",
+          "inputs": {},
+          "fields": {
+            "STOP_OPTION": ["this script", null]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b59": {
+          "opcode": "control_if",
+          "next": "b60",
+          "parent": "b54",
+          "inputs": {
+            "CONDITION": [2, "b56"],
+            "SUBSTACK": [2, "b57"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b60": {
+          "opcode": "data_setvariableto",
+          "next": "b63",
+          "parent": "b59",
+          "inputs": {
+            "VALUE": [1, [10, "Reading"]]
+          },
+          "fields": {
+            "VARIABLE": ["Sample state", "sample-state"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b61": {
+          "opcode": "kubohiroyasesame_menu_statusFields",
+          "next": null,
+          "parent": "b62",
+          "inputs": {},
+          "fields": {
+            "statusFields": ["batteryPercentage", null]
+          },
+          "shadow": true,
+          "topLevel": false
+        },
+        "b62": {
+          "opcode": "kubohiroyasesame_getStatusField",
+          "next": null,
+          "parent": "b63",
+          "inputs": {
+            "FIELD": [2, "b61"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b63": {
+          "opcode": "data_setvariableto",
+          "next": "b65",
+          "parent": "b60",
+          "inputs": {
+            "VALUE": [2, "b62"]
+          },
+          "fields": {
+            "VARIABLE": ["Result", "sample-result"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b64": {
+          "opcode": "kubohiroyasesame_lastError",
+          "next": null,
+          "parent": "b65",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b65": {
+          "opcode": "data_setvariableto",
+          "next": "b67",
+          "parent": "b63",
+          "inputs": {
+            "VALUE": [2, "b64"]
+          },
+          "fields": {
+            "VARIABLE": ["Last error", "sample-error"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b66": {
+          "opcode": "kubohiroyasesame_connectionMode",
+          "next": null,
+          "parent": "b67",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b67": {
+          "opcode": "data_setvariableto",
+          "next": "b68",
+          "parent": "b65",
+          "inputs": {
+            "VALUE": [2, "b66"]
+          },
+          "fields": {
+            "VARIABLE": ["Connection", "sample-connection"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b68": {
+          "opcode": "data_setvariableto",
+          "next": null,
+          "parent": "b67",
+          "inputs": {
+            "VALUE": [1, [10, "Read complete; check Last error"]]
+          },
+          "fields": {
+            "VARIABLE": ["Sample state", "sample-state"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b69": {
+          "opcode": "event_whenbroadcastreceived",
+          "next": "sample-empty-endpoint",
+          "parent": null,
+          "inputs": {},
+          "fields": {
+            "BROADCAST_OPTION": ["Start", "start"]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 30,
+          "y": 582
+        },
+        "b70": {
+          "opcode": "kubohiroyasesame_clearCredentials",
+          "next": "b71",
+          "parent": "b80",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b71": {
+          "opcode": "data_setvariableto",
+          "next": "b72",
+          "parent": "b70",
+          "inputs": {
+            "VALUE": [1, [10, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["Relay endpoint", "sample-endpoint"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b72": {
+          "opcode": "data_setvariableto",
+          "next": "b73",
+          "parent": "b71",
+          "inputs": {
+            "VALUE": [1, [10, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["Device alias", "sample-alias"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b73": {
+          "opcode": "data_setvariableto",
+          "next": "b74",
+          "parent": "b72",
+          "inputs": {
+            "VALUE": [1, [10, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["Result", "sample-result"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b74": {
+          "opcode": "data_setvariableto",
+          "next": "b76",
+          "parent": "b73",
+          "inputs": {
+            "VALUE": [1, [10, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["Last error", "sample-error"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b75": {
+          "opcode": "kubohiroyasesame_relayPaired",
+          "next": null,
+          "parent": "b76",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b76": {
+          "opcode": "data_setvariableto",
+          "next": "b78",
+          "parent": "b74",
+          "inputs": {
+            "VALUE": [2, "b75"]
+          },
+          "fields": {
+            "VARIABLE": ["Relay paired", "sample-paired"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b77": {
+          "opcode": "kubohiroyasesame_connectionMode",
+          "next": null,
+          "parent": "b78",
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "b78": {
+          "opcode": "data_setvariableto",
+          "next": "b79",
+          "parent": "b76",
+          "inputs": {
+            "VALUE": [2, "b77"]
+          },
+          "fields": {
+            "VARIABLE": ["Connection", "sample-connection"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b79": {
+          "opcode": "data_setvariableto",
+          "next": null,
+          "parent": "b78",
+          "inputs": {
+            "VALUE": [1, [10, "Stopped; settings cleared"]]
+          },
+          "fields": {
+            "VARIABLE": ["Sample state", "sample-state"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "b80": {
+          "opcode": "event_whenbroadcastreceived",
+          "next": "b70",
+          "parent": null,
+          "inputs": {},
+          "fields": {
+            "BROADCAST_OPTION": ["Stop", "stop"]
+          },
+          "shadow": false,
+          "topLevel": true,
+          "x": 30,
+          "y": 670
+        },
+        "sample-empty-endpoint": {
+          "opcode": "control_if",
+          "next": "b54",
+          "parent": "b69",
+          "inputs": {
+            "CONDITION": [2, "sample-empty-endpoint-equals"],
+            "SUBSTACK": [2, "sample-empty-endpoint-message"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "sample-empty-endpoint-equals": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "sample-empty-endpoint",
+          "inputs": {
+            "OPERAND1": [2, "sample-empty-endpoint-variable"],
+            "OPERAND2": [1, [10, ""]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "sample-empty-endpoint-variable": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "sample-empty-endpoint-equals",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["Relay endpoint", "sample-endpoint"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "sample-empty-endpoint-message": {
+          "opcode": "data_setvariableto",
+          "next": "sample-empty-endpoint-stop",
+          "parent": "sample-empty-endpoint",
+          "inputs": {
+            "VALUE": [1, [10, "Pair first"]]
+          },
+          "fields": {
+            "VARIABLE": ["Sample state", "sample-state"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "sample-empty-endpoint-stop": {
+          "opcode": "control_stop",
+          "next": null,
+          "parent": "sample-empty-endpoint-message",
+          "inputs": {},
+          "fields": {
+            "STOP_OPTION": ["this script", null]
+          },
+          "shadow": false,
+          "topLevel": false
+        }
+      },
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "backdrop",
+          "name": "instructions",
+          "md5ext": "backdrop.svg",
+          "dataFormat": "svg",
+          "rotationCenterX": 240,
+          "rotationCenterY": 180
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 0,
+      "tempo": 60,
+      "videoTransparency": 50,
+      "videoState": "off",
+      "textToSpeechLanguage": null
+    },
+    {
+      "isStage": false,
+      "name": "Configure",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {
+        "click": {
+          "opcode": "event_whenthisspriteclicked",
+          "next": "send",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 30,
+          "y": 30
+        },
+        "send": {
+          "opcode": "event_broadcast",
+          "next": null,
+          "parent": "click",
+          "inputs": {
+            "BROADCAST_INPUT": [1, "message"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "message": {
+          "opcode": "event_broadcast_menu",
+          "next": null,
+          "parent": "send",
+          "inputs": {},
+          "fields": {
+            "BROADCAST_OPTION": ["Configure", "configure"]
+          },
+          "shadow": true,
+          "topLevel": false
+        }
+      },
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "configure",
+          "name": "Configure",
+          "md5ext": "configure.svg",
+          "dataFormat": "svg",
+          "rotationCenterX": 62,
+          "rotationCenterY": 22
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 1,
+      "visible": true,
+      "x": -150,
+      "y": -136,
+      "size": 100,
+      "direction": 90,
+      "draggable": false,
+      "rotationStyle": "all around"
+    },
+    {
+      "isStage": false,
+      "name": "Read",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {
+        "click": {
+          "opcode": "event_whenthisspriteclicked",
+          "next": "send",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 30,
+          "y": 30
+        },
+        "send": {
+          "opcode": "event_broadcast",
+          "next": null,
+          "parent": "click",
+          "inputs": {
+            "BROADCAST_INPUT": [1, "message"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "message": {
+          "opcode": "event_broadcast_menu",
+          "next": null,
+          "parent": "send",
+          "inputs": {},
+          "fields": {
+            "BROADCAST_OPTION": ["Start", "start"]
+          },
+          "shadow": true,
+          "topLevel": false
+        }
+      },
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "start",
+          "name": "Read",
+          "md5ext": "start.svg",
+          "dataFormat": "svg",
+          "rotationCenterX": 62,
+          "rotationCenterY": 22
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 2,
+      "visible": true,
+      "x": 0,
+      "y": -136,
+      "size": 100,
+      "direction": 90,
+      "draggable": false,
+      "rotationStyle": "all around"
+    },
+    {
+      "isStage": false,
+      "name": "Stop / Clear",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {
+        "click": {
+          "opcode": "event_whenthisspriteclicked",
+          "next": "send",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true,
+          "x": 30,
+          "y": 30
+        },
+        "send": {
+          "opcode": "event_broadcast",
+          "next": null,
+          "parent": "click",
+          "inputs": {
+            "BROADCAST_INPUT": [1, "message"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "message": {
+          "opcode": "event_broadcast_menu",
+          "next": null,
+          "parent": "send",
+          "inputs": {},
+          "fields": {
+            "BROADCAST_OPTION": ["Stop", "stop"]
+          },
+          "shadow": true,
+          "topLevel": false
+        }
+      },
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "assetId": "stop",
+          "name": "Stop / Clear",
+          "md5ext": "stop.svg",
+          "dataFormat": "svg",
+          "rotationCenterX": 62,
+          "rotationCenterY": 22
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 3,
+      "visible": true,
+      "x": 150,
+      "y": -136,
+      "size": 100,
+      "direction": 90,
+      "draggable": false,
+      "rotationStyle": "all around"
+    }
+  ],
+  "monitors": [
+    {
+      "id": "sample-state",
+      "mode": "default",
+      "opcode": "data_variable",
+      "params": {
+        "VARIABLE": "Sample state"
+      },
+      "spriteName": null,
+      "value": "",
+      "width": 0,
+      "height": 0,
+      "x": 16,
+      "y": 99,
+      "visible": true,
+      "sliderMin": 0,
+      "sliderMax": 100,
+      "isDiscrete": true
+    },
+    {
+      "id": "sample-paired",
+      "mode": "default",
+      "opcode": "data_variable",
+      "params": {
+        "VARIABLE": "Relay paired"
+      },
+      "spriteName": null,
+      "value": "",
+      "width": 0,
+      "height": 0,
+      "x": 16,
+      "y": 127,
+      "visible": true,
+      "sliderMin": 0,
+      "sliderMax": 100,
+      "isDiscrete": true
+    },
+    {
+      "id": "sample-connection",
+      "mode": "default",
+      "opcode": "data_variable",
+      "params": {
+        "VARIABLE": "Connection"
+      },
+      "spriteName": null,
+      "value": "",
+      "width": 0,
+      "height": 0,
+      "x": 16,
+      "y": 155,
+      "visible": true,
+      "sliderMin": 0,
+      "sliderMax": 100,
+      "isDiscrete": true
+    },
+    {
+      "id": "sample-result",
+      "mode": "default",
+      "opcode": "data_variable",
+      "params": {
+        "VARIABLE": "Result"
+      },
+      "spriteName": null,
+      "value": "",
+      "width": 0,
+      "height": 0,
+      "x": 16,
+      "y": 183,
+      "visible": true,
+      "sliderMin": 0,
+      "sliderMax": 100,
+      "isDiscrete": true
+    },
+    {
+      "id": "sample-error",
+      "mode": "default",
+      "opcode": "data_variable",
+      "params": {
+        "VARIABLE": "Last error"
+      },
+      "spriteName": null,
+      "value": "",
+      "width": 0,
+      "height": 0,
+      "x": 16,
+      "y": 211,
+      "visible": true,
+      "sliderMin": 0,
+      "sliderMax": 100,
+      "isDiscrete": true
+    }
+  ],
+  "extensions": [],
+  "meta": {
+    "semver": "3.0.0",
+    "vm": "0.2.0",
+    "agent": "TurboWarp sample"
+  }
+}
