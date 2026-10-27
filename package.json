@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-sesame",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A TurboWarp extension for the Candy House Sesame Web API.",
   "author": "Hiroya Kubo <hiroya@cuc.ac.jp>",
   "license": "MPL-2.0",
@@ -60,9 +60,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
-    "@kubohiroya/sb3-toolchain": "^0.17.0",
-    "@kubohiroya/turbowarp-extension-manifest": "^0.3.2",
-    "@kubohiroya/vite-plugin-turbowarp-extension": "^0.8.0",
+    "@kubohiroya/sb3-toolchain": "^0.18.0",
+    "@kubohiroya/turbowarp-extension-manifest": "^0.4.0",
+    "@kubohiroya/vite-plugin-turbowarp-extension": "^0.9.0",
     "@types/node": "^24.13.3",
     "eslint": "^9.39.5",
     "jszip": "^3.10.2",
@@ -71,11 +71,11 @@
     "typescript-eslint": "^8.66.0",
     "vite": "^8.2.2",
     "vitest": "^5.0.0",
-    "@kubohiroya/turbowarp-extension-data-editor": "^0.3.4"
+    "@kubohiroya/turbowarp-extension-data-editor": "^0.4.0"
   },
-  "gitHead": "58434abb0bf2d20977afbda0c0b82b6502c80094",
+  "gitHead": "e376264b11d86bfd13ff153fd899531dbdcdda8d",
   "x-turbowarp-source": {
-    "revision": "58434abb0bf2d20977afbda0c0b82b6502c80094",
+    "revision": "e376264b11d86bfd13ff153fd899531dbdcdda8d",
     "revisionRole": "base-commit",
     "sourceState": "local-release-overlay"
   }
