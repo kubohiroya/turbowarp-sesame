@@ -638,7 +638,7 @@
         "b54": {
           "opcode": "data_setvariableto",
           "next": "b59",
-          "parent": "b69",
+          "parent": "sample-empty-endpoint",
           "inputs": {
             "VALUE": [2, "b53"]
           },
@@ -811,7 +811,7 @@
         },
         "b69": {
           "opcode": "event_whenbroadcastreceived",
-          "next": "b54",
+          "next": "sample-empty-endpoint",
           "parent": null,
           "inputs": {},
           "fields": {
@@ -952,6 +952,65 @@
           "topLevel": true,
           "x": 30,
           "y": 670
+        },
+        "sample-empty-endpoint": {
+          "opcode": "control_if",
+          "next": "b54",
+          "parent": "b69",
+          "inputs": {
+            "CONDITION": [2, "sample-empty-endpoint-equals"],
+            "SUBSTACK": [2, "sample-empty-endpoint-message"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "sample-empty-endpoint-equals": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "sample-empty-endpoint",
+          "inputs": {
+            "OPERAND1": [2, "sample-empty-endpoint-variable"],
+            "OPERAND2": [1, [10, ""]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "sample-empty-endpoint-variable": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "sample-empty-endpoint-equals",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["Relay endpoint", "sample-endpoint"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "sample-empty-endpoint-message": {
+          "opcode": "data_setvariableto",
+          "next": "sample-empty-endpoint-stop",
+          "parent": "sample-empty-endpoint",
+          "inputs": {
+            "VALUE": [1, [10, "Pair first"]]
+          },
+          "fields": {
+            "VARIABLE": ["Sample state", "sample-state"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "sample-empty-endpoint-stop": {
+          "opcode": "control_stop",
+          "next": null,
+          "parent": "sample-empty-endpoint-message",
+          "inputs": {},
+          "fields": {
+            "STOP_OPTION": ["this script", null]
+          },
+          "shadow": false,
+          "topLevel": false
         }
       },
       "comments": {},
