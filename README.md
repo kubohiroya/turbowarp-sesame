@@ -10,6 +10,21 @@ provider credentials out of TurboWarp projects.
 
 **User guide:** [English](https://kubohiroya.github.io/turbowarp-sesame/)
 
+## Minimal sample
+
+[Open in TurboWarp Editor](https://turbowarp.org/editor?project_url=https%3A%2F%2Fkubohiroya.github.io%2Fturbowarp-sesame%2Fsamples%2Fread-device-status.sb3) · [Download SB3](https://kubohiroya.github.io/turbowarp-sesame/samples/read-device-status.sb3)
+
+1. Open the sample, enable **Run without sandbox**, and allow the bundled extension. Green flag only resets local state.
+2. Run your localhost relay, configure the provider there, then click **Configure**. Enter its loopback origin and device alias, then the eight-digit one-time pairing code. Never enter an API key. At the final prompt, press Enter with an empty answer to clear the entered code.
+3. Confirm **Relay paired = true**, then click **Read**. The sample reads batteryPercentage only; it contains no lock/unlock/toggle block.
+4. Click **Stop / Clear** to end the session and clear settings/results. Before saving or sharing, complete the empty-answer prompt and clear; reopening the original sample also restores blank input values.
+
+**Requirements:** A localhost @kubohiroya/keybroker, a configured device alias, Candy House credentials held by the relay, and a real cloud-reachable Sesame device (for example via a supported Wi-Fi module).
+
+**Verification boundary:** Real relay pairing, Candy House requests and physical device battery/status reads have not been verified. Automated checks cover blank/unpaired state and cancellation only, with browser audio muted. No real relay, API, microphone, or device success is claimed.
+
+Editable sources and maintenance: [samples/README.md](samples/README.md).
+
 ## What it does
 
 - Reads lock state, battery level, angle, timestamp, and Wi-Fi module state.

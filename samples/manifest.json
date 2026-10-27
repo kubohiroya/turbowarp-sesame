@@ -1,0 +1,43 @@
+{
+  "baseURL": "https://kubohiroya.github.io/turbowarp-sesame/",
+  "extension": {
+    "id": "kubohiroyasesame",
+    "bundle": "dist/turbowarp-sesame.js",
+    "unsandboxed": true
+  },
+  "samples": [
+    {
+      "name": "read-device-status",
+      "title": "Sesame: read battery only",
+      "instructions": "Green flag resets. Configure your local relay, then click Start/Read. Stop clears settings. No automatic connection.",
+      "checks": [
+        {
+          "variable": "sample-state",
+          "equals": "Ready"
+        },
+        {
+          "variable": "sample-paired",
+          "equals": false
+        },
+        {
+          "variable": "sample-result",
+          "equals": ""
+        },
+        {
+          "variable": "sample-error",
+          "equals": ""
+        },
+        {
+          "variable": "sample-endpoint",
+          "equals": ""
+        },
+        {
+          "variable": "sample-connection",
+          "equals": "not configured"
+        }
+      ],
+      "requirements": "localhost keybroker、設定済みSesame alias、Candy House認証情報をrelay側に設定、cloud経由で到達できる実Sesame機器（対応Wi-Fi接続等）。状態取得のみ。",
+      "unverified": "実relayペアリング、Candy House API疎通、機器の電池値・状態の実取得は未検証。施錠・解錠・toggleはデモに含めない。"
+    }
+  ]
+}
