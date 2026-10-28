@@ -45,9 +45,20 @@ function checkPolicy() {
 }
 
 function checkPackageMetadata() {
+  if (
+    typeof packageMetadata.author !== "object" ||
+    packageMetadata.author === null ||
+    Array.isArray(packageMetadata.author) ||
+    packageMetadata.author.name !== "Hiroya Kubo" ||
+    packageMetadata.author.email !== "hiroya@cuc.ac.jp" ||
+    packageMetadata.author.url !== "https://github.com/kubohiroya"
+  ) {
+    errors.push(
+      "package.json author must use the approved name, email, and URL",
+    );
+  }
   const requiredStrings = [
     "description",
-    "author",
     "license",
     "homepage",
     "packageManager",
