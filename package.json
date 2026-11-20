@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-sesame",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "A TurboWarp extension for the Candy House Sesame Web API.",
   "author": {
     "name": "Hiroya Kubo",
@@ -85,5 +85,43 @@
     "revision": "e376264b11d86bfd13ff153fd899531dbdcdda8d",
     "revisionRole": "base-commit",
     "sourceState": "local-release-overlay"
+  },
+  "turbowarpExtension": {
+    "resourceDeclaration": {
+      "schemaVersion": 1,
+      "resources": [
+        {
+          "type": "bluetooth",
+          "usage": "conditional",
+          "purpose": {
+            "en": "Read or control the selected Sesame lock over Bluetooth LE",
+            "ja": "選択したSesame錠の状態をBluetooth LEで読み取り、対応ビルドでは操作する"
+          },
+          "condition": {
+            "en": "In Bluetooth mode after the user selects a device; lock commands require an explicitly enabled build",
+            "ja": "Bluetoothモードで利用者が機器を選択した場合。施錠操作は明示的に有効にしたビルドのみ"
+          }
+        },
+        {
+          "type": "network",
+          "usage": "conditional",
+          "purpose": {
+            "en": "Call the Sesame API, local relay or configured keyholder page",
+            "ja": "Sesame API、ローカル中継、設定された鍵管理ページへ接続する"
+          },
+          "condition": {
+            "en": "In Direct/Relay mode, or when opening the external keyholder page for Bluetooth mode",
+            "ja": "Direct・Relayモード、またはBluetoothモードで外部の鍵管理ページを開く場合"
+          },
+          "data": {
+            "direction": "bidirectional",
+            "content": {
+              "en": "Device status, permitted commands, authentication/relay exchange and the selected keyholder page",
+              "ja": "機器の状態、許可された操作、認証・中継のやり取り、選択した鍵管理ページ"
+            }
+          }
+        }
+      ]
+    }
   }
 }
