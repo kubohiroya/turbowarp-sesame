@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-sesame",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "A TurboWarp extension for the Candy House Sesame Web API.",
   "author": {
     "name": "Hiroya Kubo",
@@ -78,7 +78,7 @@
     "typescript-eslint": "^8.66.0",
     "vite": "^8.2.2",
     "vitest": "^5.0.0",
-    "@kubohiroya/turbowarp-extension-data-editor": "^0.11.2"
+    "@kubohiroya/turbowarp-extension-data-editor": "^0.11.4"
   },
   "gitHead": "e376264b11d86bfd13ff153fd899531dbdcdda8d",
   "x-turbowarp-source": {
